@@ -106,9 +106,7 @@ export default function DashboardPage() {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           const userData = userDoc.data();
           const userColor = userData?.color || '#3498DB'; // Use user's color or default if not set
-          
-          console.log(userData?.displayName)
-          
+                    
           // Create new group document
           await setDoc(doc(db, 'groups', groupId), {
             name: `New Group (click to change)`,
