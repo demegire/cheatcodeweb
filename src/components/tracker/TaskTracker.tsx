@@ -4,7 +4,7 @@ import { Task } from '../../types';
 import TaskCell from './TaskCell';
 import WeekNavigation from './WeekNavigation';
 import GroupHeader from '../layout/GroupHeader';
-import { collection, addDoc, updateDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek } from '../../lib/dateUtils';
 
@@ -172,6 +172,34 @@ export default function TaskTracker({
     }
   };
 
+  const handleDeleteTask = async (memberId: string, taskId: string) => {
+    if (!user || !groupId) return;
+    
+    try {
+      // Delete task from Firestore
+      await deleteDoc(doc(db, 'groups', groupId, 'tasks', taskId));
+      
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleEditTask = async (memberId: string, taskId: string, newText: string) => {
+    if (!user || !groupId) return;
+    
+    try {
+      // Update task text in Firestore
+      await updateDoc(doc(db, 'groups', groupId, 'tasks', taskId), {
+        text: newText
+      });
+      
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+      console.error('Error updating task text:', error);
+    }
+  };
+
   const handleUpdateGroupName = async (newName: string) => {
     if (!groupId) return;
     
@@ -227,6 +255,8 @@ export default function TaskTracker({
                 tasks={tasks[member.id]?.filter(t => t.day === day) || []}
                 onAddTask={(text) => handleAddTask(member.id, day, text)}
                 onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
+                onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
+                onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
                 isCurrentUser={user?.uid === member.id}
                 onSelectTask={onSelectTask}
                 selectedTaskId={selectedTask?.id}
