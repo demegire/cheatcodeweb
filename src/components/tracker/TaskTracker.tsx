@@ -221,6 +221,59 @@ export default function TaskTracker({
     }
   };
 
+  // New method to suggest a task for another user
+  const handleSuggestTask = async (forMemberId: string, day: number, text: string) => {
+    if (!user || !groupId) return;
+    
+    try {
+      // Add suggested task to Firestore
+      await addDoc(collection(db, 'groups', groupId, 'tasks'), {
+        text,
+        status: 'not-done',
+        day,
+        createdBy: forMemberId,  // This is who the task is FOR
+        suggestedBy: user.uid,   // This is who SUGGESTED the task
+        createdAt: new Date(),
+        weekId: currentISOWeek
+      });
+      
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+      console.error('Error suggesting task:', error);
+    }
+  };
+
+  // New method to accept a suggested task
+  const handleAcceptTask = async (memberId: string, taskId: string) => {
+    if (!user || !groupId) return;
+    
+    try {
+      // Update task in Firestore to remove suggestedBy field
+      const taskRef = doc(db, 'groups', groupId, 'tasks', taskId);
+      await updateDoc(taskRef, {
+        suggestedBy: null
+      });
+      
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+      console.error('Error accepting task:', error);
+    }
+  };
+
+  // New method to reject a suggested task
+  const handleRejectTask = async (memberId: string, taskId: string) => {
+    if (!user || !groupId) return;
+    
+    try {
+      // Delete the suggested task
+      await deleteDoc(doc(db, 'groups', groupId, 'tasks', taskId));
+      
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+      console.error('Error rejecting task:', error);
+    }
+  };
+
   // Rest of the component remains the same
   return (
     <div className="flex flex-col h-full">
@@ -248,20 +301,32 @@ export default function TaskTracker({
                 </td>
                 
                 {[0, 1, 2, 3, 4, 5, 6].map(day => (
-                <TaskCell
-                key={day}
-                memberId={member.id}
-                day={day}
-                tasks={tasks[member.id]?.filter(t => t.day === day) || []}
-                onAddTask={(text) => handleAddTask(member.id, day, text)}
-                onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
-                onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
-                onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
-                isCurrentUser={user?.uid === member.id}
-                onSelectTask={onSelectTask}
-                selectedTaskId={selectedTask?.id}
-                highlightedTaskId={highlightedTaskId}
-              />
+                  <TaskCell
+                    key={day}
+                    memberId={member.id}
+                    day={day}
+                    tasks={tasks[member.id]?.filter(t => t.day === day) || []}
+                    onAddTask={(text) => {
+                      // If adding task for current user, use handleAddTask
+                      if (member.id === user?.uid) {
+                        handleAddTask(member.id, day, text);
+                      } 
+                      // If adding task for another user, use handleSuggestTask
+                      else {
+                        handleSuggestTask(member.id, day, text);
+                      }
+                    }}
+                    onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
+                    onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
+                    onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
+                    isCurrentUser={member.id === user?.uid}
+                    onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
+                    selectedTaskId={selectedTask?.id}
+                    highlightedTaskId={highlightedTaskId}
+                    onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
+                    onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
+                    members={members} // Pass all members to get color info for suggested tasks
+                  />
                 ))}
                 
                 <td className="border p-2 text-center font-bold text-gray-800 bg-white">

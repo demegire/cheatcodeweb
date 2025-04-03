@@ -14,6 +14,9 @@ interface TaskCellProps {
   onSelectTask?: (task: Task | null) => void;
   selectedTaskId?: string | null;
   highlightedTaskId?: string | null;
+  onAcceptTask?: (taskId: string) => void;
+  onRejectTask?: (taskId: string) => void;
+  members: { id: string; name: string; color: string }[];
 }
 
 export default function TaskCell({ 
@@ -27,7 +30,10 @@ export default function TaskCell({
   isCurrentUser,
   onSelectTask,
   selectedTaskId,
-  highlightedTaskId
+  highlightedTaskId,
+  onAcceptTask,
+  onRejectTask,
+  members
 }: TaskCellProps) {
     const [newTaskText, setNewTaskText] = useState('');
     const [isHovering, setIsHovering] = useState(false);
@@ -63,9 +69,13 @@ export default function TaskCell({
       return Math.max(104, cellWidth - 16 - 27 - 2); // 16px for cell padding (8px each side), 27px for button, 2px for borders
     };
 
-    // Show input field if hovering OR if there's text in the input OR it's focused
-    const showInputField = isCurrentUser && (isHovering || newTaskText.trim().length > 0 || isFocused);
-  
+    // Function to get color of a user who suggested the task
+    const getSuggestedByColor = (suggestedById?: string) => {
+      if (!suggestedById) return undefined;
+      const suggestingMember = members.find(m => m.id === suggestedById);
+      return suggestingMember?.color;
+    };
+
     return (
       <td 
         ref={cellRef}
@@ -86,13 +96,18 @@ export default function TaskCell({
                 isEditable={isCurrentUser}
                 isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
                 onSelect={onSelectTask ? () => onSelectTask(task) : undefined}
+                onAcceptTask={task.suggestedBy && isCurrentUser && onAcceptTask ? 
+                  () => onAcceptTask(task.id) : undefined}
+                onRejectTask={task.suggestedBy && isCurrentUser && onRejectTask ? 
+                  () => onRejectTask(task.id) : undefined}
+                suggestedByColor={getSuggestedByColor(task.suggestedBy)}
               />
             ))}
           </div>
           
-          {/* Reserve space for input field even when not shown */}
+          {/* Show input field for both current user and other users */}
           <div className="h-[38px] mt-1 box-border">
-            {showInputField ? (
+            {(isHovering || newTaskText.trim().length > 0 || isFocused) ? (
               <div className="flex w-full m-0 box-border">
                 <input
                   type="text"
@@ -104,6 +119,7 @@ export default function TaskCell({
                   onBlur={() => setIsFocused(false)}
                   className="text-sm border border-gray-300 rounded-l px-2 py-1 text-gray-800 box-border"
                   style={{ width: `${getInputWidth()}px` }}
+                  placeholder={isCurrentUser ? "Add task..." : "Suggest task..."}
                 />
                 <button
                   onClick={handleAddTask}

@@ -9,6 +9,9 @@ interface TaskItemProps {
   onSelect?: () => void;
   onDelete?: () => void;
   onEdit?: (newText: string) => void;
+  onAcceptTask?: () => void;
+  onRejectTask?: () => void;
+  suggestedByColor?: string;
 }
 
 export default function TaskItem({ 
@@ -18,13 +21,22 @@ export default function TaskItem({
   isHighlighted = false,
   onSelect,
   onDelete,
-  onEdit
+  onEdit,
+  onAcceptTask,
+  onRejectTask,
+  suggestedByColor
 }: TaskItemProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
 
+  const isSuggested = !!task.suggestedBy;
+
   const getStatusColor = () => {
+    if (isSuggested && suggestedByColor) {
+      return `bg-opacity-20 border border-opacity-30 text-gray-800`;
+    }
+    
     switch (task.status) {
       case 'completed': return 'bg-green-50 border-green-200 text-green-800';
       case 'postponed': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
@@ -87,8 +99,12 @@ export default function TaskItem({
       onMouseLeave={handleMouseLeave}
       onClick={onSelect}
       data-task-item="true"
+      style={isSuggested && suggestedByColor ? { 
+        backgroundColor: `${suggestedByColor}20`,
+        borderColor: `${suggestedByColor}30`
+      } : {}}
     >
-      {isEditable && (
+      {isEditable && !isSuggested && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -103,7 +119,32 @@ export default function TaskItem({
         </button>
       )}
 
-      {isEditable && showButtons && !isEditing && (
+      {isSuggested && onAcceptTask && onRejectTask && (
+        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAcceptTask();
+            }}
+            className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center"
+            title="Accept task"
+          >
+            ✓
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRejectTask();
+            }}
+            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            title="Reject task"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {isEditable && showButtons && !isEditing && !isSuggested && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
           <button
             onClick={(e) => {
@@ -145,9 +186,16 @@ export default function TaskItem({
           </button>
         </div>
       ) : (
-        <span className={`${isEditable ? 'ml-6' : ''} block truncate`}>
-          {task.text}
-        </span>
+        <>
+          <span className={`${isEditable && !isSuggested ? 'ml-6' : ''} block truncate`}>
+            {task.text}
+          </span>
+          {isSuggested && (
+            <div className="text-xs mt-1 text-gray-500">
+              Suggested by another user
+            </div>
+          )}
+        </>
       )}
     </div>
   );
