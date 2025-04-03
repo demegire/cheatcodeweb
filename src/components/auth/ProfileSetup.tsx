@@ -1,13 +1,18 @@
+'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { HexColorPicker } from 'react-colorful';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useAuth } from '../../lib/hooks/useAuth';
 
 interface ProfileSetupProps {
   userId: string;
 }
 
 export default function ProfileSetup({ userId }: ProfileSetupProps) {
+  const router = useRouter();
+  const { completeProfile } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [color, setColor] = useState('#3498DB');
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
@@ -31,16 +36,24 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
     try {
       setIsSubmitting(true);
       
-      // Update user profile
+      // Update user profile in Firestore
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         displayName: displayName.trim(),
         color,
         profileCompleted: true
       });
+
+      // Update auth state so that needsProfileSetup becomes false
+      await completeProfile();
       
-      // Force reload the page to refresh auth state
-      window.location.reload();
+      // Redirect based on any pending invite stored in localStorage
+      const pendingInvite = localStorage.getItem('pendingInvite');
+      if (pendingInvite) {
+        router.push(`/invite/${pendingInvite}`);
+      } else {
+        router.push('/dashboard');
+      }
       
     } catch (err) {
       console.error('Error updating profile:', err);

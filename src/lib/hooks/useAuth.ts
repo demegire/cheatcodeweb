@@ -28,7 +28,6 @@ export function useAuth() {
         // Check if user exists in Firestore
         const userRef = doc(db, 'users', authUser.uid);
         const userSnap = await getDoc(userRef);
-        const pendingInvite = localStorage.getItem('pendingInvite');
         
         if (!userSnap.exists()) {
           // Create new user document
@@ -56,13 +55,7 @@ export function useAuth() {
             needsProfileSetup: !userData.profileCompleted
           });
         }
-
-        if (pendingInvite) {
-          localStorage.removeItem('pendingInvite');
-          window.location.href = `/invite/${pendingInvite}`;
-          return;
-        }
-
+        // We'll handle pendingInvite in the Home component now
       } else {
         setAuthState({
           user: null,

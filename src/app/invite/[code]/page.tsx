@@ -9,15 +9,22 @@ import { useParams } from 'next/navigation';
 
 export default function InvitePage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, needsProfileSetup } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
   const groupId = params.code as string;
   
   useEffect(() => {
+    // If user needs profile setup, redirect to home page
+    // The profile will be completed there, and user will be redirected back here
+    //if (!user || needsProfileSetup) {
+    //  localStorage.setItem('pendingInvite', groupId);
+    //  router.push('/');
+    //  return;
+    //}
+
     const joinGroup = async () => {
       try {
-        
         // Check if group exists
         const groupRef = doc(db, 'groups', groupId);
         const groupSnap = await getDoc(groupRef);
@@ -28,11 +35,12 @@ export default function InvitePage() {
         }
         
         if (!user) {
+          console.log('no user')
           // Store the invite code in localStorage to use after login
           localStorage.setItem('pendingInvite', groupId);
           
           // Redirect to login page
-            router.push('/');
+          router.push('/');
           return;
         }
         
@@ -45,18 +53,19 @@ export default function InvitePage() {
           return;
         }
         
-        // Get user's display name
+        // Get user's display name and color from completed profile
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
         const userData = userSnap.data();
         const displayName = userData?.displayName || 'User';
+        const userColor = userData?.color || '#' + Math.floor(Math.random()*16777215).toString(16);
         
         // Add user to group members
         await updateDoc(groupRef, {
           members: arrayUnion({
             id: user.uid,
             name: displayName,
-            color: userData?.color || '#' + Math.floor(Math.random()*16777215).toString(16) // Random color
+            color: userColor
           })
         });
         
@@ -64,9 +73,12 @@ export default function InvitePage() {
         await updateDoc(userRef, {
           groups: arrayUnion(groupId)
         });
+        
+        // Clear the pendingInvite from localStorage
+        localStorage.removeItem('pendingInvite');
                 
         // Redirect to dashboard
-          router.push('/dashboard');
+        router.push('/dashboard');
         
       } catch (error) {
         console.error('Error joining group:', error);
@@ -77,7 +89,8 @@ export default function InvitePage() {
     if (!loading) {
       joinGroup();
     }
-    }, [groupId, user, loading, router]); // Now we're using the component variable
+  }, [groupId, user, loading, needsProfileSetup, router]);
+  
   
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
