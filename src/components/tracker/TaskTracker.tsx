@@ -325,7 +325,8 @@ export default function TaskTracker({
                     highlightedTaskId={highlightedTaskId}
                     onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
                     onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
-                    members={members} // Pass all members to get color info for suggested tasks
+                    members={members}
+                    currentUserId={user?.uid || ''}
                   />
                 ))}
                 

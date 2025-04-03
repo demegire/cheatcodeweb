@@ -17,6 +17,7 @@ interface TaskCellProps {
   onAcceptTask?: (taskId: string) => void;
   onRejectTask?: (taskId: string) => void;
   members: { id: string; name: string; color: string }[];
+  currentUserId: string;
 }
 
 export default function TaskCell({ 
@@ -33,7 +34,8 @@ export default function TaskCell({
   highlightedTaskId,
   onAcceptTask,
   onRejectTask,
-  members
+  members,
+  currentUserId
 }: TaskCellProps) {
     const [newTaskText, setNewTaskText] = useState('');
     const [isHovering, setIsHovering] = useState(false);
@@ -101,6 +103,7 @@ export default function TaskCell({
                 onRejectTask={task.suggestedBy && isCurrentUser && onRejectTask ? 
                   () => onRejectTask(task.id) : undefined}
                 suggestedByColor={getSuggestedByColor(task.suggestedBy)}
+                currentUserId={currentUserId}
               />
             ))}
           </div>
