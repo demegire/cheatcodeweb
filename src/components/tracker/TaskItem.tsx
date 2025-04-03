@@ -9,6 +9,10 @@ interface TaskItemProps {
   onSelect?: () => void;
   onDelete?: () => void;
   onEdit?: (newText: string) => void;
+  onAcceptTask?: () => void;
+  onRejectTask?: () => void;
+  suggestedByColor?: string;
+  currentUserId?: string;
 }
 
 export default function TaskItem({ 
@@ -18,13 +22,24 @@ export default function TaskItem({
   isHighlighted = false,
   onSelect,
   onDelete,
-  onEdit
+  onEdit,
+  onAcceptTask,
+  onRejectTask,
+  suggestedByColor,
+  currentUserId
 }: TaskItemProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
 
+  const isSuggested = !!task.suggestedBy;
+  const isCurrentUserSuggester = currentUserId && task.suggestedBy === currentUserId;
+
   const getStatusColor = () => {
+    if (isSuggested && suggestedByColor) {
+      return `bg-opacity-20 border border-opacity-30 text-gray-800`;
+    }
+    
     switch (task.status) {
       case 'completed': return 'bg-green-50 border-green-200 text-green-800';
       case 'postponed': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
@@ -49,16 +64,15 @@ export default function TaskItem({
   };
 
   const handleMouseEnter = () => {
-    if (isEditable) {
-      setShowButtons(true);
-    }
+    setShowButtons(true);
   };
 
   const handleMouseLeave = () => {
     setShowButtons(false);
   };
 
-  const handleEditClick = () => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsEditing(true);
   };
 
@@ -87,8 +101,12 @@ export default function TaskItem({
       onMouseLeave={handleMouseLeave}
       onClick={onSelect}
       data-task-item="true"
+      style={isSuggested && suggestedByColor ? { 
+        backgroundColor: `${suggestedByColor}20`,
+        borderColor: `${suggestedByColor}30`
+      } : {}}
     >
-      {isEditable && (
+      {isEditable && !isSuggested && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -103,13 +121,57 @@ export default function TaskItem({
         </button>
       )}
 
-      {isEditable && showButtons && !isEditing && (
+      {isSuggested && isEditable && !isCurrentUserSuggester && onAcceptTask && onRejectTask && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleEditClick();
+              onAcceptTask();
             }}
+            className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center"
+            title="Accept task"
+          >
+            ✓
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRejectTask();
+            }}
+            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            title="Reject task"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {isSuggested && isCurrentUserSuggester && showButtons && !isEditing && (
+        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
+          <button
+            onClick={handleEditClick}
+            className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
+            title="Edit suggestion"
+          >
+            ✎
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.();
+            }}
+            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            title="Delete suggestion"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {isEditable && showButtons && !isEditing && !isSuggested && (
+        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
+          <button
+            onClick={handleEditClick}
             className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
           >
             ✎
@@ -127,7 +189,7 @@ export default function TaskItem({
       )}
 
       {isEditing ? (
-        <div className="ml-6 flex" onClick={(e) => e.stopPropagation()}>
+        <div className="ml-0 flex" onClick={(e) => e.stopPropagation()}>
           <input
             type="text"
             value={editText}
@@ -145,7 +207,7 @@ export default function TaskItem({
           </button>
         </div>
       ) : (
-        <span className={`${isEditable ? 'ml-6' : ''} block truncate`}>
+        <span className={`${isEditable && !isSuggested ? 'ml-6' : ''} block truncate`}>
           {task.text}
         </span>
       )}
