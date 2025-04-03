@@ -36,6 +36,9 @@ export default function CommentSection({
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
+  // Add a ref to the main container to handle keyboard events
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   // Fetch comments for the current group and week
   useEffect(() => {
     if (!groupId || !currentWeekId) return;
@@ -69,12 +72,48 @@ export default function CommentSection({
     return () => unsubscribe();
   }, [groupId, currentWeekId]);
 
+  // Add an effect to handle the Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedTask) {
+        onSelectTask(null);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedTask, onSelectTask]);
+
+  // Add an effect to handle clicks outside of the task cell
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // If there's a selected task and the click is not within a task element
+      if (selectedTask && 
+          !(e.target as Element)?.closest('[data-task-item="true"]') && 
+          !containerRef.current?.contains(e.target as Node)) {
+        onSelectTask(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [selectedTask, onSelectTask]);
+
   // Scroll to bottom when new comments are added
   useEffect(() => {
     if (commentsContainerRef.current) {
       commentsContainerRef.current.scrollTop = commentsContainerRef.current.scrollHeight;
     }
   }, [comments.length]);
+
+  // Filter comments based on selected task
+  const filteredComments = selectedTask 
+    ? comments.filter(comment => comment.taskId === selectedTask.id)
+    : comments;
 
   // Add a new comment
   const handleAddComment = async () => {
@@ -101,11 +140,6 @@ export default function CommentSection({
       });
       
       setNewComment('');
-      
-      // Clear selected task after comment is added
-      if (selectedTask) {
-        onSelectTask(null);
-      }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -124,12 +158,12 @@ export default function CommentSection({
     onSelectTask(null);
   };
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" ref={containerRef}>
       <div className={`p-4 text-gray-600 font-bold ${isCollapsed ? 'text-center' : ''} border-b border-gray-200`}>
-        {!isCollapsed && 'Comments'}
+        {!isCollapsed && (selectedTask ? `Comments for "${selectedTask.text}"` : 'All Comments')}
       </div>
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" ref={commentsContainerRef}>
         {/* Comment list */}
         {isCollapsed ? (
           <div className="px-2 py-4">
@@ -146,7 +180,7 @@ export default function CommentSection({
           </div>
         )  : (
           <div className="p-4">
-            {comments.map(comment => (
+            {filteredComments.map(comment => (
               <CommentItem 
                 key={comment.id}
                 comment={comment}
@@ -164,6 +198,11 @@ export default function CommentSection({
                 }}
               />
             ))}
+            {filteredComments.length === 0 && (
+              <div className="text-gray-500 text-center italic">
+                {selectedTask ? "No comments for this task yet" : "No comments yet"}
+              </div>
+            )}
           </div>
         )}
       </div>

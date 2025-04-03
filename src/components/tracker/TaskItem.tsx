@@ -86,6 +86,7 @@ export default function TaskItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onSelect}
+      data-task-item="true"
     >
       {isEditable && (
         <button
