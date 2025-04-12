@@ -74,9 +74,44 @@ export default function TaskTracker({
       
       // Populate with tasks from Firestore
       snapshot.forEach(doc => {
-        const task = { id: doc.id, ...doc.data() } as Task;
+        const data = doc.data();
+        
+        // Convert Firestore timestamp to a serializable format
+        let createdAt;
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          createdAt = data.createdAt.toDate();
+        } else if (data.createdAt) {
+          createdAt = new Date(data.createdAt);
+        } else {
+          createdAt = new Date(); // Fallback to current date if missing
+        }
+        
+        const task = { 
+          id: doc.id, 
+          ...data,
+          createdAt: createdAt
+        } as Task;
+        
         if (taskData[task.createdBy]) {
           taskData[task.createdBy].push(task);
+        }
+      });
+      
+      // Sort tasks by creation date for each member (oldest first)
+      members.forEach(member => {
+        if (taskData[member.id]) {
+          console.log(`Before sorting - ${member.id}:`, 
+            taskData[member.id].map(t => ({ id: t.id, text: t.text, createdAt: t.createdAt }))
+          );
+          
+          taskData[member.id].sort((a, b) => {
+            console.log(`Comparing ${a.text} (${a.createdAt}) with ${b.text} (${b.createdAt})`);
+            return a.createdAt.getTime() - b.createdAt.getTime();
+          });
+          
+          console.log(`After sorting - ${member.id}:`, 
+            taskData[member.id].map(t => ({ id: t.id, text: t.text, createdAt: t.createdAt }))
+          );
         }
       });
       
