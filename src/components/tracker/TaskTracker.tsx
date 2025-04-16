@@ -378,7 +378,7 @@ export default function TaskTracker({
                   {day}
                 </th>
               ))}
-              <th className="border p-1 bg-gray-50 text-gray-800 w-16">Score</th>
+              <th className="border p-1 bg-gray-50 text-gray-800" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}>Score</th>
             </tr>
           </thead>
           <tbody>
@@ -422,7 +422,7 @@ export default function TaskTracker({
                   />
                 ))}
                 
-                <td className="border p-1 text-center font-bold text-gray-800 bg-white">
+                <td className="border p-1 text-center font-bold text-gray-800 bg-white" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden' }}>
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>
