@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { formatDateRange, getCurrentISOWeek, getDateFromISOWeek, getWeekDateRange } from '../../lib/dateUtils';
+import { getWeekDateRange } from '../../lib/dateUtils';
 
-interface WeekNavigationProps {
+interface MonthlyNavigationProps {
   currentISOWeek: string;
-  onPreviousWeek: () => void;
-  onNextWeek: () => void;
   onMonthSelect: (year: number, month: number) => void;
   onYearSelect?: (year: number) => void;
 }
 
-export default function WeekNavigation({ 
+export default function MonthlyNavigation({ 
   currentISOWeek, 
-  onPreviousWeek, 
-  onNextWeek,
   onMonthSelect,
   onYearSelect = () => {}
-}: WeekNavigationProps) {
-  const dateRangeText = formatDateRange(currentISOWeek);
+}: MonthlyNavigationProps) {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -43,24 +38,6 @@ export default function WeekNavigation({
   
   return (
     <div className="flex flex-col border-t">
-      <div className="flex justify-center items-center p-4">
-        <button
-          onClick={onPreviousWeek}
-          className="px-4 py-2 bg-blue-500 rounded-l hover:bg-blue-600 text-white"
-        >
-          ←
-        </button>
-        <span className="px-4 text-gray-600 font-medium">
-          {dateRangeText}
-        </span>
-        <button
-          onClick={onNextWeek}
-          className="px-4 py-2 bg-blue-500 rounded-r hover:bg-blue-600 text-white"
-        >
-          →
-        </button>
-      </div>
-      
       <div className="flex justify-center items-center px-4 pb-4">
         <div className="flex items-center w-full max-w-4xl mx-auto justify-between">
           <button
@@ -124,4 +101,4 @@ export default function WeekNavigation({
       </div>
     </div>
   );
-}
+} 

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
-import WeekNavigation from './WeekNavigation';
-import GroupHeader from '../layout/GroupHeader';
+import Navigation from './Navigation';
+import WeeklyNavigation from './WeeklyNavigation';
+import CompactGroupHeader from '../layout/CompactGroupHeader';
+import ShareButton from '../layout/ShareButton';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
@@ -152,6 +154,12 @@ export default function TaskTracker({
     const newWeek = getRelativeISOWeek(currentISOWeek, 1);
     setCurrentISOWeek(newWeek);
     onWeekChange?.(newWeek); // Notify parent
+  };
+
+  const handleCurrentWeek = () => {
+    const currentWeek = getCurrentISOWeek();
+    setCurrentISOWeek(currentWeek);
+    onWeekChange?.(currentWeek); // Notify parent
   };
 
   const handleMonthSelect = (year: number, month: number) => {
@@ -335,11 +343,33 @@ export default function TaskTracker({
 
   // Rest of the component remains the same
   return (
-    <div className="flex flex-col h-full">
-      <GroupHeader groupName={groupName} groupId={groupId} onUpdateName={handleUpdateGroupName}/>
+    <div className="flex flex-col h-full overflow-hidden p-4 relative">
+      <div className="flex justify-between items-center mb-3">
+        <div className="py-1">
+          <WeeklyNavigation
+            currentISOWeek={currentISOWeek}
+            onPreviousWeek={handlePreviousWeek}
+            onNextWeek={handleNextWeek}
+            onCurrentWeek={handleCurrentWeek}
+          />
+        </div>
+        <div className="py-1">
+          <ShareButton groupId={groupId} />
+        </div>
+      </div>
       
-      <div className="flex-1 overflow-auto p-4">
-        <table className="w-full border-collapse table-fixed">
+      {/* Absolutely positioned group header to keep it centered */}
+      <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto">
+          <CompactGroupHeader
+            groupName={currentGroupName}
+            onUpdateName={handleUpdateGroupName}
+          />
+        </div>
+      </div>
+      
+      <div className="flex-grow overflow-auto">
+        <table className="w-full border-collapse">
           <thead>
             <tr>
               <th className="border p-1 bg-gray-50 text-gray-800 w-24">Person</th>
@@ -401,7 +431,7 @@ export default function TaskTracker({
         </table>
       </div>
       
-      <WeekNavigation 
+      <Navigation 
         currentISOWeek={currentISOWeek}
         onPreviousWeek={handlePreviousWeek}
         onNextWeek={handleNextWeek}
