@@ -43,6 +43,7 @@ export default function TaskCell({
     const [isHovering, setIsHovering] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const cellRef = useRef<HTMLTableCellElement>(null);
+    const tasksContainerRef = useRef<HTMLDivElement>(null);
     const [cellWidth, setCellWidth] = useState(0);
   
     // Measure the actual cell width
@@ -80,6 +81,21 @@ export default function TaskCell({
       return suggestingMember?.color;
     };
 
+    // Define the minimum height we want for the task container
+    // Each task is about 32px total height (content + padding + margin + borders)
+    const MIN_TASK_CONTAINER_HEIGHT = 96; // 32px * 3 tasks
+
+    // Calculate the height we need to add to meet the minimum
+    const getMinHeightStyle = () => {
+      if (!tasksContainerRef.current || tasks.length === 0) {
+        // If no tasks, use the full minimum height
+        return { minHeight: `${MIN_TASK_CONTAINER_HEIGHT}px` };
+      }
+      
+      // No extra minimum height needed
+      return {};
+    };
+
     return (
       <td 
         ref={cellRef}
@@ -88,8 +104,8 @@ export default function TaskCell({
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {/* Task list */}
-        <div>
+        {/* Task list with minimum height */}
+        <div ref={tasksContainerRef} style={getMinHeightStyle()}>
           {tasks.map(task => (
             <TaskItem 
               key={task.id} 
@@ -109,6 +125,13 @@ export default function TaskCell({
               hasComments={tasksWithComments.includes(task.id)}
             />
           ))}
+          
+          {/* If the cell is empty, add invisible placeholder to maintain minimum height */}
+          {tasks.length === 0 && (
+            <div className="opacity-0" style={{ height: `${MIN_TASK_CONTAINER_HEIGHT}px` }}>
+              &nbsp;
+            </div>
+          )}
         </div>
         
         {/* Empty placeholder to reserve space (always visible) */}
