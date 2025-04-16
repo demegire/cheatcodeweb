@@ -42,8 +42,8 @@ export default function MainLayout({
   selectedTask = null,
   onSelectTask = () => {}
 }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
 
@@ -92,9 +92,10 @@ export default function MainLayout({
   };
 
   return (
-    <div className="flex h-screen">
-      {/* Left Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-100 border-r border-gray-200 transition-all duration-300 hidden md:block`}>
+    <div className="flex h-screen relative">
+      {/* Left Sidebar - always absolute positioned */}
+      <div className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-300 hidden md:block
+        ${sidebarCollapsed ? 'w-16' : 'w-64 shadow-lg z-10'}`}>
         <div className="h-full flex flex-col">
           <div className={`p-4 text-gray-600 font-bold ${sidebarCollapsed ? 'text-center' : ''}`}>
             {sidebarCollapsed ? '' : 'My Groups'}
@@ -153,8 +154,8 @@ export default function MainLayout({
         </div>
       </div>
       
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content - fixed margins */}
+      <div className="w-full h-full flex flex-col overflow-hidden md:pl-16 lg:pr-16">
         {/* Clone children with additional props if it's a TaskTracker component */}
         {React.Children.map(children, child => {
           // Check if it's a valid element
@@ -170,8 +171,9 @@ export default function MainLayout({
         })}
       </div>
       
-      {/* Right Sidebar */}
-      <div className={`${rightSidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-100 border-l border-gray-200 transition-all duration-300 hidden lg:block`}>
+      {/* Right Sidebar - always absolute positioned */}
+      <div className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-300 hidden lg:block
+        ${rightSidebarCollapsed ? 'w-16' : 'w-64 shadow-lg z-10'}`}>
         {groupId && currentWeekId ? (
           <CommentSection 
             groupId={groupId}

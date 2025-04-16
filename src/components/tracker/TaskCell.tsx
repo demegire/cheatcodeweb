@@ -83,7 +83,7 @@ export default function TaskCell({
     return (
       <td 
         ref={cellRef}
-        className="border p-2 align-top bg-gray-50 border-gray-300 min-w-[150px] box-border"
+        className="border p-1 align-top bg-gray-50 border-gray-300 h-full"
         style={{ minHeight: '150px', position: 'relative' }} 
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -119,9 +119,9 @@ export default function TaskCell({
           <div 
             style={{
               position: 'absolute',
-              bottom: '8px',
-              left: '8px',
-              width: 'calc(100% - 16px)',
+              bottom: '4px',
+              left: '4px',
+              width: 'calc(100% - 8px)',
               zIndex: 10
             }}
           >

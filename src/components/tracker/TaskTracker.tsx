@@ -322,21 +322,23 @@ export default function TaskTracker({
       <GroupHeader groupName={groupName} groupId={groupId} onUpdateName={handleUpdateGroupName}/>
       
       <div className="flex-1 overflow-auto p-4">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse table-fixed">
           <thead>
             <tr>
-              <th className="border p-2 bg-gray-50 text-gray-800">Person</th>
+              <th className="border p-1 bg-gray-50 text-gray-800 w-24">Person</th>
               {dayNames.map((day, index) => (
-                <th key={index} className="border p-2 bg-gray-50 text-gray-800">{day}</th>
+                <th key={index} className="border p-1 bg-gray-50 text-gray-800" style={{ width: '14.28%' }}>
+                  {day}
+                </th>
               ))}
-              <th className="border p-2 bg-gray-50 text-gray-800">Score</th>
+              <th className="border p-1 bg-gray-50 text-gray-800 w-16">Score</th>
             </tr>
           </thead>
           <tbody>
             {members.map(member => (
               <tr key={member.id}>
                 <td 
-                  className="border border-black p-2 font-bold text-white text-center" 
+                  className="border border-black p-1 font-bold text-white text-center" 
                   style={{ backgroundColor: member.color }}
                 >
                   {member.name}
@@ -373,7 +375,7 @@ export default function TaskTracker({
                   />
                 ))}
                 
-                <td className="border p-2 text-center font-bold text-gray-800 bg-white">
+                <td className="border p-1 text-center font-bold text-gray-800 bg-white">
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>

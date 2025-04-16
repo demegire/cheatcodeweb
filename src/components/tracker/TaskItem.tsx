@@ -97,7 +97,7 @@ export default function TaskItem({
 
   return (
     <div 
-      className={`relative rounded border p-2 mb-1 text-sm ${getStatusColor()} 
+      className={`relative rounded border p-1 mb-1 text-sm ${getStatusColor()} 
         ${isHighlighted ? 'ring-2 ring-blue-400' : ''}
         ${onSelect ? 'cursor-pointer' : ''}`}
       onMouseEnter={handleMouseEnter}
@@ -111,7 +111,7 @@ export default function TaskItem({
     >
       {/* Comment icon - shows in top right corner when task has comments */}
       {hasComments && (
-        <div className="absolute top-1 right-1">
+        <div className="absolute top-0.5 right-0.5">
           <ChatBubbleLeftIcon className="h-4 w-4 text-blue-500" title="This task has comments" />
         </div>
       )}
@@ -123,7 +123,7 @@ export default function TaskItem({
             onUpdateStatus();
           }}
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
-            w-6 h-6 flex items-center justify-center
+            w-5 h-5 flex items-center justify-center
             rounded-full text-white text-xs
             ${getStatusBgColor()}`}
         >
@@ -217,7 +217,7 @@ export default function TaskItem({
           </button>
         </div>
       ) : (
-        <span className={`${isEditable && !isSuggested ? 'ml-6' : ''} block truncate`}>
+        <span className={`${isEditable && !isSuggested ? 'ml-5 pl-1' : ''} block break-words`}>
           {task.text}
         </span>
       )}
