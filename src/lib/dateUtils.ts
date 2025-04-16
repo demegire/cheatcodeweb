@@ -52,3 +52,12 @@ export const getISOWeek = (date: Date): string => {
     currentDate.setDate(currentDate.getDate() + (offset * 7));
     return getISOWeek(currentDate);
   };
+
+  // Function to get the ISO week containing the first day of a specified month
+  export const getMonthFirstWeek = (year: number, month: number): string => {
+    // Create a date for the first day of the month
+    const firstDayOfMonth = new Date(year, month, 1);
+    
+    // Get the ISO week containing this date
+    return getISOWeek(firstDayOfMonth);
+  };

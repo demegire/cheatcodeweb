@@ -6,7 +6,7 @@ import WeekNavigation from './WeekNavigation';
 import GroupHeader from '../layout/GroupHeader';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek } from '../../lib/dateUtils';
+import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek } from '../../lib/dateUtils';
 
 // Helper function to get day names with dates for a specific ISO week
 const getDayNames = (isoWeek: string) => {
@@ -150,6 +150,12 @@ export default function TaskTracker({
 
   const handleNextWeek = () => {
     const newWeek = getRelativeISOWeek(currentISOWeek, 1);
+    setCurrentISOWeek(newWeek);
+    onWeekChange?.(newWeek); // Notify parent
+  };
+
+  const handleMonthSelect = (year: number, month: number) => {
+    const newWeek = getMonthFirstWeek(year, month);
     setCurrentISOWeek(newWeek);
     onWeekChange?.(newWeek); // Notify parent
   };
@@ -388,6 +394,7 @@ export default function TaskTracker({
         currentISOWeek={currentISOWeek}
         onPreviousWeek={handlePreviousWeek}
         onNextWeek={handleNextWeek}
+        onMonthSelect={handleMonthSelect}
       />
     </div>
   );
