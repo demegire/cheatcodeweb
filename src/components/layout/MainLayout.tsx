@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth } from '../../lib/firebase';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Task } from '../../types';
+import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 type TaskTrackerComponentProps = React.ComponentProps<typeof TaskTracker>;
 
@@ -43,6 +45,39 @@ export default function MainLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  // Fetch comments when group or week changes
+  useEffect(() => {
+    if (!groupId || !currentWeekId) return;
+
+    const commentsRef = collection(db, 'groups', groupId, 'comments');
+    const q = query(
+      commentsRef,
+      where('weekId', '==', currentWeekId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const commentsList: Comment[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        commentsList.push({
+          id: doc.id,
+          text: data.text,
+          userId: data.userId,
+          userName: data.userName,
+          userColor: data.userColor,
+          taskId: data.taskId,
+          createdAt: data.createdAt.toDate(),
+          weekId: data.weekId
+        });
+      });
+      
+      setComments(commentsList);
+    });
+
+    return () => unsubscribe();
+  }, [groupId, currentWeekId]);
 
   const handleLogout = () => {
     auth.signOut();
@@ -127,7 +162,8 @@ export default function MainLayout({
               child.type === TaskTracker) {
             // Pass the highlightedTaskId to the TaskTracker
             return React.cloneElement(child as React.ReactElement<TaskTrackerComponentProps>, { 
-              highlightedTaskId: highlightedTaskId 
+              highlightedTaskId: highlightedTaskId,
+              comments: comments 
             });
           }
           return child;

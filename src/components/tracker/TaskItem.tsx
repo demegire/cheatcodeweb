@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
+import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
   task: Task;
@@ -13,6 +14,7 @@ interface TaskItemProps {
   onRejectTask?: () => void;
   suggestedByColor?: string;
   currentUserId?: string;
+  hasComments?: boolean;
 }
 
 export default function TaskItem({ 
@@ -26,7 +28,8 @@ export default function TaskItem({
   onAcceptTask,
   onRejectTask,
   suggestedByColor,
-  currentUserId
+  currentUserId,
+  hasComments = false
 }: TaskItemProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -106,6 +109,13 @@ export default function TaskItem({
         borderColor: `${suggestedByColor}30`
       } : {}}
     >
+      {/* Comment icon - shows in top right corner when task has comments */}
+      {hasComments && (
+        <div className="absolute top-1 right-1">
+          <ChatBubbleLeftIcon className="h-4 w-4 text-blue-500" title="This task has comments" />
+        </div>
+      )}
+
       {isEditable && !isSuggested && (
         <button
           onClick={(e) => {

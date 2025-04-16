@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { Task } from '../../types';
+import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
 import WeekNavigation from './WeekNavigation';
 import GroupHeader from '../layout/GroupHeader';
@@ -28,7 +28,8 @@ interface TaskTrackerProps {
   onSelectTask?: (task: Task | null) => void;
   selectedTask?: Task | null;
   highlightedTaskId?: string | null;
-  onWeekChange?: (weekId: string) => void; // Add this
+  onWeekChange?: (weekId: string) => void;
+  comments?: Comment[];
 }
 
 export default function TaskTracker({ 
@@ -39,7 +40,8 @@ export default function TaskTracker({
   onSelectTask,
   selectedTask,
   highlightedTaskId,
-  onWeekChange
+  onWeekChange,
+  comments = []
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -49,6 +51,11 @@ export default function TaskTracker({
   
   
   const dayNames = getDayNames(currentISOWeek);
+
+  // Extract task IDs from comments
+  const tasksWithComments = comments
+    .filter(comment => comment.taskId !== null)
+    .map(comment => comment.taskId as string);
 
   useEffect(() => {
     if (!groupId) return;
@@ -362,6 +369,7 @@ export default function TaskTracker({
                     onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
                     members={members}
                     currentUserId={user?.uid || ''}
+                    tasksWithComments={tasksWithComments}
                   />
                 ))}
                 

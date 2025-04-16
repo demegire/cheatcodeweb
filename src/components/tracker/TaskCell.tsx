@@ -18,6 +18,7 @@ interface TaskCellProps {
   onRejectTask?: (taskId: string) => void;
   members: { id: string; name: string; color: string }[];
   currentUserId: string;
+  tasksWithComments?: string[]; // Array of task IDs that have comments
 }
 
 export default function TaskCell({ 
@@ -35,7 +36,8 @@ export default function TaskCell({
   onAcceptTask,
   onRejectTask,
   members,
-  currentUserId
+  currentUserId,
+  tasksWithComments = []
 }: TaskCellProps) {
     const [newTaskText, setNewTaskText] = useState('');
     const [isHovering, setIsHovering] = useState(false);
@@ -104,6 +106,7 @@ export default function TaskCell({
                 () => onRejectTask(task.id) : undefined}
               suggestedByColor={getSuggestedByColor(task.suggestedBy)}
               currentUserId={currentUserId}
+              hasComments={tasksWithComments.includes(task.id)}
             />
           ))}
         </div>
