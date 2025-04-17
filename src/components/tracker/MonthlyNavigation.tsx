@@ -38,7 +38,7 @@ export default function MonthlyNavigation({
   
   return (
     <div className="flex flex-col border-t">
-      <div className="flex justify-center items-center px-4 pb-4">
+      <div className="flex justify-center items-center px-4 py-1">
         <div className="flex items-center w-full max-w-4xl mx-auto justify-between">
           <button
             onClick={() => setDisplayedYear(displayedYear - 1)}

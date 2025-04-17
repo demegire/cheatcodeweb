@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
-import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
@@ -116,9 +115,9 @@ export default function TaskItem({
       }}
     >
       {/* Comment icon - shows in top right corner when task has comments */}
-      {hasComments && (
+      {hasComments && !isEditing && (
         <div className="absolute top-0.5 right-0.5">
-          <ChatBubbleLeftIcon className="h-4 w-4 text-blue-500" title="This task has comments" />
+          <span className="block h-1.5 w-1.5 bg-blue-500 rounded-full" title="This task has comments" />
         </div>
       )}
 
@@ -211,14 +210,14 @@ export default function TaskItem({
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={handleKeyPress}
-            maxLength={50}
-            className="flex-1 text-gray-800 bg-white border border-gray-300 rounded px-2 py-0.5 w-full"
+            maxLength={64}
+            className="flex-1 text-gray-800 bg-white border border-gray-300 rounded px-1 py-0 w-full"
             autoFocus
             style={{ maxWidth: 'calc(100% - 45px)' }}
           />
           <button
             onClick={handleEditSave}
-            className="ml-1 bg-green-500 text-white p-1 rounded hover:bg-green-600 flex-shrink-0"
+            className="ml-1 bg-green-500 text-white px-1 py-0 rounded hover:bg-green-600 flex-shrink-0"
             title="Save edit"
           >
             <ArrowRightIcon className="h-3 w-3" />

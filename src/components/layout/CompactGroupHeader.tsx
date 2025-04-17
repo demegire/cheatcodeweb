@@ -52,7 +52,7 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
         </div>
       ) : (
         <h1 
-          className="text-xl text-gray-800 font-bold cursor-pointer"
+          className="text-2xl text-gray-800 font-bold cursor-pointer"
           onClick={() => onUpdateName && setIsEditing(true)}
         >
           {groupName}
