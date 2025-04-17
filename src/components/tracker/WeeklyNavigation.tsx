@@ -28,6 +28,19 @@ export default function WeeklyNavigation({
   return (
     <div className="flex items-center">
       <button
+        onClick={handleCurrentWeek}
+        disabled={isCurrentWeek}
+        className={`mr-4 px-3 py-1 text-sm rounded-md ${
+          isCurrentWeek 
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+        }`}
+        aria-label="Go to current week"
+      >
+        This Week
+      </button>
+
+      <button
         onClick={onPreviousWeek}
         className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 text-sm mr-2"
         aria-label="Previous week"
@@ -50,19 +63,6 @@ export default function WeeklyNavigation({
         aria-label="Next week"
       >
         →
-      </button>
-      
-      <button
-        onClick={handleCurrentWeek}
-        disabled={isCurrentWeek}
-        className={`ml-4 px-3 py-1 text-sm rounded-md ${
-          isCurrentWeek 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-            : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-        }`}
-        aria-label="Go to current week"
-      >
-        This Week
       </button>
     </div>
   );

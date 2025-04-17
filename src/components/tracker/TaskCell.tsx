@@ -100,7 +100,13 @@ export default function TaskCell({
       <td 
         ref={cellRef}
         className="border p-1 align-top bg-gray-50 border-gray-300 h-full"
-        style={{ minHeight: '150px', position: 'relative' }} 
+        style={{ 
+          minHeight: '150px', 
+          position: 'relative',
+          width: '14.28%',
+          maxWidth: '1fr',
+          overflow: 'hidden' 
+        }} 
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >

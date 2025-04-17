@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
   task: Task;
@@ -106,8 +107,13 @@ export default function TaskItem({
       data-task-item="true"
       style={isSuggested && suggestedByColor ? { 
         backgroundColor: `${suggestedByColor}20`,
-        borderColor: `${suggestedByColor}30`
-      } : {}}
+        borderColor: `${suggestedByColor}30`,
+        overflow: 'hidden',
+        width: '100%'
+      } : {
+        overflow: 'hidden',
+        width: '100%'
+      }}
     >
       {/* Comment icon - shows in top right corner when task has comments */}
       {hasComments && (
@@ -199,25 +205,27 @@ export default function TaskItem({
       )}
 
       {isEditing ? (
-        <div className="ml-0 flex" onClick={(e) => e.stopPropagation()}>
+        <div className="ml-6 flex w-full" onClick={(e) => e.stopPropagation()}>
           <input
             type="text"
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={handleKeyPress}
-            maxLength={64}
-            className="flex-1 text-gray-800 bg-white border border-gray-300 rounded px-2 py-0.5"
+            maxLength={50}
+            className="flex-1 text-gray-800 bg-white border border-gray-300 rounded px-2 py-0.5 w-full"
             autoFocus
+            style={{ maxWidth: 'calc(100% - 45px)' }}
           />
           <button
             onClick={handleEditSave}
-            className="ml-1 bg-green-500 text-white px-2 py-0.5 rounded hover:bg-green-600 text-xs"
+            className="ml-1 bg-green-500 text-white p-1 rounded hover:bg-green-600 flex-shrink-0"
+            title="Save edit"
           >
-            Save
+            <ArrowRightIcon className="h-3 w-3" />
           </button>
         </div>
       ) : (
-        <span className={`${isEditable && !isSuggested ? 'ml-5 pl-1' : ''} block break-words`}>
+        <span className={`${isEditable && !isSuggested ? 'ml-5 pl-1' : ''} block break-words overflow-hidden text-ellipsis`}>
           {task.text}
         </span>
       )}
