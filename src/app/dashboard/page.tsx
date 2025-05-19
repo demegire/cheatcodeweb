@@ -237,6 +237,7 @@ export default function DashboardPage() {
         <StatsView
         groupID={selectedGroup?.id || ''}
         groupName={selectedGroup?.name || ''}
+        members = {selectedGroup?.members || []}
         isStatView={isStatView}
         onStatView={handleStatButtonPress}
         />
