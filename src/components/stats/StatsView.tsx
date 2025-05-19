@@ -346,20 +346,32 @@ export default function StatsView({
               <h5 className='text-gray-800'>Leaderboard</h5>
             </div>
             <div>
-              <table className='w-full text-gray-800 border-collapse'>
+              <table className='w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1'>
                 <thead>
-                  <tr>
-                    <th className='border'>Rank</th>
-                    <th className='border'>Name</th>
-                    <th className='border'>Score</th>
+                  <tr className=''>
+                    <th className='rounded-l-md bg-gray-100'>Rank</th>
+                    <th className='bg-gray-100'>Name</th>
+                    <th className='rounded-r-md bg-gray-100'>Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedMembers.map((member, index) => (
-                    <tr key={member.id}>
-                      <td className='border text-center'>{index + 1}</td>
-                      <td className='border text-center'>{member.name}</td>
-                      <td className='border text-center'>
+                    <tr key={member.id} className=''>
+                      <td className={`text-center rounded-l-md ${
+                        index === 0 ? ('bg-amber-300/80') :
+                        index === 1 ? ('bg-zinc-400/80') :
+                        index === 2 ? ('bg-yellow-600/80') :
+                        ('bg-blue-100')}`}>{index + 1}</td>
+                      <td className={`text-center ${
+                        index === 0 ? ('bg-amber-300/80') :
+                        index === 1 ? ('bg-zinc-400/80') :
+                        index === 2 ? ('bg-yellow-600/80') :
+                        ('bg-blue-100')}`}>{member.name}</td>
+                      <td className={`text-center rounded-r-md ${
+                        index === 0 ? ('bg-amber-300/80') :
+                        index === 1 ? ('bg-zinc-400/80') :
+                        index === 2 ? ('bg-yellow-600/80') :
+                        ('bg-blue-100')}`}>
                         {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
                       </td>
                     </tr>
