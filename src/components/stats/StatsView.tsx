@@ -29,6 +29,8 @@ ChartJS.register(
   Legend
 );
 
+ChartJS.defaults.font.family = 'Arial';
+
 interface StatsViewProps {
     groupID: string,
     groupName: string,
@@ -56,11 +58,13 @@ export default function StatsView({
   const [yearlyStats, setYearlyStats] = useState<{
     memberNames: string[],
     uncplTasks: Record<string, number>,
-    complTasks: Record<string, number>
+    complTasks: Record<string, number>,
+    rates: Record<string, number>,
   }>({
     memberNames: [],
     uncplTasks: {},
-    complTasks: {}
+    complTasks: {},
+    rates: {},
   })
   
   useEffect(() => {
@@ -191,6 +195,13 @@ export default function StatsView({
         const weekDate = getDateFromISOWeek(week);
         return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       });
+
+      // Calculate total yearly rates
+      const rates: Record<string, number> = {};
+
+      members.forEach( member => {
+        rates[member.id] = complTasks[member.id] / (complTasks[member.id] + uncplTasks[member.id]);
+      })
       
       setWeeklyStats({
         weekLabels,
@@ -199,14 +210,15 @@ export default function StatsView({
       setYearlyStats({
         memberNames,
         uncplTasks,
-        complTasks
+        complTasks,
+        rates
       })
     });
     
     return () => unsubscribe();
   }, [groupID, members]);
   
-  // Chart configuration
+  // Line chart configuration
   const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -217,6 +229,8 @@ export default function StatsView({
       title: {
         display: true,
         text: 'Weekly Task Completion Rates',
+        color: 'black',
+        font: {size: 18},
       },
     },
     scales: {
@@ -228,25 +242,20 @@ export default function StatsView({
           text: 'Completion Rate (%)'
         }
       },
-      x: {
-        title: {
-          display: true,
-          text: 'Week Starting'
-        }
-      }
     }
   };
   
-  // Prepare dataset for chart
+  // Prepare dataset for line chart
   const lineData = {
     labels: weeklyStats.weekLabels,
     datasets: members.map(member => ({
       label: member.name,
       data: weeklyStats.memberStats[member.id] || [],
       borderColor: member.color,
-      backgroundColor: `${member.color}33`, // Add transparency
+      backgroundColor: member.color,
       fill: false,
-    }))
+      pointRadius: 2,
+      }))
   };
 
   const barOptions = {
@@ -258,12 +267,15 @@ export default function StatsView({
       },
       title: {
         display: true,
-        text: 'Yearly task totals',
+        text: 'Yearly Task Totals',
+        color: 'black',
+        font: {size: 18},
       },
     },
     scales: {
       y: {
         beginAtZero: true,
+        grace: '5%',
         title: {
           display: true,
           text: 'Number of tasks'
@@ -292,6 +304,13 @@ export default function StatsView({
     ]
   }
   
+  // Sort members by yearly completion rate for the leaderboard
+  const sortedMembers = members.slice().sort((a, b) => {
+    const rateA = yearlyStats.rates[a.id] || 0;
+    const rateB = yearlyStats.rates[b.id] || 0;
+    return rateB - rateA; // Sort descending
+  });
+
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 relative">
         <div className="flex justify-between items-center mb-3 relative">
@@ -309,7 +328,8 @@ export default function StatsView({
                 <div>
                 <ShareButton groupId={groupID} />
                 </div>
-            </div>
+            </div>        rate;
+
         </div>
         <div className="flex-1">
           <Line options={lineOptions} data={lineData}/>
@@ -319,15 +339,33 @@ export default function StatsView({
             {/*Bar chart*/}
             <Bar options={barOptions} data={barData}/>
           </div>
-          <div className='flex-1'>
+          <div className='flex flex-1 flex-col justify-center'>
             {/* Leaderboard */}
-            <table className='w-full'>
-              <thead>
-                <tr>
-                  <th></th>
-                </tr>
-              </thead>
-            </table>
+            <div className='flex justify-center text-xl text-gray-800 font-bold mb-2  '>
+              <h5 className='text-gray-800'>Leaderboard</h5>
+            </div>
+            <div>
+              <table className='w-full text-gray-800 border-collapse'>
+                <thead>
+                  <tr>
+                    <th className='border'>Rank</th>
+                    <th className='border'>Name</th>
+                    <th className='border'>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedMembers.map((member, index) => (
+                    <tr key={member.id}>
+                      <td className='border text-center'>{index + 1}</td>
+                      <td className='border text-center'>{member.name}</td>
+                      <td className='border text-center'>
+                        {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
     </div>

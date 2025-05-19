@@ -219,6 +219,7 @@ export default function DashboardPage() {
       currentWeekId={currentISOWeek}
       selectedTask={selectedTask}
       onSelectTask={setSelectedTask}
+      isStatView={isStatView}
       > 
       {selectedGroup && !isStatView && (
         <TaskTracker

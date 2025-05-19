@@ -29,6 +29,7 @@ interface MainLayoutProps {
   currentWeekId?: string;
   selectedTask?: Task | null;
   onSelectTask?: (task: Task | null) => void;
+  isStatView?: boolean;
 }
 
 export default function MainLayout({ 
@@ -40,7 +41,8 @@ export default function MainLayout({
   groupId = '',
   currentWeekId = '',
   selectedTask = null,
-  onSelectTask = () => {}
+  onSelectTask = () => {},
+  isStatView,
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
