@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
   task: Task;
@@ -198,7 +198,7 @@ export default function TaskItem({
             }}
             className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
           >
-            ×
+            <TrashIcon className="h-4 w-4" />
           </button>
         </div>
       )}
