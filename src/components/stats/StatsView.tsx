@@ -173,11 +173,13 @@ export default function StatsView({
           const weekTasks = tasksByMemberAndWeek[member.id][week] || [];
           
           if (weekTasks.length > 0) {
+            const suggestedTasks = weekTasks.filter(t => t.suggestedBy != null)
+            const totalTasks = weekTasks.length - suggestedTasks.length;
             const completedCount = weekTasks.filter(t => t.status === 'completed').length;
-            const completionRate = (completedCount / weekTasks.length) * 100;
+            const completionRate = (completedCount / totalTasks) * 100;
             memberStats[member.id][weekIndex] = completionRate;
 
-            uncplTasks[member.id] = uncplTasks[member.id] + (weekTasks.length - completedCount);
+            uncplTasks[member.id] = uncplTasks[member.id] + (totalTasks - completedCount);
             complTasks[member.id] = complTasks[member.id] + completedCount;
           }
           // If no tasks, rate remains 0 from our fill(0) initialization
