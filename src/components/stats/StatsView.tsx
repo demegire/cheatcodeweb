@@ -284,6 +284,7 @@ export default function StatsView({
       },
       x: {
         stacked: true,
+        grid: {display: false}
       }
     }
   };
@@ -328,7 +329,7 @@ export default function StatsView({
                 <div>
                 <ShareButton groupId={groupID} />
                 </div>
-            </div>        rate;
+            </div>
 
         </div>
         <div className="flex-1">
