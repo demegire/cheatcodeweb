@@ -6,12 +6,13 @@ import {
   CategoryScale, 
   LinearScale, 
   PointElement,
-  LineElement, 
+  LineElement,
+  BarElement, 
   Title, 
   Tooltip, 
   Legend 
 } from "chart.js";
-import { Line } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../../lib/firebase';
 import { Task } from '../../types'
@@ -22,6 +23,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -50,6 +52,16 @@ export default function StatsView({
     weekLabels: [],
     memberStats: {}
   });
+
+  const [yearlyStats, setYearlyStats] = useState<{
+    memberNames: string[],
+    uncplTasks: Record<string, number>,
+    complTasks: Record<string, number>
+  }>({
+    memberNames: [],
+    uncplTasks: {},
+    complTasks: {}
+  })
   
   useEffect(() => {
     if (!groupID) return;
@@ -144,6 +156,16 @@ export default function StatsView({
       members.forEach(member => {
         memberStats[member.id] = Array(allWeeks.length).fill(0);
       });
+
+      // Initialize yearly stats object
+      const memberNames: string[] = [];
+      const uncplTasks: Record<string, number> = {};
+      const complTasks: Record<string, number> = {};
+      members.forEach(member => {
+        memberNames.push(member.name);
+        uncplTasks[member.id] = 0;
+        complTasks[member.id] = 0;
+      })
       
       // Calculate completion rate for each member for each week
       allWeeks.forEach((week, weekIndex) => {
@@ -154,6 +176,9 @@ export default function StatsView({
             const completedCount = weekTasks.filter(t => t.status === 'completed').length;
             const completionRate = (completedCount / weekTasks.length) * 100;
             memberStats[member.id][weekIndex] = completionRate;
+
+            uncplTasks[member.id] = uncplTasks[member.id] + (weekTasks.length - completedCount);
+            complTasks[member.id] = complTasks[member.id] + completedCount;
           }
           // If no tasks, rate remains 0 from our fill(0) initialization
         });
@@ -169,13 +194,18 @@ export default function StatsView({
         weekLabels,
         memberStats
       });
+      setYearlyStats({
+        memberNames,
+        uncplTasks,
+        complTasks
+      })
     });
     
     return () => unsubscribe();
   }, [groupID, members]);
   
   // Chart configuration
-  const options = {
+  const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -206,7 +236,7 @@ export default function StatsView({
   };
   
   // Prepare dataset for chart
-  const data = {
+  const lineData = {
     labels: weeklyStats.weekLabels,
     datasets: members.map(member => ({
       label: member.name,
@@ -216,6 +246,49 @@ export default function StatsView({
       fill: false,
     }))
   };
+
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Yearly task totals',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Number of tasks'
+        },
+        stacked: true,
+      },
+      x: {
+        stacked: true,
+      }
+    }
+  };
+
+  const barData = {
+    labels: yearlyStats.memberNames,
+    datasets: [
+      {
+      label: 'Completed Tasks',
+      data: members.map(member => (yearlyStats.complTasks[member.id])),
+      backgroundColor: 'rgba(0, 255, 0, 60)'
+      },
+      {
+        label: 'Total Tasks',
+        data: members.map(member => yearlyStats.uncplTasks[member.id]),
+        backgroundColor: 'rgba(255, 0, 0, 60)'
+      }
+    ]
+  }
   
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 relative">
@@ -236,8 +309,24 @@ export default function StatsView({
                 </div>
             </div>
         </div>
-        <div className="h-[80vh]">
-          <Line options={options} data={data}/>
+        <div className="flex-1">
+          <Line options={lineOptions} data={lineData}/>
+        </div>
+        <div className="flex flex-1">
+          <div className='flex-1'>
+            {/*Bar chart*/}
+            <Bar options={barOptions} data={barData}/>
+          </div>
+          <div className='flex-1'>
+            {/* Leaderboard */}
+            <table className='w-full'>
+              <thead>
+                <tr>
+                  <th></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
         </div>
     </div>
   );
