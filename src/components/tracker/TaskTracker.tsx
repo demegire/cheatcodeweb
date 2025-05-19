@@ -33,6 +33,8 @@ interface TaskTrackerProps {
   highlightedTaskId?: string | null;
   onWeekChange?: (weekId: string) => void;
   comments?: Comment[];
+  isStatView: boolean;
+  onStatView: () => void;
 }
 
 export default function TaskTracker({ 
@@ -44,7 +46,9 @@ export default function TaskTracker({
   selectedTask,
   highlightedTaskId,
   onWeekChange,
-  comments = []
+  comments = [],
+  isStatView,
+  onStatView
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -368,7 +372,6 @@ export default function TaskTracker({
               currentISOWeek={currentISOWeek}
               onPreviousWeek={handlePreviousWeek}
               onNextWeek={handleNextWeek}
-              //onCurrentWeek={handleCurrentWeek}
               onMonthSelect={handleMonthSelect}
               onYearSelect={handleYearSelect}
             />
@@ -378,7 +381,7 @@ export default function TaskTracker({
         {/* Right section: Share button */}
         <div className="flex gap-4">
           <div>
-            <StatButton groupID={groupId} />
+            <StatButton isStatView={isStatView} onStatView={onStatView} />
           </div>
           <div>
             <ShareButton groupId={groupId} />
