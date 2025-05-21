@@ -295,12 +295,12 @@ export default function StatsView({
       {
       label: 'Completed Tasks',
       data: members.map(member => (yearlyStats.complTasks[member.id])),
-      backgroundColor: 'rgba(0, 255, 0, 60)'
+      backgroundColor: 'rgb(64, 219, 64)'
       },
       {
         label: 'Total Tasks',
         data: members.map(member => yearlyStats.uncplTasks[member.id]),
-        backgroundColor: 'rgba(255, 0, 0, 60)'
+        backgroundColor: 'rgb(255, 53, 53)'
       }
     ]
   }
@@ -318,7 +318,7 @@ export default function StatsView({
             {/* Left section: Group name */}
             <div className="py-2 flex justify-center items-center">
                 <h1 
-                className="text-2xl text-gray-800 font-bold cursor-pointer"
+                className="text-2xl text-gray-800 font-bold"
                 >{groupName}</h1>
             </div>
             {/* Right section: Share button */}
@@ -332,26 +332,26 @@ export default function StatsView({
             </div>
 
         </div>
-        <div className="flex-1">
+        <div className="flex-1 bg-gray-100 m-2 p-4 rounded-2xl">
           <Line options={lineOptions} data={lineData}/>
         </div>
         <div className="flex flex-1">
-          <div className='flex-1'>
+          <div className='flex-2 bg-gray-100 m-2 p-4 rounded-2xl'>
             {/*Bar chart*/}
             <Bar options={barOptions} data={barData}/>
           </div>
-          <div className='flex flex-1 flex-col justify-center'>
+          <div className='flex flex-1 flex-col justify-start bg-gray-100 m-2 p-4 rounded-2xl'>
             {/* Leaderboard */}
-            <div className='flex justify-center text-xl text-gray-800 font-bold mb-2  '>
-              <h5 className='text-gray-800'>Leaderboard</h5>
+            <div className='self-center text-xl text-gray-800 font-bold mb-2  '>
+              Leaderboard
             </div>
             <div>
               <table className='w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1'>
                 <thead>
                   <tr className=''>
-                    <th className='rounded-l-md bg-gray-100'>Rank</th>
-                    <th className='bg-gray-100'>Name</th>
-                    <th className='rounded-r-md bg-gray-100'>Score</th>
+                    <th className='rounded-l-md bg-gray-300 p-0.5'>Rank</th>
+                    <th className='bg-gray-300'>Name</th>
+                    <th className='rounded-r-md bg-gray-300'>Score</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -361,17 +361,17 @@ export default function StatsView({
                         index === 0 ? ('bg-amber-300/80') :
                         index === 1 ? ('bg-zinc-400/80') :
                         index === 2 ? ('bg-yellow-600/80') :
-                        ('bg-blue-100')}`}>{index + 1}</td>
+                        ('bg-blue-200')}`}>{index + 1}</td>
                       <td className={`text-center ${
                         index === 0 ? ('bg-amber-300/80') :
                         index === 1 ? ('bg-zinc-400/80') :
                         index === 2 ? ('bg-yellow-600/80') :
-                        ('bg-blue-100')}`}>{member.name}</td>
+                        ('bg-blue-200')}`}>{member.name}</td>
                       <td className={`text-center rounded-r-md ${
                         index === 0 ? ('bg-amber-300/80') :
                         index === 1 ? ('bg-zinc-400/80') :
                         index === 2 ? ('bg-yellow-600/80') :
-                        ('bg-blue-100')}`}>
+                        ('bg-blue-200')}`}>
                         {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
                       </td>
                     </tr>
