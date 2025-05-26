@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
-import Navigation from './Navigation';
 import WeeklyNavigation from './WeeklyNavigation';
 import CompactGroupHeader from '../layout/CompactGroupHeader';
 import ShareButton from '../layout/ShareButton';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
+import ThisWeekButton from './ThisWeekButton';
+import StatButton from '../layout/StatsButton';
 
 // Helper function to get day names with dates for a specific ISO week
 const getDayNames = (isoWeek: string) => {
@@ -32,6 +33,8 @@ interface TaskTrackerProps {
   highlightedTaskId?: string | null;
   onWeekChange?: (weekId: string) => void;
   comments?: Comment[];
+  isStatView: boolean;
+  onStatView: () => void;
 }
 
 export default function TaskTracker({ 
@@ -43,7 +46,9 @@ export default function TaskTracker({
   selectedTask,
   highlightedTaskId,
   onWeekChange,
-  comments = []
+  comments = [],
+  isStatView,
+  onStatView
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -341,30 +346,46 @@ export default function TaskTracker({
     }
   };
 
-  // Rest of the component remains the same
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 relative">
-      <div className="flex justify-between items-center mb-3">
-        <div className="py-1">
-          <WeeklyNavigation
-            currentISOWeek={currentISOWeek}
-            onPreviousWeek={handlePreviousWeek}
-            onNextWeek={handleNextWeek}
-            onCurrentWeek={handleCurrentWeek}
-          />
-        </div>
-        <div className="py-1">
-          <ShareButton groupId={groupId} />
-        </div>
-      </div>
-      
-      {/* Absolutely positioned group header to keep it centered */}
-      <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto">
+      <div className="flex justify-between items-center mb-3 relative">
+        {/* Left section: Group name */}
+        <div className="flex-shrink-0">
           <CompactGroupHeader
             groupName={currentGroupName}
             onUpdateName={handleUpdateGroupName}
           />
+        </div>
+        
+        {/* Middle section: Weekly navigation - absolutely positioned */}
+        <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
+          <div className="pointer-events-auto relative">
+            {/* Position ThisWeekButton absolutely relative to the centered WeeklyNavigation */}
+            <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2">
+              <ThisWeekButton
+                currentISOWeek={currentISOWeek}
+                onCurrentWeek={handleCurrentWeek}
+              />
+            </div>
+            
+            <WeeklyNavigation
+              currentISOWeek={currentISOWeek}
+              onPreviousWeek={handlePreviousWeek}
+              onNextWeek={handleNextWeek}
+              onMonthSelect={handleMonthSelect}
+              onYearSelect={handleYearSelect}
+            />
+          </div>
+        </div>
+        
+        {/* Right section: Share button */}
+        <div className="flex gap-4">
+          <div>
+            <StatButton isStatView={isStatView} onStatView={onStatView} />
+          </div>
+          <div>
+            <ShareButton groupId={groupId} />
+          </div>
         </div>
       </div>
       
@@ -430,14 +451,6 @@ export default function TaskTracker({
           </tbody>
         </table>
       </div>
-      
-      <Navigation 
-        currentISOWeek={currentISOWeek}
-        onPreviousWeek={handlePreviousWeek}
-        onNextWeek={handleNextWeek}
-        onMonthSelect={handleMonthSelect}
-        onYearSelect={handleYearSelect}
-      />
     </div>
   );
 }

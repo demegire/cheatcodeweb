@@ -40,7 +40,7 @@ export default function MainLayout({
   groupId = '',
   currentWeekId = '',
   selectedTask = null,
-  onSelectTask = () => {}
+  onSelectTask = () => {},
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);

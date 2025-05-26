@@ -10,6 +10,7 @@ import TaskTracker from '../../components/tracker/TaskTracker';
 import { Task } from '../../types';
 import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
+import StatsView from '../../components/stats/StatsView';
 
 interface GroupData {
   id: string;
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
+  const [isStatView, setStatView] = useState(false);
 
 
   useEffect(() => {
@@ -184,6 +186,11 @@ export default function DashboardPage() {
     }
   };
 
+  const handleStatButtonPress = () => {
+    setStatView(!isStatView)
+
+  }
+
   // No groups available
   if (groups.length === 0) {
     return (
@@ -213,7 +220,7 @@ export default function DashboardPage() {
       selectedTask={selectedTask}
       onSelectTask={setSelectedTask}
       > 
-      {selectedGroup && (
+      {selectedGroup && !isStatView && (
         <TaskTracker
         groupId={selectedGroup?.id || ''}
         groupName={selectedGroup?.name || ''}
@@ -221,8 +228,19 @@ export default function DashboardPage() {
         onGroupNameUpdate={handleGroupNameUpdate}
         onSelectTask={setSelectedTask}
         selectedTask={selectedTask}
-        onWeekChange={setCurrentISOWeek} // Add this
+        onWeekChange={setCurrentISOWeek}
+        isStatView={isStatView}
+        onStatView={handleStatButtonPress}
       />
+      )}
+      {selectedGroup && isStatView && (
+        <StatsView
+        groupID={selectedGroup?.id || ''}
+        groupName={selectedGroup?.name || ''}
+        members = {selectedGroup?.members || []}
+        isStatView={isStatView}
+        onStatView={handleStatButtonPress}
+        />
       )}
     </MainLayout>
   );
