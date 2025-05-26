@@ -179,12 +179,14 @@ export default function StatsView({
           if (weekTasks.length > 0) {
             const suggestedTasks = weekTasks.filter(t => t.suggestedBy != null)
             const totalTasks = weekTasks.length - suggestedTasks.length;
-            const completedCount = weekTasks.filter(t => t.status === 'completed').length;
-            const completionRate = (completedCount / totalTasks) * 100;
-            memberStats[member.id][weekIndex] = completionRate;
+            if (totalTasks > 0) {
+              const completedCount = weekTasks.filter(t => t.status === 'completed').length;
+              const completionRate = (completedCount / totalTasks) * 100;
+              memberStats[member.id][weekIndex] = completionRate;
 
-            uncplTasks[member.id] = uncplTasks[member.id] + (totalTasks - completedCount);
-            complTasks[member.id] = complTasks[member.id] + completedCount;
+              uncplTasks[member.id] = uncplTasks[member.id] + (totalTasks - completedCount);
+              complTasks[member.id] = complTasks[member.id] + completedCount;
+            }
           }
           // If no tasks, rate remains 0 from our fill(0) initialization
         });
