@@ -175,17 +175,20 @@ export default function TaskCell({
       return {};
     };
 
+    const color = members.find(m => m.id === memberId)?.color
+
     return (
       <td
         ref={cellRef}
-        className="border p-1 align-top bg-gray-50 border-gray-300 h-full"
-        style={{
-          minHeight: '150px',
+        className=" p-1 align-top border-white h-full"
+        style={{ 
+          minHeight: '150px', 
           position: 'relative',
           width: '14.28%',
           maxWidth: '1fr',
-          overflow: 'hidden' // Keep overflow hidden for cell content
-        }}
+          overflow: 'hidden',
+          backgroundColor: `${color}${day%2 ? '17' : '10'}`,
+        }} 
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
             setIsHovering(false);
@@ -259,18 +262,11 @@ export default function TaskCell({
                 placeholder={`Add ${currentTaskType} task...`} // Placeholder uses currentTaskType from props
               />
               <button
-                onClick={handleAddTask} // This now calls the local handleAddTask which checks currentTaskType
-                className={`bg-blue-500 text-white px-2 py-1 hover:bg-blue-600 w-[27px] flex-shrink-0 flex items-center justify-center h-full`} // Removed rounded-r here
+                onClick={handleAddTask}
+                className="bg-theme hover:bg-theme-hover text-white px-2 py-1 rounded-r w-[27px] flex-shrink-0 cursor-pointer"
               >
-                {currentTaskType === 'global' ? <GlobeAltIcon className="h-4 w-4" /> : '+'} {/* Use h-4 w-4 for consistent icon size */}
+                +
               </button>
-
-              <button
-                  onClick={toggleExpanded} // Chevron button triggers expansion
-                  className="bg-blue-500 text-white border-l border-white px-1 py-1 rounded-r hover:bg-blue-600 w-[19px] flex-shrink-0 flex items-center justify-center h-full"
-                >
-                  <ChevronRightIcon className={`h-3 w-3 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}/>
-                </button>
             </div>
           </div>
         )}

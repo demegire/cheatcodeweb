@@ -14,7 +14,7 @@ export default function StatButton({
   return (
     <button
       onClick={onStatView}
-      className="px-3 py-1 rounded-md bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center"
+      className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
     >
       
       

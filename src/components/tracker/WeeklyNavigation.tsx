@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { formatDateRange, getWeekDateRange} from '../../lib/dateUtils';
 import MonthlyNavigation from './MonthlyNavigation';
+import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface WeeklyNavigationProps {
   currentISOWeek: string;
@@ -49,17 +50,17 @@ export default function WeeklyNavigation({
   }, [showMonthlyPopup]);
   
   return (
-    <div className="flex items-stretch relative">
+    <div className="flex items-center">
       <button
         onClick={onPreviousWeek}
-        className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 text-sm mr-2"
+        className="px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 text-lg mr-2 cursor-pointer"
         aria-label="Previous week"
       >
-        ←
+        <ArrowLeftIcon className="h-5 w-5" />
       </button>
       
       <div 
-        className="flex flex-col hover:bg-gray-200 rounded-md items-center w-[265px] cursor-pointer"
+        className="flex flex-col hover:bg-gray-200 rounded-full items-center w-[265px] cursor-pointer"
         onClick={toggleMonthlyPopup}
       >
         <span className="text-lg font-bold text-gray-800">
@@ -72,10 +73,10 @@ export default function WeeklyNavigation({
       
       <button
         onClick={onNextWeek}
-        className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 text-sm ml-2"
+        className="px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 text-lg ml-2 cursor-pointer"
         aria-label="Next week"
       >
-        →
+        <ArrowRightIcon className="h-5 w-5" />
       </button>
       
       {/* Monthly Navigation Popup */}
