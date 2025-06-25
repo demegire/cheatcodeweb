@@ -55,13 +55,16 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
           </button>
         </div>
       ) : (
-        <h1 
+        <h1
           className="text-2xl text-gray-800 font-bold cursor-pointer"
           onClick={() => onUpdateName && setIsEditing(true)}
         >
-          {groupName}
+          <span className="sm:hidden">
+            {groupName.length > 8 ? `${groupName.slice(0, 8)}...` : groupName}
+          </span>
+          <span className="hidden sm:inline">{groupName}</span>
         </h1>
       )}
     </div>
   );
-} 
+}
