@@ -263,10 +263,16 @@ export default function TaskCell({
               />
               <button
                 onClick={handleAddTask}
-                className="bg-theme hover:bg-theme-hover text-white px-2 py-1 rounded-r w-[27px] flex-shrink-0 cursor-pointer"
+                className="bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer"
               >
-                +
+                {currentTaskType === 'global' ? <GlobeAltIcon className="h-4 w-4" /> : '+'}
               </button>
+              <button
+                onClick={toggleExpanded} // Chevron button triggers expansion
+                className="bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 rounded-r w-[19px] flex-shrink-0 flex items-center justify-center h-full"
+              >
+                <ChevronRightIcon className={`h-3 w-3 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}/>
+              </button> 
             </div>
           </div>
         )}
@@ -297,7 +303,7 @@ export default function TaskCell({
                      />
                       <button
                         onClick={handleAddTask} // This will call the local handleAddTask (which calls handleSuggestTask)
-                        className={`bg-blue-500 text-white px-2 py-1 hover:bg-blue-600 w-[27px] flex-shrink-0 flex items-center justify-center h-full rounded-r`} // Apply rounded-r here for non-current user
+                        className={`bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full rounded-r`} // Apply rounded-r here for non-current user
                       >
                         +
                       </button>
