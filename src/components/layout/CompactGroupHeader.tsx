@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface CompactGroupHeaderProps {
   groupName: string;
@@ -8,6 +8,10 @@ interface CompactGroupHeaderProps {
 export default function CompactGroupHeader({ groupName, onUpdateName }: CompactGroupHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(groupName);
+
+  useEffect(() => {
+    setName(groupName);
+  }, [groupName]);
 
   const handleSave = () => {
     if (onUpdateName && name.trim()) {
