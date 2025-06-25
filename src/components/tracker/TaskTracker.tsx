@@ -147,58 +147,64 @@ export default function TaskTracker({
     return () => unsubscribe();
   }, [groupId, currentISOWeek, members]);
 
-  // Fetch global tasks for the current user
+  // Fetch global tasks for all members
   useEffect(() => {
-    if (!user) return;
+    const unsubscribes: (() => void)[] = [];
 
-    const tasksRef = collection(db, 'users', user.uid, 'tasks');
-    const q = query(tasksRef, where('weekId', '==', currentISOWeek));
+    members.forEach(member => {
+      const tasksRef = collection(db, 'users', member.id, 'tasks');
+      const q = query(tasksRef, where('weekId', '==', currentISOWeek));
 
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const globalTasks: Task[] = [];
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const globalTasks: Task[] = [];
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        let createdAt;
-        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-          createdAt = data.createdAt.toDate();
-        } else if (data.createdAt) {
-          createdAt = new Date(data.createdAt);
-        } else {
-          createdAt = new Date();
-        }
-
-        globalTasks.push({
-          id: docSnap.id,
-          ...data,
-          createdAt,
-          isGlobal: true,
-        } as Task);
-      });
-
-      // Sort global tasks by creation date
-      globalTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-      setTasks(prev => {
-        const updated: Record<string, Task[]> = { ...prev };
-        const localOnly = (prev[user.uid] || []).filter(t => !t.isGlobal);
-        updated[user.uid] = [...localOnly, ...globalTasks];
-
-        const scoreData: Record<string, number> = {};
-        members.forEach(member => {
-          const memberTasks = updated[member.id] || [];
-          if (memberTasks.length > 0) {
-            const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-            scoreData[member.id] = (completedCount / memberTasks.length) * 100;
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          let createdAt;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAt = data.createdAt.toDate();
+          } else if (data.createdAt) {
+            createdAt = new Date(data.createdAt);
+          } else {
+            createdAt = new Date();
           }
+
+          globalTasks.push({
+            id: docSnap.id,
+            ...data,
+            createdAt,
+            isGlobal: true,
+          } as Task);
         });
-        setScores(scoreData);
-        return updated;
+
+        // Sort global tasks by creation date
+        globalTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+        setTasks(prev => {
+          const updated: Record<string, Task[]> = { ...prev };
+          const localOnly = (updated[member.id] || []).filter(t => !t.isGlobal);
+          updated[member.id] = [...localOnly, ...globalTasks];
+
+          const scoreData: Record<string, number> = {};
+          members.forEach(m => {
+            const memberTasks = updated[m.id] || [];
+            if (memberTasks.length > 0) {
+              const completedCount = memberTasks.filter(t => t.status === 'completed').length;
+              scoreData[m.id] = (completedCount / memberTasks.length) * 100;
+            }
+          });
+          setScores(scoreData);
+          return updated;
+        });
       });
+
+      unsubscribes.push(unsubscribe);
     });
 
-    return () => unsubscribe();
-  }, [user, currentISOWeek, members]);
+    return () => {
+      unsubscribes.forEach(u => u());
+    };
+  }, [members, currentISOWeek]);
 
   useEffect(() => {
     setCurrentGroupName(groupName);
