@@ -66,159 +66,170 @@ export default function StatsView({
     complTasks: {},
     rates: {},
   })
+
+  // Store raw task data
+  const [groupTasks, setGroupTasks] = useState<Task[]>([]);
+  const [userTasks, setUserTasks] = useState<Record<string, Task[]>>({});
   
+  // Fetch tasks stored under the group
   useEffect(() => {
     if (!groupID) return;
-    
-    // Calculate current year for filtering
+
     const currentYear = new Date().getFullYear();
     const yearStart = `${currentYear}-W01`;
-    const yearEnd = `${currentYear}-W53`; // Using W53 to ensure we capture all weeks
-    
-    // Reference to tasks collection
+    const yearEnd = `${currentYear}-W53`;
+
     const tasksRef = collection(db, 'groups', groupID, 'tasks');
-    
-    // Query tasks for the current year
-    const q = query(
-      tasksRef,
-      where('weekId', '>=', yearStart),
-      where('weekId', '<=', yearEnd)
-    );
-    
+    const q = query(tasksRef, where('weekId', '>=', yearStart), where('weekId', '<=', yearEnd));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Initialize data structure to hold all tasks by member and week
-      const tasksByMemberAndWeek: Record<string, Record<string, Task[]>> = {};
-      
-      // Initialize for all members
-      members.forEach(member => {
-        tasksByMemberAndWeek[member.id] = {};
-      });
-      
-      // Collect all weeks present in the data
-      const weeksSet = new Set<string>();
-      
-      // Process all tasks from the snapshot
-      snapshot.forEach(doc => {
-        const task = { 
-          id: doc.id, 
+      const tasks: Task[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
+      })) as Task[];
+      setGroupTasks(tasks);
+    });
+
+    return () => unsubscribe();
+  }, [groupID]);
+
+  // Fetch global tasks stored under each user
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    const yearStart = `${currentYear}-W01`;
+    const yearEnd = `${currentYear}-W53`;
+
+    const unsubscribes: (() => void)[] = [];
+
+    members.forEach(member => {
+      const tasksRef = collection(db, 'users', member.id, 'tasks');
+      const q = query(tasksRef, where('weekId', '>=', yearStart), where('weekId', '<=', yearEnd));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const tasks: Task[] = snapshot.docs.map(doc => ({
+          id: doc.id,
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate() || new Date()
-        } as Task;
-        
-        // Add the week to our set of weeks
-        weeksSet.add(task.weekId);
-        
-        // Ensure the member exists in our structure
-        if (!tasksByMemberAndWeek[task.createdBy]) {
-          tasksByMemberAndWeek[task.createdBy] = {};
-        }
-        
-        // Ensure the week exists for this member
-        if (!tasksByMemberAndWeek[task.createdBy][task.weekId]) {
-          tasksByMemberAndWeek[task.createdBy][task.weekId] = [];
-        }
-        
-        // Add the task to the appropriate member and week
-        tasksByMemberAndWeek[task.createdBy][task.weekId].push(task);
+        })) as Task[];
+        setUserTasks(prev => ({ ...prev, [member.id]: tasks }));
       });
-      
-      // Convert the set of weeks to a sorted array
-      const existingWeeks = Array.from(weeksSet).sort();
-      
-      // Generate all weeks in the range
-      const allWeeks: string[] = [];
-      if (existingWeeks.length > 0) {
-        // Find min and max weeks from the data
-        const minWeek = existingWeeks[0];
-        const maxWeek = existingWeeks[existingWeeks.length - 1];
-        
-        const [minYear, minWeekNum] = minWeek.split('-W').map(Number);
-        const [maxYear, maxWeekNum] = maxWeek.split('-W').map(Number);
-        
-        // Generate all weeks between min and max
-        let currentWeek = minWeek;
-        while (currentWeek <= maxWeek) {
-          allWeeks.push(currentWeek);
-          // Move to next week
-          const date = getDateFromISOWeek(currentWeek);
-          date.setDate(date.getDate() + 7); // Add 7 days
-          currentWeek = getISOWeek(date);
-        }
-      }
-      
-      // If no data, return empty
-      if (allWeeks.length === 0) {
-        setWeeklyStats({
-          weekLabels: [],
-          memberStats: {}
-        });
-        return;
-      }
-      
-      // Initialize the stats object for all members
-      const memberStats: Record<string, number[]> = {};
-      members.forEach(member => {
-        memberStats[member.id] = Array(allWeeks.length).fill(0);
-      });
-
-      // Initialize yearly stats object
-      const memberNames: string[] = [];
-      const uncplTasks: Record<string, number> = {};
-      const complTasks: Record<string, number> = {};
-      members.forEach(member => {
-        memberNames.push(member.name);
-        uncplTasks[member.id] = 0;
-        complTasks[member.id] = 0;
-      })
-      
-      // Calculate completion rate for each member for each week
-      allWeeks.forEach((week, weekIndex) => {
-        members.forEach(member => {
-          const weekTasks = tasksByMemberAndWeek[member.id][week] || [];
-          
-          if (weekTasks.length > 0) {
-            const suggestedTasks = weekTasks.filter(t => t.suggestedBy != null)
-            const totalTasks = weekTasks.length - suggestedTasks.length;
-            if (totalTasks > 0) {
-              const completedCount = weekTasks.filter(t => t.status === 'completed').length;
-              const completionRate = (completedCount / totalTasks) * 100;
-              memberStats[member.id][weekIndex] = completionRate;
-
-              uncplTasks[member.id] = uncplTasks[member.id] + (totalTasks - completedCount);
-              complTasks[member.id] = complTasks[member.id] + completedCount;
-            }
-          }
-          // If no tasks, rate remains 0 from our fill(0) initialization
-        });
-      });
-      
-      // Format week labels as dates (first day of each week)
-      const weekLabels = allWeeks.map(week => {
-        const weekDate = getDateFromISOWeek(week);
-        return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      });
-
-      // Calculate total yearly rates
-      const rates: Record<string, number> = {};
-
-      members.forEach( member => {
-        rates[member.id] = complTasks[member.id] / (complTasks[member.id] + uncplTasks[member.id]);
-      })
-      
-      setWeeklyStats({
-        weekLabels,
-        memberStats
-      });
-      setYearlyStats({
-        memberNames,
-        uncplTasks,
-        complTasks,
-        rates
-      })
+      unsubscribes.push(unsubscribe);
     });
-    
-    return () => unsubscribe();
-  }, [groupID, members]);
+
+    return () => {
+      unsubscribes.forEach(u => u());
+    };
+  }, [members]);
+
+  // Recalculate stats whenever tasks change
+  useEffect(() => {
+    // Initialize data structure to hold all tasks by member and week
+    const tasksByMemberAndWeek: Record<string, Record<string, Task[]>> = {};
+
+    members.forEach(member => {
+      tasksByMemberAndWeek[member.id] = {};
+    });
+
+    const weeksSet = new Set<string>();
+
+    // Process group tasks
+    groupTasks.forEach(task => {
+      weeksSet.add(task.weekId);
+
+      if (!tasksByMemberAndWeek[task.createdBy]) {
+        tasksByMemberAndWeek[task.createdBy] = {};
+      }
+
+      if (!tasksByMemberAndWeek[task.createdBy][task.weekId]) {
+        tasksByMemberAndWeek[task.createdBy][task.weekId] = [];
+      }
+
+      tasksByMemberAndWeek[task.createdBy][task.weekId].push(task);
+    });
+
+    // Process user global tasks
+    Object.entries(userTasks).forEach(([userId, tasks]) => {
+      tasks.forEach(task => {
+        weeksSet.add(task.weekId);
+
+        if (!tasksByMemberAndWeek[userId]) {
+          tasksByMemberAndWeek[userId] = {};
+        }
+
+        if (!tasksByMemberAndWeek[userId][task.weekId]) {
+          tasksByMemberAndWeek[userId][task.weekId] = [];
+        }
+
+        tasksByMemberAndWeek[userId][task.weekId].push(task);
+      });
+    });
+
+    const existingWeeks = Array.from(weeksSet).sort();
+
+    const allWeeks: string[] = [];
+    if (existingWeeks.length > 0) {
+      let currentWeek = existingWeeks[0];
+      const maxWeek = existingWeeks[existingWeeks.length - 1];
+
+      while (currentWeek <= maxWeek) {
+        allWeeks.push(currentWeek);
+        const date = getDateFromISOWeek(currentWeek);
+        date.setDate(date.getDate() + 7);
+        currentWeek = getISOWeek(date);
+      }
+    }
+
+    if (allWeeks.length === 0) {
+      setWeeklyStats({ weekLabels: [], memberStats: {} });
+      setYearlyStats({ memberNames: [], uncplTasks: {}, complTasks: {}, rates: {} });
+      return;
+    }
+
+    const memberStats: Record<string, number[]> = {};
+    const memberNames: string[] = [];
+    const uncplTasks: Record<string, number> = {};
+    const complTasks: Record<string, number> = {};
+
+    members.forEach(member => {
+      memberStats[member.id] = Array(allWeeks.length).fill(0);
+      memberNames.push(member.name);
+      uncplTasks[member.id] = 0;
+      complTasks[member.id] = 0;
+    });
+
+    allWeeks.forEach((week, weekIndex) => {
+      members.forEach(member => {
+        const weekTasks = tasksByMemberAndWeek[member.id][week] || [];
+
+        if (weekTasks.length > 0) {
+          const suggestedTasks = weekTasks.filter(t => t.suggestedBy != null);
+          const totalTasks = weekTasks.length - suggestedTasks.length;
+          if (totalTasks > 0) {
+            const completedCount = weekTasks.filter(t => t.status === 'completed').length;
+            const completionRate = (completedCount / totalTasks) * 100;
+            memberStats[member.id][weekIndex] = completionRate;
+
+            uncplTasks[member.id] += totalTasks - completedCount;
+            complTasks[member.id] += completedCount;
+          }
+        }
+      });
+    });
+
+    const weekLabels = allWeeks.map(week => {
+      const weekDate = getDateFromISOWeek(week);
+      return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    const rates: Record<string, number> = {};
+    members.forEach(member => {
+      const total = complTasks[member.id] + uncplTasks[member.id];
+      rates[member.id] = total === 0 ? 0 : complTasks[member.id] / total;
+    });
+
+    setWeeklyStats({ weekLabels, memberStats });
+    setYearlyStats({ memberNames, uncplTasks, complTasks, rates });
+  }, [groupTasks, userTasks, members]);
   
   // Line chart configuration
   const lineOptions = {
