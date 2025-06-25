@@ -187,7 +187,7 @@ export default function TaskCell({
           width: '14.28%',
           maxWidth: '1fr',
           overflow: 'hidden',
-          backgroundColor: `${color}${day%2 ? '17' : '10'}`,
+          backgroundColor: `${color}${day%2 ? '10' : '10'}`,
         }} 
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
