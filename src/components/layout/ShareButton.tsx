@@ -33,7 +33,7 @@ export default function ShareButton({ groupId }: ShareButtonProps) {
   return (
     <button 
       onClick={handleShare} 
-      className="text-blue-500 hover:text-blue-700 flex items-center"
+      className="px-3 py-1 text-sm rounded-md bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center"
     >
       <ShareIcon className="h-5 w-5 mr-1" />
       <span className="text-sm">{copied ? "Copied!" : "Share"}</span>
