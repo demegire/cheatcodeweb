@@ -7,6 +7,12 @@ export interface Task {
   createdAt: Date;
   weekId: string; // ISO week format like "2023-W42"
   suggestedBy?: string; // ID of the user who suggested this task (optional)
+  /**
+   * Indicates that the task comes from the user's personal collection rather
+   * than a group. This property is not persisted in Firestore and is derived
+   * from the document path when tasks are loaded.
+   */
+  isGlobal?: boolean;
 }
   
 export interface UserData {
