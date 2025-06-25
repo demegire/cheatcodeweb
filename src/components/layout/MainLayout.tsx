@@ -94,8 +94,10 @@ export default function MainLayout({
   return (
     <div className="flex h-screen relative">
       {/* Left Sidebar - always absolute positioned */}
-      <div className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-300 hidden md:block
-        ${sidebarCollapsed ? 'w-16' : 'w-64 shadow-lg z-10'}`}>
+      <div
+        className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-300
+        ${sidebarCollapsed ? 'w-8 md:w-16' : 'w-full md:w-64 shadow-lg z-10'}`}
+      >
         <div className="h-full flex flex-col">
           <div className={`p-4 text-gray-600 font-bold ${sidebarCollapsed ? 'text-center' : ''}`}>
             {sidebarCollapsed ? '' : 'My Groups'}
@@ -155,7 +157,7 @@ export default function MainLayout({
       </div>
       
       {/* Main Content - fixed margins */}
-      <div className="w-full h-full flex flex-col overflow-hidden md:pl-16 lg:pr-16">
+      <div className="w-full h-full flex flex-col overflow-hidden pl-8 pr-8 md:pl-16 lg:pr-16">
         {/* Clone children with additional props if it's a TaskTracker component */}
         {React.Children.map(children, child => {
           // Check if it's a valid element
@@ -172,8 +174,10 @@ export default function MainLayout({
       </div>
       
       {/* Right Sidebar - always absolute positioned */}
-      <div className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-300 hidden lg:block
-        ${rightSidebarCollapsed ? 'w-16' : 'w-64 shadow-lg z-10'}`}>
+      <div
+        className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-300
+        ${rightSidebarCollapsed ? 'w-8 lg:w-16' : 'w-full lg:w-64 shadow-lg z-10'}`}
+      >
         {groupId && currentWeekId ? (
           <CommentSection 
             groupId={groupId}
