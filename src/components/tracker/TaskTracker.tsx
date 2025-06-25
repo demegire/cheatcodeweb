@@ -77,83 +77,123 @@ export default function TaskTracker({
   useEffect(() => {
     if (!groupId) return;
 
-    // Create a reference to the tasks collection for this group
+    // Reference to this group's tasks for the selected week
     const tasksRef = collection(db, 'groups', groupId, 'tasks');
-
-    // Query tasks for the current week using ISO week identifier
-    const q = query(
-      tasksRef,
-      where('weekId', '==', currentISOWeek)
-    );
+    const q = query(tasksRef, where('weekId', '==', currentISOWeek));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const taskData: Record<string, Task[]> = {};
-      const scoreData: Record<string, number> = {};
+      const localData: Record<string, Task[]> = {};
 
-      // Initialize empty arrays for each member
       members.forEach(member => {
-        taskData[member.id] = [];
-        scoreData[member.id] = 0;
+        localData[member.id] = [];
       });
 
-      // Populate with tasks from Firestore
-      snapshot.forEach(doc => {
-        const data = doc.data();
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
 
-        // Convert Firestore timestamp to a serializable format
         let createdAt;
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
           createdAt = data.createdAt.toDate();
         } else if (data.createdAt) {
           createdAt = new Date(data.createdAt);
         } else {
-          createdAt = new Date(); // Fallback to current date if missing
+          createdAt = new Date();
         }
 
         const task = {
-          id: doc.id,
+          id: docSnap.id,
           ...data,
-          createdAt: createdAt
+          createdAt,
+          isGlobal: false,
         } as Task;
 
-        if (taskData[task.createdBy]) {
-          taskData[task.createdBy].push(task);
+        if (localData[task.createdBy]) {
+          localData[task.createdBy].push(task);
         }
       });
 
-      // Sort tasks by creation date for each member (oldest first)
+      // Sort local tasks by creation date
       members.forEach(member => {
-        if (taskData[member.id]) {
-          console.log(`Before sorting - ${member.id}:`,
-            taskData[member.id].map(t => ({ id: t.id, text: t.text, createdAt: t.createdAt }))
-          );
-
-          taskData[member.id].sort((a, b) => {
-            console.log(`Comparing ${a.text} (${a.createdAt}) with ${b.text} (${b.createdAt})`);
-            return a.createdAt.getTime() - b.createdAt.getTime();
-          });
-
-          console.log(`After sorting - ${member.id}:`,
-            taskData[member.id].map(t => ({ id: t.id, text: t.text, createdAt: t.createdAt }))
-          );
-        }
+        localData[member.id].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
       });
 
-      // Calculate scores for each member
-      members.forEach(member => {
-        const memberTasks = taskData[member.id] || [];
-        if (memberTasks.length > 0) {
-          const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-          scoreData[member.id] = (completedCount / memberTasks.length) * 100;
-        }
-      });
+      // Merge with any existing global tasks
+      setTasks(prev => {
+        const merged: Record<string, Task[]> = {};
+        members.forEach(member => {
+          const globals = prev[member.id]?.filter(t => t.isGlobal) || [];
+          merged[member.id] = [...localData[member.id], ...globals];
+        });
 
-      setTasks(taskData);
-      setScores(scoreData);
+        const scoreData: Record<string, number> = {};
+        members.forEach(member => {
+          const memberTasks = merged[member.id] || [];
+          if (memberTasks.length > 0) {
+            const completedCount = memberTasks.filter(t => t.status === 'completed').length;
+            scoreData[member.id] = (completedCount / memberTasks.length) * 100;
+          }
+        });
+
+        setScores(scoreData);
+        return merged;
+      });
     });
 
     return () => unsubscribe();
   }, [groupId, currentISOWeek, members]);
+
+  // Fetch global tasks for the current user
+  useEffect(() => {
+    if (!user) return;
+
+    const tasksRef = collection(db, 'users', user.uid, 'tasks');
+    const q = query(tasksRef, where('weekId', '==', currentISOWeek));
+
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const globalTasks: Task[] = [];
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        let createdAt;
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          createdAt = data.createdAt.toDate();
+        } else if (data.createdAt) {
+          createdAt = new Date(data.createdAt);
+        } else {
+          createdAt = new Date();
+        }
+
+        globalTasks.push({
+          id: docSnap.id,
+          ...data,
+          createdAt,
+          isGlobal: true,
+        } as Task);
+      });
+
+      // Sort global tasks by creation date
+      globalTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+      setTasks(prev => {
+        const updated: Record<string, Task[]> = { ...prev };
+        const localOnly = (prev[user.uid] || []).filter(t => !t.isGlobal);
+        updated[user.uid] = [...localOnly, ...globalTasks];
+
+        const scoreData: Record<string, number> = {};
+        members.forEach(member => {
+          const memberTasks = updated[member.id] || [];
+          if (memberTasks.length > 0) {
+            const completedCount = memberTasks.filter(t => t.status === 'completed').length;
+            scoreData[member.id] = (completedCount / memberTasks.length) * 100;
+          }
+        });
+        setScores(scoreData);
+        return updated;
+      });
+    });
+
+    return () => unsubscribe();
+  }, [user, currentISOWeek, members]);
 
   useEffect(() => {
     setCurrentGroupName(groupName);
@@ -235,13 +275,10 @@ export default function TaskTracker({
 
 
   const handleUpdateTaskStatus = async (memberId: string, taskId: string) => {
-    if (!user || !groupId) return;
+    if (!user) return;
 
     try {
-      // Get the current task
-      const taskRef = doc(db, 'groups', groupId, 'tasks', taskId);
-
-      // Find the task in local state to get its current status
+      // Find the task in local state to get its current status and location
       const memberTasks = tasks[memberId] || [];
       const task = memberTasks.find(t => t.id === taskId);
 
@@ -263,9 +300,13 @@ export default function TaskTracker({
           nextStatus = 'not-done';
       }
 
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
       // Update task status in Firestore
       await updateDoc(taskRef, {
-        status: nextStatus
+        status: nextStatus,
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -275,11 +316,19 @@ export default function TaskTracker({
   };
 
   const handleDeleteTask = async (memberId: string, taskId: string) => {
-    if (!user || !groupId) return;
+    if (!user) return;
 
     try {
+      const memberTasks = tasks[memberId] || [];
+      const task = memberTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
       // Delete task from Firestore
-      await deleteDoc(doc(db, 'groups', groupId, 'tasks', taskId));
+      await deleteDoc(taskRef);
 
       // No need to update local state as the onSnapshot will handle that
     } catch (error) {
@@ -288,12 +337,20 @@ export default function TaskTracker({
   };
 
   const handleEditTask = async (memberId: string, taskId: string, newText: string) => {
-    if (!user || !groupId) return;
+    if (!user) return;
 
     try {
+      const memberTasks = tasks[memberId] || [];
+      const task = memberTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
       // Update task text in Firestore
-      await updateDoc(doc(db, 'groups', groupId, 'tasks', taskId), {
-        text: newText
+      await updateDoc(taskRef, {
+        text: newText,
       });
 
       // No need to update local state as the onSnapshot will handle that
