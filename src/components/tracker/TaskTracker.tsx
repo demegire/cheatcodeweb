@@ -488,12 +488,15 @@ export default function TaskTracker({
       </div>
 
       <div className="flex-grow overflow-auto">
-        <table className="w-full border-collapse table-fixed">
+        <table className="border-collapse min-w-max md:w-full">
           <thead>
             <tr>
               <th className="border p-1 bg-gray-50 text-gray-800 w-24">Person</th>
               {dayNames.map((day, index) => (
-                <th key={index} className="border p-1 bg-gray-50 text-gray-800" style={{ width: '14.28%', minWidth: '150px', maxWidth: '1fr' }}>
+                <th
+                  key={index}
+                  className="border p-1 bg-gray-50 text-gray-800 min-w-screen sm:min-w-[150px]"
+                >
                   {day}
                 </th>
               ))}

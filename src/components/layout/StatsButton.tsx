@@ -16,23 +16,17 @@ export default function StatButton({
       onClick={onStatView}
       className="px-3 py-1 rounded-md bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center"
     >
-      
-      
         {isStatView ? (
           <>
-            <CalendarDaysIcon className="h-5 w-5 mr-1" />
-            <span className="text-sm">
-              Calendar
-            </span>
+            <CalendarDaysIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Calendar</span>
           </>
         ) : (
           <>
-            <ChartBarIcon className="h-5 w-5 mr-1" />
-            <span className="text-sm">
-                Stats
-            </span>
+            <ChartBarIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Stats</span>
           </>
-        )} 
+        )}
     </button>
   );
 }
