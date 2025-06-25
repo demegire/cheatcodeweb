@@ -214,12 +214,23 @@ export default function TaskTracker({
     }
   };
 
-  // Placeholder for handleAddGlobalTask (Implement the actual logic here later)
   const handleAddGlobalTask = async (memberId: string, day: number, text: string) => {
      if (!user) return;
-     console.log(`Attempting to add GLOBAL task for member ${memberId} on day ${day}: "${text}"`);
-     // TODO: Implement actual global task creation logic here
-     alert(`Simulating adding global task for ${members.find(m => m.id === memberId)?.name} on day ${day}: "${text}"`);
+     try {
+        // Add task to Firestore with ISO week ID
+        await addDoc(collection(db, 'users', memberId, 'tasks'), {
+          text,
+          status: 'not-done',
+          day,
+          createdBy: memberId,
+          createdAt: new Date(),
+          weekId: currentISOWeek  // Using ISO week identifier
+        });
+
+      // No need to update local state as the onSnapshot will handle that
+    } catch (error) {
+        console.error('Error adding task:', error);
+    }
   };
 
 
