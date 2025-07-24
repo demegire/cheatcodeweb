@@ -326,7 +326,7 @@ export default function StatsView({
   });
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 relative">
+    <div className="flex flex-col h-screen overflow-y-auto p-4 relative">
       <div className="flex justify-between items-center mb-3 relative">
         {/* Left section: Group name */}
         <div className="py-2 flex justify-center items-center">
