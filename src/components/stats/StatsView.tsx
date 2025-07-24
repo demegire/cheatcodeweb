@@ -243,7 +243,7 @@ export default function StatsView({
         display: true,
         text: 'Weekly Task Completion Rates',
         color: 'black',
-        font: {size: 18},
+        font: {size: 24},
       },
     },
     scales: {
@@ -282,7 +282,7 @@ export default function StatsView({
         display: true,
         text: 'Yearly Task Totals',
         color: 'black',
-        font: {size: 18},
+        font: {size: 24},
       },
     },
     scales: {
@@ -351,57 +351,38 @@ export default function StatsView({
         <div className="bg-gray-100 m-2 p-4 rounded-2xl">
           <Bar options={barOptions} data={barData} />
         </div>
-        <div className="bg-gray-100 m-2 p-4 rounded-2xl overflow-auto flex flex-col">
-          <div className="self-center text-xl text-gray-800 font-bold mb-2">Leaderboard</div>
+        <div className='flex flex-1 flex-col justify-start bg-gray-100 m-2 p-4 rounded-2xl overflow-auto'>
+          {/* Leaderboard */}
+          <div className='self-center text-2xl text-gray-800 font-bold mb-2  '>
+            Leaderboard
+          </div>
           <div>
-            <table className="w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1">
+            <table className='w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1'>
               <thead>
-                <tr>
-                  <th className="rounded-l-md bg-gray-300 p-0.5">Rank</th>
-                  <th className="bg-gray-300">Name</th>
-                  <th className="rounded-r-md bg-gray-300">Score</th>
+                <tr className=''>
+                  <th className='rounded-tl-md bg-gray-300 p-0.5'>Rank</th>
+                  <th className='bg-gray-300'>Name</th>
+                  <th className='rounded-tr-md  bg-gray-300'>Score</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedMembers.map((member, index) => (
-                  <tr key={member.id}>
-                    <td
-                      className={`text-center rounded-l-md ${
-                        index === 0
-                          ? 'bg-amber-300/80'
-                          : index === 1
-                          ? 'bg-zinc-400/80'
-                          : index === 2
-                          ? 'bg-yellow-600/80'
-                          : 'bg-blue-200'
-                      }`}
-                    >
-                      {index + 1}
-                    </td>
-                    <td
-                      className={`text-center ${
-                        index === 0
-                          ? 'bg-amber-300/80'
-                          : index === 1
-                          ? 'bg-zinc-400/80'
-                          : index === 2
-                          ? 'bg-yellow-600/80'
-                          : 'bg-blue-200'
-                      }`}
-                    >
-                      {member.name}
-                    </td>
-                    <td
-                      className={`text-center rounded-r-md ${
-                        index === 0
-                          ? 'bg-amber-300/80'
-                          : index === 1
-                          ? 'bg-zinc-400/80'
-                          : index === 2
-                          ? 'bg-yellow-600/80'
-                          : 'bg-blue-200'
-                      }`}
-                    >
+                  <tr key={member.id} className=''>
+                    <td className={`text-center rounded-l-md ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>{index + 1}</td>
+                    <td className={`text-center ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>{member.name}</td>
+                    <td className={`text-center rounded-r-md ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>
                       {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
                     </td>
                   </tr>

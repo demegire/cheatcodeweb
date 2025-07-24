@@ -488,26 +488,26 @@ export default function TaskTracker({
       </div>
 
       <div className="flex-grow overflow-auto">
-        <table className="border-collapse min-w-max md:w-full">
+        <table className="border-separate border-spacing-x-1 border-spacing-y-2 min-w-max md:w-full">
           <thead>
             <tr>
-              <th className="border p-1 bg-gray-50 text-gray-800 w-24">Person</th>
+              <th className="p-1 text-black w-24"></th>
               {dayNames.map((day, index) => (
                 <th
                   key={index}
-                  className="border p-1 bg-gray-50 text-gray-800 min-w-screen sm:min-w-[150px]"
+                  className="p-1 rounded-t-2xl bg-gray-100 text-black min-w-screen sm:min-w-[150px]"
                 >
                   {day}
                 </th>
               ))}
-              <th className="border p-1 bg-gray-50 text-gray-800" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}>Score</th>
+              <th className="rounded-r-2xl p-1 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
             </tr>
           </thead>
           <tbody>
             {members.map(member => (
               <tr key={member.id}>
-                <td
-                  className="border border-black p-1 font-bold text-white text-center"
+                <td 
+                  className="rounded-l-2xl p-1 font-bold text-white text-center" 
                   style={{ backgroundColor: member.color }}
                 >
                   {member.name}
@@ -550,8 +550,8 @@ export default function TaskTracker({
                     onTaskTypeChange={setGlobalTaskType}
                   />
                 ))}
-
-                <td className="border p-1 text-center font-bold text-gray-800 bg-white" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden' }}>
+                
+                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.color}}>
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>
