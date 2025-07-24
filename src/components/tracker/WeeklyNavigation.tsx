@@ -58,9 +58,9 @@ export default function WeeklyNavigation({
       >
         <ArrowLeftIcon className="h-5 w-5" />
       </button>
-      
-      <div 
-        className="flex flex-col hover:bg-gray-200 rounded-full items-center w-[265px] cursor-pointer"
+
+      <div
+        className="hidden sm:flex flex-col hover:bg-gray-200 rounded-fill items-center w-[265px] cursor-pointer"
         onClick={toggleMonthlyPopup}
       >
         <span className="text-lg font-bold text-gray-800">
@@ -70,7 +70,7 @@ export default function WeeklyNavigation({
           {year}
         </span>
       </div>
-      
+
       <button
         onClick={onNextWeek}
         className="px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 text-lg ml-2 cursor-pointer"
@@ -82,11 +82,11 @@ export default function WeeklyNavigation({
       {/* Monthly Navigation Popup */}
       {showMonthlyPopup && onMonthSelect && (
         <div
-          className="absolute z-10 top-full mt-2 left-1/2 transform -translate-x-1/2"
+          className="hidden sm:block absolute z-10 top-full mt-2 left-1/2 transform -translate-x-1/2"
           ref={popupRef}
         >
           <div className="relative z-20 bg-white p-4 rounded-lg shadow-xl border border-gray-200 w-auto">
-            <MonthlyNavigation 
+            <MonthlyNavigation
               currentISOWeek={currentISOWeek}
               onMonthSelect={(year, month) => {
                 if (onMonthSelect) {

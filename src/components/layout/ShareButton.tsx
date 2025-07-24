@@ -31,12 +31,12 @@ export default function ShareButton({ groupId }: ShareButtonProps) {
   };
 
   return (
-    <button 
-      onClick={handleShare} 
+    <button
+      onClick={handleShare}
       className="px-3 py-2 text-sm rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
     >
-      <ShareIcon className="h-5 w-5 mr-1" />
-      <span className="text-sm">{copied ? "Copied!" : "Share"}</span>
+      <ShareIcon className="h-5 w-5 mr-0 sm:mr-1" />
+      <span className="text-sm hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
     </button>
   );
-} 
+}

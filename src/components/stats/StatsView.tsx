@@ -326,74 +326,72 @@ export default function StatsView({
   });
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 relative">
-        <div className="flex justify-between items-center mb-3 relative">
-            {/* Left section: Group name */}
-            <div className="py-2 flex justify-center items-center">
-                <h1 
-                className="text-2xl text-gray-800 font-bold"
-                >{groupName}</h1>
-            </div>
-            {/* Right section: Share button */}
-            <div className="flex gap-4">
-                <div>
-                <StatButton isStatView={isStatView} onStatView={onStatView} />
-                </div>
-                <div>
-                <ShareButton groupId={groupID} />
-                </div>
-            </div>
+    <div className="flex flex-col h-screen overflow-y-auto p-4 relative">
+      <div className="flex justify-between items-center mb-3 relative">
+        {/* Left section: Group name */}
+        <div className="py-2 flex justify-center items-center">
+          <h1 className="text-2xl text-gray-800 font-bold">{groupName}</h1>
+        </div>
+        {/* Right section: Share button */}
+        <div className="flex gap-4">
+          <div>
+            <StatButton isStatView={isStatView} onStatView={onStatView} />
+          </div>
+          <div>
+            <ShareButton groupId={groupID} />
+          </div>
+        </div>
+      </div>
 
+      {/* Charts */}
+      <div className="grid flex-1 grid-rows-3 md:grid-rows-2 md:grid-cols-2">
+        <div className="row-span-1 md:col-span-2 bg-gray-100 m-2 p-4 rounded-2xl">
+          <Line options={lineOptions} data={lineData} />
         </div>
-        <div className="flex-1 bg-gray-100 m-2 p-4 rounded-2xl">
-          <Line options={lineOptions} data={lineData}/>
+        <div className="bg-gray-100 m-2 p-4 rounded-2xl">
+          <Bar options={barOptions} data={barData} />
         </div>
-        <div className="flex flex-1">
-          <div className='flex-2 bg-gray-100 m-2 p-4 rounded-2xl'>
-            {/*Bar chart*/}
-            <Bar options={barOptions} data={barData}/>
+        <div className='flex flex-1 flex-col justify-start bg-gray-100 m-2 p-4 rounded-2xl overflow-auto'>
+          {/* Leaderboard */}
+          <div className='self-center text-2xl text-gray-800 font-bold mb-2  '>
+            Leaderboard
           </div>
-          <div className='flex flex-1 flex-col justify-start bg-gray-100 m-2 p-4 rounded-2xl'>
-            {/* Leaderboard */}
-            <div className='self-center text-2xl text-gray-800 font-bold mb-2  '>
-              Leaderboard
-            </div>
-            <div>
-              <table className='w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1'>
-                <thead>
-                  <tr className=''>
-                    <th className='rounded-tl-md bg-gray-300 p-0.5'>Rank</th>
-                    <th className='bg-gray-300'>Name</th>
-                    <th className='rounded-tr-md  bg-gray-300'>Score</th>
+          <div>
+            <table className='w-full text-gray-800 border-separate border-spacing-x-0 border-spacing-y-1'>
+              <thead>
+                <tr className=''>
+                  <th className='rounded-tl-md bg-gray-300 p-0.5'>Rank</th>
+                  <th className='bg-gray-300'>Name</th>
+                  <th className='rounded-tr-md  bg-gray-300'>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedMembers.map((member, index) => (
+                  <tr key={member.id} className=''>
+                    <td className={`text-center rounded-l-md ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>{index + 1}</td>
+                    <td className={`text-center ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>{member.name}</td>
+                    <td className={`text-center rounded-r-md ${
+                      index === 0 ? ('') :
+                      index === 1 ? ('') :
+                      index === 2 ? ('') :
+                      ('')}`}>
+                      {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {sortedMembers.map((member, index) => (
-                    <tr key={member.id} className=''>
-                      <td className={`text-center rounded-l-md ${
-                        index === 0 ? ('') :
-                        index === 1 ? ('') :
-                        index === 2 ? ('') :
-                        ('')}`}>{index + 1}</td>
-                      <td className={`text-center ${
-                        index === 0 ? ('') :
-                        index === 1 ? ('') :
-                        index === 2 ? ('') :
-                        ('')}`}>{member.name}</td>
-                      <td className={`text-center rounded-r-md ${
-                        index === 0 ? ('') :
-                        index === 1 ? ('') :
-                        index === 2 ? ('') :
-                        ('')}`}>
-                        {(yearlyStats.rates[member.id] * 100 || 0).toFixed(2)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
     </div>
   );
 }
