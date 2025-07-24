@@ -180,7 +180,7 @@ export default function TaskCell({
     return (
       <td
         ref={cellRef}
-        className="p-1 relative align-top border-white h-full overflow-hidden min-h-[150px]"
+        className="p-1 relative align-top h-full overflow-hidden min-h-[150px]"
         style={{
           backgroundColor: `${color}10`
         }}
@@ -198,7 +198,7 @@ export default function TaskCell({
         }}
       >
         {/* Task list with minimum height */}
-        <div ref={tasksContainerRef} style={getMinHeightStyle()}>
+        <div ref={tasksContainerRef} className="m-1" style={getMinHeightStyle()}>
           {tasks.map(task => (
             <TaskItem
               key={task.id}
@@ -206,7 +206,7 @@ export default function TaskCell({
               onUpdateStatus={() => onUpdateTaskStatus(task.id)}
               onDelete={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
               onEdit={onEditTask ? (newText) => onEditTask(task.id, newText) : undefined}
-              isEditable={isCurrentUser}
+              isCurrentUser={isCurrentUser}
               isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
               onSelect={onSelectTask ? () => onSelectTask(task) : undefined}
               onAcceptTask={task.suggestedBy && isCurrentUser && onAcceptTask ?

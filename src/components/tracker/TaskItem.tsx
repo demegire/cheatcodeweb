@@ -5,7 +5,7 @@ import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
 interface TaskItemProps {
   task: Task;
   onUpdateStatus: () => void;
-  isEditable: boolean;
+  isCurrentUser: boolean;
   isHighlighted?: boolean;
   onSelect?: () => void;
   onDelete?: () => void;
@@ -20,7 +20,7 @@ interface TaskItemProps {
 export default function TaskItem({ 
   task, 
   onUpdateStatus, 
-  isEditable, 
+  isCurrentUser , 
   isHighlighted = false,
   onSelect,
   onDelete,
@@ -38,31 +38,30 @@ export default function TaskItem({
   const isSuggested = !!task.suggestedBy;
   const isCurrentUserSuggester = currentUserId && task.suggestedBy === currentUserId;
 
-  const getStatusColor = () => {
-    if (isSuggested && suggestedByColor) {
-      return `bg-opacity-20 border border-opacity-30 text-gray-800`;
-    }
-    
-    switch (task.status) {
-      case 'completed': return 'bg-green-50 border-green-200 text-green-800';
-      case 'postponed': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      default: return 'bg-red-50 border-red-200 text-red-800';
-    }
-  };
-
   const getStatusIcon = () => {
     switch (task.status) {
       case 'completed': return '✓';
       case 'postponed': return '-';
+      case 'suggested': return '?';
       default: return 'x';
     }
   };
 
   const getStatusBgColor = () => {
     switch (task.status) {
-      case 'completed': return 'bg-green-400 hover:bg-green-500';
-      case 'postponed': return 'bg-yellow-400 hover:bg-yellow-500';
-      default: return 'bg-red-400 hover:bg-red-500';
+      case 'completed': return `${isCurrentUser ? "bg-green-400 hover:bg-green-500" : "bg-green-300"}`;
+      case 'postponed': return `${isCurrentUser ? "bg-yellow-400 hover:bg-yellow-500" : "bg-yellow-300"}`;
+      case 'suggested': return `${isCurrentUser ? `${suggestedByColor}20 hover:${suggestedByColor}10` : `${suggestedByColor}20`}`
+      default: return `${isCurrentUser ? "bg-red-400 hover:bg-red-500" : "bg-red-300"}`;
+    }
+  };
+
+  const getStatusTitle = () => {
+    switch (task.status) {
+      case 'completed': return 'Completed';
+      case 'postponed': return 'Postponed';
+      case 'suggested': return `Suggested by ${task.suggestedBy}`;
+      default: return 'Not done';
     }
   };
 
@@ -97,22 +96,13 @@ export default function TaskItem({
 
   return (
     <div 
-      className={`relative rounded border p-1 mb-1 text-sm ${getStatusColor()} 
+      className={`relative w-full overflow-hidden border-b-1 border-b-gray-300 px-1 py-1 text-sm text-black
         ${isHighlighted ? 'ring-2 ring-blue-400' : ''}
         ${onSelect ? 'cursor-pointer' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onSelect}
       data-task-item="true"
-      style={isSuggested && suggestedByColor ? { 
-        backgroundColor: `${suggestedByColor}20`,
-        borderColor: `${suggestedByColor}30`,
-        overflow: 'hidden',
-        width: '100%'
-      } : {
-        overflow: 'hidden',
-        width: '100%'
-      }}
     >
       {/* Comment icon - shows in top right corner when task has comments */}
       {hasComments && !isEditing && (
@@ -121,7 +111,8 @@ export default function TaskItem({
         </div>
       )}
 
-      {isEditable && !isSuggested && (
+      {/* Status icons for current user*/}
+      {isCurrentUser && !isSuggested && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -131,12 +122,27 @@ export default function TaskItem({
             w-5 h-5 flex items-center justify-center
             rounded-full text-white text-xs
             ${getStatusBgColor()}`}
+            title={getStatusTitle()}
         >
           {getStatusIcon()}
         </button>
       )}
 
-      {isSuggested && isEditable && !isCurrentUserSuggester && onAcceptTask && onRejectTask && (
+      {/* Status icons for other users*/}
+      {!isCurrentUser && !isSuggested && (
+        <div
+          className={`absolute left-1 top-1/2 transform -translate-y-1/2
+            w-5 h-5 flex items-center justify-center
+            rounded-full text-white text-xs
+            ${getStatusBgColor()}`}
+            title={getStatusTitle()}
+        >
+          {getStatusIcon()}
+        </div>
+      )}
+
+      {/* Suggested task accept and reject buttons */}
+      {isSuggested && isCurrentUser && !isCurrentUserSuggester && onAcceptTask && onRejectTask && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
           <button
             onClick={(e) => {
@@ -161,12 +167,13 @@ export default function TaskItem({
         </div>
       )}
 
-      {isSuggested && isCurrentUserSuggester && showButtons && !isEditing && (
+      {/* Edit and delete buttons. Shown if  */}
+      {((!isSuggested && isCurrentUser) || (isSuggested && isCurrentUserSuggester)) && showButtons && !isEditing && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
           <button
             onClick={handleEditClick}
             className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
-            title="Edit suggestion"
+            title="Edit"
           >
             ✎
           </button>
@@ -176,33 +183,14 @@ export default function TaskItem({
               onDelete?.();
             }}
             className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
-            title="Delete suggestion"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {isEditable && showButtons && !isEditing && !isSuggested && (
-        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
-          <button
-            onClick={handleEditClick}
-            className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
-          >
-            ✎
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.();
-            }}
-            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            title="Delete"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
         </div>
       )}
 
+      {/* Text and edit fields */}
       {isEditing ? (
         <div className="ml-6 flex w-full" onClick={(e) => e.stopPropagation()}>
           <input
@@ -213,7 +201,7 @@ export default function TaskItem({
             maxLength={64}
             className="flex-1 text-gray-800 bg-white border border-gray-300 rounded px-1 py-0 w-full"
             autoFocus
-            style={{ maxWidth: 'calc(100% - 45px)' }}
+            style={{ maxWidth: 'calc(100% - 45px)'}}
           />
           <button
             onClick={handleEditSave}
@@ -224,7 +212,7 @@ export default function TaskItem({
           </button>
         </div>
       ) : (
-        <span className={`${isEditable && !isSuggested ? 'ml-5 pl-1' : ''} block break-words overflow-hidden text-ellipsis`}>
+        <span className='ml-5 pl-1 block break-words overflow-hidden text-ellipsis'>
           {task.text}
         </span>
       )}
