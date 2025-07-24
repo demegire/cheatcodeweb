@@ -66,17 +66,32 @@ export default function DashboardPage() {
         }
         
         const groupsData: GroupData[] = [];
-        
+
         for (const groupId of userGroups) {
-          const groupDoc = await getDoc(doc(db, 'groups', groupId));
-          
-          if (groupDoc.exists()) {
-            const groupData = groupDoc.data();
-            
+          const groupDocSnap = await getDoc(doc(db, 'groups', groupId));
+
+          if (groupDocSnap.exists()) {
+            const groupData = groupDocSnap.data();
+
+            const memberUids: Record<string, boolean> = groupData.memberUids || {};
+            const members: { id: string; name: string; color: string }[] = [];
+
+            for (const uid of Object.keys(memberUids)) {
+              const memberSnap = await getDoc(doc(db, 'users', uid));
+              if (memberSnap.exists()) {
+                const memberData = memberSnap.data();
+                members.push({
+                  id: uid,
+                  name: memberData.displayName || 'User',
+                  color: memberData.color || '#3B82F6'
+                });
+              }
+            }
+
             groupsData.push({
-              id: groupDoc.id,
+              id: groupDocSnap.id,
               name: groupData.name,
-              members: groupData.members || []
+              members
             });
           }
         }
@@ -112,13 +127,9 @@ export default function DashboardPage() {
           // Create new group document
           await setDoc(doc(db, 'groups', groupId), {
             name: `New Group (click to change)`,
-            members: [
-              {
-                id: user.uid,
-                name: userData?.displayName || 'User',
-                color: userColor // Default color
-              }
-            ],
+            memberUids: {
+              [user.uid]: true
+            },
             createdBy: user.uid,
             createdAt: new Date()
           });
