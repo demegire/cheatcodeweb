@@ -180,12 +180,9 @@ export default function TaskCell({
     return (
       <td
         ref={cellRef}
-        className="p-1 align-top border-white h-full min-w-screen sm:min-w-[150px]"
+        className="p-1 relative align-top border-white h-full overflow-hidden min-h-[150px]"
         style={{
-          minHeight: '150px',
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: `${color}${day%2 ? '10' : '10'}`
+          backgroundColor: `${color}10`
         }}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
