@@ -22,16 +22,22 @@ export interface UserData {
   photoURL: string | null;
   groups: string[];
   createdAt: Date;
+  color: string | null;
+  profileCompleted: boolean | null;
 }
 
 export interface GroupData {
   id: string;
   name: string;
-  members: string[];
+  /**
+   * Map of user ids belonging to the group. The value is always `true` and
+   * exists purely to allow efficient membership checks in Firestore security
+   * rules.
+   */
+  memberUids: Record<string, boolean>;
   tasks: Record<string, Task[]>; // userId -> tasks
   createdAt: Date;
   createdBy: string;
-  // Remove weekOffset as it's no longer needed
 }
 
 export interface Comment {

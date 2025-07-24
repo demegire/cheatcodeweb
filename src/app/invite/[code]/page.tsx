@@ -46,27 +46,21 @@ export default function InvitePage() {
         
         // Check if user is already in the group
         const groupData = groupSnap.data();
-        const isAlreadyMember = groupData.members.some((member: any) => member.id === user.uid);
+        const memberUids: Record<string, boolean> = groupData.memberUids || {};
+        const isAlreadyMember = !!memberUids[user.uid];
         
         if (isAlreadyMember) {
           router.push('/dashboard');
           return;
         }
         
-        // Get user's display name and color from completed profile
+        // Ensure the user's profile document exists
         const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.data();
-        const displayName = userData?.displayName || 'User';
-        const userColor = userData?.color || '#' + Math.floor(Math.random()*16777215).toString(16);
+        await getDoc(userRef); // ensure user document exists
         
-        // Add user to group members
+        // Add user to group's member map
         await updateDoc(groupRef, {
-          members: arrayUnion({
-            id: user.uid,
-            name: displayName,
-            color: userColor
-          })
+          [`memberUids.${user.uid}`]: true
         });
         
         // Add group to user's groups
