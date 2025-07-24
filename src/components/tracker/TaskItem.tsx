@@ -51,7 +51,7 @@ export default function TaskItem({
     switch (task.status) {
       case 'completed': return `${isCurrentUser ? "bg-green-400 hover:bg-green-500" : "bg-green-300"}`;
       case 'postponed': return `${isCurrentUser ? "bg-yellow-400 hover:bg-yellow-500" : "bg-yellow-300"}`;
-      case 'suggested': return `${isCurrentUser ? `${suggestedByColor}20 hover:${suggestedByColor}10` : `${suggestedByColor}20`}`
+      case 'suggested': return `bg-[${suggestedByColor}]`;
       default: return `${isCurrentUser ? "bg-red-400 hover:bg-red-500" : "bg-red-300"}`;
     }
   };
@@ -120,7 +120,7 @@ export default function TaskItem({
           }}
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center
-            rounded-full text-white text-xs
+            rounded-full text-white text-xs cursor-pointer
             ${getStatusBgColor()}`}
             title={getStatusTitle()}
         >
@@ -129,11 +129,11 @@ export default function TaskItem({
       )}
 
       {/* Status icons for other users*/}
-      {!isCurrentUser && !isSuggested && (
+      {(!isCurrentUser || isSuggested) && (
         <div
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center
-            rounded-full text-white text-xs
+            rounded-full text-white text-xs cursor-default
             ${getStatusBgColor()}`}
             title={getStatusTitle()}
         >

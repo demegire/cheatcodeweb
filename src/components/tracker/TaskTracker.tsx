@@ -399,7 +399,7 @@ export default function TaskTracker({
       // Add suggested task to Firestore
       await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
-        status: 'not-done',
+        status: 'suggested',
         day,
         createdBy: forMemberId,  // This is who the task is FOR
         suggestedBy: user.uid,   // This is who SUGGESTED the task
@@ -421,6 +421,7 @@ export default function TaskTracker({
       // Update task in Firestore to remove suggestedBy field
       const taskRef = doc(db, 'groups', groupId, 'tasks', taskId);
       await updateDoc(taskRef, {
+        status: 'not-done',
         suggestedBy: null
       });
 
