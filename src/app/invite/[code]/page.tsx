@@ -46,7 +46,8 @@ export default function InvitePage() {
         
         // Check if user is already in the group
         const groupData = groupSnap.data();
-        const isAlreadyMember = groupData.members.some((member: any) => member.id === user.uid);
+        const memberUids: Record<string, boolean> = groupData.memberUids || {};
+        const isAlreadyMember = !!memberUids[user.uid];
         
         if (isAlreadyMember) {
           router.push('/dashboard');

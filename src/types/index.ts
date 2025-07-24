@@ -22,6 +22,8 @@ export interface UserData {
   photoURL: string | null;
   groups: string[];
   createdAt: Date;
+  color: string | null;
+  profileCompleted: boolean | null;
 }
 
 export interface GroupData {
