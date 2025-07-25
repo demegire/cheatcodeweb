@@ -258,13 +258,13 @@ export default function TaskCell({
               />
               <button
                 onClick={handleAddTask}
-                className="bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer"
+                className="bg-theme hover:bg-theme-hover text-white w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer"
               >
                 {currentTaskType === 'global' ? <GlobeAltIcon className="h-4 w-4" /> : '+'}
               </button>
               <button
                 onClick={toggleExpanded} // Chevron button triggers expansion
-                className="bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 rounded-r w-[19px] flex-shrink-0 flex items-center justify-center h-full"
+                className={`bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 ${!isExpanded && "rounded-r"} w-[19px] flex-shrink-0 flex items-center justify-center h-full`}
               >
                 <ChevronRightIcon className={`h-3 w-3 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}/>
               </button> 
@@ -312,7 +312,7 @@ export default function TaskCell({
           <div
             style={{
               position: 'absolute', // Position relative to the viewport/document
-              top: inputContainerRect.top,
+              top: inputContainerRect.top-1,
               left: inputContainerRect.right, // Position to the right of the input container
               zIndex: 50, // High z-index to appear on top
               display: 'flex',
@@ -332,7 +332,7 @@ export default function TaskCell({
             {currentTaskType === 'local' && onAddGlobalTask && (
               <button
                 onClick={() => handleTaskTypeChange('global')} // Calls parent handler
-                className="bg-blue-500 text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-blue-600 whitespace-nowrap text-sm h-8" // Set fixed height
+                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8" // Set fixed height
               >
                 <GlobeAltIcon className="h-4 w-4 mr-1" /> {/* Use h-4 w-4 for consistent icon size */}
                 <span>Global</span>
@@ -342,7 +342,7 @@ export default function TaskCell({
             {currentTaskType === 'global' && (
               <button
                 onClick={() => handleTaskTypeChange('local')} // Calls parent handler
-                className="bg-blue-500 text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-blue-600 whitespace-nowrap text-sm h-8" // Set fixed height
+                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8" // Set fixed height
               >
                 <span className="mr-1">+</span>
                 <span>Local</span>
