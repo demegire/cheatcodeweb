@@ -191,7 +191,8 @@ export default function TaskTracker({
             const memberTasks = updated[m.id] || [];
             if (memberTasks.length > 0) {
               const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-              scoreData[m.id] = (completedCount / memberTasks.length) * 100;
+              const totalCount = memberTasks.filter(t => t.status != 'suggested').length;
+              scoreData[m.id] = (completedCount / totalCount) * 100;
             }
           });
           setScores(scoreData);
