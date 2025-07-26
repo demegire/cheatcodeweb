@@ -25,15 +25,7 @@ export default function InvitePage() {
 
     const joinGroup = async () => {
       try {
-        // Check if group exists
-        const groupRef = doc(db, 'groups', groupId);
-        const groupSnap = await getDoc(groupRef);
-        
-        if (!groupSnap.exists()) {
-          setError('Invalid invite link. The group may no longer exist.');
-          return;
-        }
-        
+
         if (!user) {
           console.log('no user')
           // Store the invite code in localStorage to use after login
@@ -43,6 +35,17 @@ export default function InvitePage() {
           router.push('/');
           return;
         }
+
+        // Check if group exists
+        const groupRef = doc(db, 'groups', groupId);
+        const groupSnap = await getDoc(groupRef);
+        
+        if (!groupSnap.exists()) {
+          setError('Invalid invite link. The group may no longer exist.');
+          return;
+        }
+        
+
         
         // Check if user is already in the group
         const groupData = groupSnap.data();
