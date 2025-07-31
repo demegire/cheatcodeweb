@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
 import StatButton from '../layout/StatsButton';
+import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 
 // Helper function to get day names with dates for a specific ISO week
 const getDayNames = (isoWeek: string) => {
@@ -35,6 +36,10 @@ interface TaskTrackerProps {
   comments?: Comment[];
   isStatView: boolean;
   onStatView: () => void;
+  onToggleLeftSidebar?: () => void;
+  onToggleRightSidebar?: () => void;
+  isLeftSidebarCollapsed?: boolean;
+  isRightSidebarCollapsed?: boolean;
 }
 
 // Task types enum for better type safety (Define it here too)
@@ -51,7 +56,11 @@ export default function TaskTracker({
   onWeekChange,
   comments = [],
   isStatView,
-  onStatView
+  onStatView,
+  onToggleLeftSidebar,
+  onToggleRightSidebar,
+  isLeftSidebarCollapsed,
+  isRightSidebarCollapsed
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -476,14 +485,30 @@ export default function TaskTracker({
           </div>
         </div>
         
-        {/* Right section: Share button */}
-        <div className="flex gap-4">
+        {/* Right section: buttons */}
+        <div className="flex gap-4 items-center">
+          {isLeftSidebarCollapsed && (
+            <button
+              onClick={onToggleLeftSidebar}
+              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
+            >
+              <UserCircleIcon className="h-5 w-5" />
+            </button>
+          )}
           <div>
             <StatButton isStatView={isStatView} onStatView={onStatView} />
           </div>
           <div>
             <ShareButton groupId={groupId} />
           </div>
+          {isRightSidebarCollapsed && (
+            <button
+              onClick={onToggleRightSidebar}
+              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
+            >
+              <ChatBubbleLeftRightIcon className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -4,10 +4,12 @@ import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
+import StatsView from '../stats/StatsView';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 type TaskTrackerComponentProps = React.ComponentProps<typeof TaskTracker>;
+type StatsViewComponentProps = React.ComponentProps<typeof StatsView>;
 
 interface GroupData {
   id: string;
@@ -96,12 +98,17 @@ export default function MainLayout({
       {/* Left Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-300
-        ${sidebarCollapsed ? 'w-8 md:w-16' : 'w-full md:w-64 shadow-lg z-10'}`}
+        ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-10'}`}
       >
         <div className="h-full flex flex-col">
-          <div className={`p-4 text-gray-600 font-bold ${sidebarCollapsed ? 'text-center' : ''}`}>
-            {sidebarCollapsed ? '' : 'My Groups'}
-          </div>
+          {!sidebarCollapsed && (
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="text-gray-600 font-bold">My Groups</div>
+              <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
           
           <div className="flex-1 overflow-y-auto">
             {/* Group list */}
@@ -137,37 +144,40 @@ export default function MainLayout({
             </div>
           </div>
           
-          <div className="p-4 border-t border-gray-200 flex items-center justify-between">
-            <button 
+          <div className="p-4 border-t border-gray-200">
+            <button
               onClick={handleLogout}
               className={`text-sm text-gray-600 hover:text-gray-900 ${sidebarCollapsed ? 'sr-only' : 'block'}`}
             >
               Logout
             </button>
-            
-            <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
-              {sidebarCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5" />
-              ) : (
-                <ChevronLeftIcon className="h-5 w-5" />
-              )}
-            </button>
           </div>
         </div>
       </div>
       
-      {/* Main Content - fixed margins */}
-      <div className="w-full h-full flex flex-col overflow-hidden pl-8 pr-8 md:pl-16 lg:pr-16">
+      {/* Main Content */}
+      <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Clone children with additional props if it's a TaskTracker component */}
         {React.Children.map(children, child => {
-          // Check if it's a valid element
-          if (React.isValidElement(child) && 
-              child.type === TaskTracker) {
-            // Pass the highlightedTaskId to the TaskTracker
-            return React.cloneElement(child as React.ReactElement<TaskTrackerComponentProps>, { 
-              highlightedTaskId: highlightedTaskId,
-              comments: comments 
-            });
+          if (React.isValidElement(child)) {
+            if (child.type === TaskTracker) {
+              return React.cloneElement(child as React.ReactElement<TaskTrackerComponentProps>, {
+                highlightedTaskId: highlightedTaskId,
+                comments: comments,
+                onToggleLeftSidebar: toggleSidebar,
+                onToggleRightSidebar: toggleRightSidebar,
+                isLeftSidebarCollapsed: sidebarCollapsed,
+                isRightSidebarCollapsed: rightSidebarCollapsed,
+              });
+            }
+            if (child.type === StatsView) {
+              return React.cloneElement(child as React.ReactElement<StatsViewComponentProps>, {
+                onToggleLeftSidebar: toggleSidebar,
+                onToggleRightSidebar: toggleRightSidebar,
+                isLeftSidebarCollapsed: sidebarCollapsed,
+                isRightSidebarCollapsed: rightSidebarCollapsed,
+              });
+            }
           }
           return child;
         })}
@@ -176,7 +186,7 @@ export default function MainLayout({
       {/* Right Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-300
-        ${rightSidebarCollapsed ? 'w-8 lg:w-16' : 'w-full lg:w-64 shadow-lg z-10'}`}
+        ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-10'}`}
       >
         {groupId && currentWeekId ? (
           <CommentSection 
