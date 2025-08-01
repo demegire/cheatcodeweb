@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StatButton from '../layout/StatsButton';
 import ShareButton from '../layout/ShareButton';
+import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -37,6 +38,10 @@ interface StatsViewProps {
     members: { id: string; name: string; color: string }[];
     isStatView: boolean
     onStatView: () => void
+    onToggleLeftSidebar?: () => void;
+    onToggleRightSidebar?: () => void;
+    isLeftSidebarCollapsed?: boolean;
+    isRightSidebarCollapsed?: boolean;
 }
 
 export default function StatsView({
@@ -44,7 +49,11 @@ export default function StatsView({
     groupName,
     members,
     isStatView,
-    onStatView
+    onStatView,
+    onToggleLeftSidebar,
+    onToggleRightSidebar,
+    isLeftSidebarCollapsed,
+    isRightSidebarCollapsed
 }: StatsViewProps) {
   // State to store weekly completion rates for each user
   const [weeklyStats, setWeeklyStats] = useState<{
@@ -332,14 +341,28 @@ export default function StatsView({
         <div className="py-2 flex justify-center items-center">
           <h1 className="text-2xl text-gray-800 font-bold">{groupName}</h1>
         </div>
-        {/* Right section: Share button */}
-        <div className="flex gap-4">
+        {/* Right section: buttons */}
+        <div className="flex gap-4 items-center">
+            <button
+              onClick={onToggleLeftSidebar}
+              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
+            >
+              <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
+              <span className="text-sm hidden sm:inline">Groups</span>
+            </button>
           <div>
             <StatButton isStatView={isStatView} onStatView={onStatView} />
           </div>
           <div>
             <ShareButton groupId={groupID} />
           </div>
+            <button
+              onClick={onToggleRightSidebar}
+              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
+            >
+              <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
+              <span className="text-sm hidden sm:inline">Comments</span>
+              </button>
         </div>
       </div>
 
