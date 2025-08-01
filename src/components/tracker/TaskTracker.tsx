@@ -144,7 +144,8 @@ export default function TaskTracker({
           const memberTasks = merged[member.id] || [];
           if (memberTasks.length > 0) {
             const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-            scoreData[member.id] = (completedCount / memberTasks.length) * 100;
+            const totalCount = memberTasks.filter(t => t.status != 'suggested').length;
+            scoreData[member.id] = (completedCount / totalCount ) * 100;
           }
         });
 
@@ -199,7 +200,8 @@ export default function TaskTracker({
             const memberTasks = updated[m.id] || [];
             if (memberTasks.length > 0) {
               const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-              scoreData[m.id] = (completedCount / memberTasks.length) * 100;
+              const totalCount = memberTasks.filter(t => t.status != 'suggested').length;
+              scoreData[m.id] = (completedCount / totalCount) * 100;
             }
           });
           setScores(scoreData);
@@ -408,7 +410,7 @@ export default function TaskTracker({
       // Add suggested task to Firestore
       await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
-        status: 'not-done',
+        status: 'suggested',
         day,
         createdBy: forMemberId,  // This is who the task is FOR
         suggestedBy: user.uid,   // This is who SUGGESTED the task
@@ -430,6 +432,7 @@ export default function TaskTracker({
       // Update task in Firestore to remove suggestedBy field
       const taskRef = doc(db, 'groups', groupId, 'tasks', taskId);
       await updateDoc(taskRef, {
+        status: 'not-done',
         suggestedBy: null
       });
 

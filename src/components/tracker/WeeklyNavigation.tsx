@@ -60,7 +60,7 @@ export default function WeeklyNavigation({
       </button>
 
       <div
-        className="hidden sm:flex flex-col hover:bg-gray-200 rounded-fill items-center w-[265px] cursor-pointer"
+        className="hidden sm:flex flex-col hover:bg-gray-200 rounded-full items-center w-[265px] cursor-pointer"
         onClick={toggleMonthlyPopup}
       >
         <span className="text-lg font-bold text-gray-800">
