@@ -343,28 +343,26 @@ export default function StatsView({
         </div>
         {/* Right section: buttons */}
         <div className="flex gap-4 items-center">
-          {isLeftSidebarCollapsed && (
             <button
               onClick={onToggleLeftSidebar}
               className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
             >
-              <UserCircleIcon className="h-5 w-5" />
+              <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
+              <span className="text-sm hidden sm:inline">Groups</span>
             </button>
-          )}
           <div>
             <StatButton isStatView={isStatView} onStatView={onStatView} />
           </div>
           <div>
             <ShareButton groupId={groupID} />
           </div>
-          {isRightSidebarCollapsed && (
             <button
               onClick={onToggleRightSidebar}
               className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
             >
-              <ChatBubbleLeftRightIcon className="h-5 w-5" />
-            </button>
-          )}
+              <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
+              <span className="text-sm hidden sm:inline">Comments</span>
+              </button>
         </div>
       </div>
 

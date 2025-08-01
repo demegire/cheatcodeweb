@@ -97,7 +97,7 @@ export default function MainLayout({
     <div className="flex h-screen relative">
       {/* Left Sidebar - always absolute positioned */}
       <div
-        className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-300
+        className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
         ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-10'}`}
       >
         <div className="h-full flex flex-col">
@@ -116,16 +116,12 @@ export default function MainLayout({
               {groups.map(group => (
                 <li 
                   key={group.id}
-                  className={`rounded-lg transition-colors duration-200 cursor-pointer p-2 ${
+                  className={`rounded-lg transition-colors duration-500 cursor-pointer p-2 ${
                     selectedGroup?.id === group.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-200'
                   }`}
                   onClick={() => onGroupSelect(group)}
                 >
-                  {sidebarCollapsed ? (
-                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                      {group.name.charAt(0)}
-                    </div>
-                  ) : (
+                  {!sidebarCollapsed && (
                     <div className="truncate text-gray-600">{group.name}</div>
                   )}
                 </li>
@@ -185,7 +181,7 @@ export default function MainLayout({
       
       {/* Right Sidebar - always absolute positioned */}
       <div
-        className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-300
+        className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-500
         ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-10'}`}
       >
         {groupId && currentWeekId ? (
