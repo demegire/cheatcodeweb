@@ -64,7 +64,7 @@ export default function TopBar({
       </div>
 
       {/* desktop: auto | 1fr | auto */}
-      <div className="hidden lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-4 w-full">
+      <div className="hidden lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-4 w-full lg:relative">
         {/* left */}
         <div>
           <CompactGroupHeader
@@ -75,7 +75,7 @@ export default function TopBar({
 
         {/* center */}
         {centerContent && (
-          <div className="justify-self-center">
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             {centerContent}
           </div>
         )}
