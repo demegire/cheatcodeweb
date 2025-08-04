@@ -140,7 +140,7 @@ export default function MainLayout({
             </div>
           </div>
           
-          <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+          <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
             <button 
             onClick={handleLogout} 
             className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
@@ -149,13 +149,6 @@ export default function MainLayout({
             <span className="text-sm">Logout</span>
           </button>
             
-            <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
-              {sidebarCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5" />
-              ) : (
-                <ChevronLeftIcon className="h-5 w-5" />
-              )}
-            </button>
           </div>
         </div>
       </div>

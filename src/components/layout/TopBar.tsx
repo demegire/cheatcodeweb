@@ -1,18 +1,21 @@
-import React from 'react';
-import CompactGroupHeader from './CompactGroupHeader';
-import ShareButton from './ShareButton';
-import StatButton from './StatsButton';
-import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import React from 'react'
+import CompactGroupHeader from './CompactGroupHeader'
+import ShareButton from './ShareButton'
+import StatButton from './StatsButton'
+import {
+  UserCircleIcon,
+  ChatBubbleLeftRightIcon,
+} from '@heroicons/react/24/outline'
 
 interface TopBarProps {
-  groupId: string;
-  groupName: string;
-  onUpdateGroupName?: (newName: string) => void;
-  isStatView: boolean;
-  onStatView: () => void;
-  onToggleLeftSidebar?: () => void;
-  onToggleRightSidebar?: () => void;
-  centerContent?: React.ReactNode;
+  groupId: string
+  groupName: string
+  onUpdateGroupName?: (newName: string) => void
+  isStatView: boolean
+  onStatView: () => void
+  onToggleLeftSidebar?: () => void
+  onToggleRightSidebar?: () => void
+  centerContent?: React.ReactNode
 }
 
 export default function TopBar({
@@ -26,40 +29,77 @@ export default function TopBar({
   centerContent,
 }: TopBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 relative">
-      <div className="flex flex-col items-center sm:flex-row sm:items-center w-full sm:w-auto relative">
-        <div className="flex-shrink-0">
-          <CompactGroupHeader groupName={groupName} onUpdateName={onUpdateGroupName} />
+    <div className="mb-3 relative w-full">
+      {/* mobile: single-row + buttons below */}
+      <div className="lg:hidden">
+        <div className="flex items-center justify-between w-full">
+          <CompactGroupHeader
+            groupName={groupName}
+            onUpdateName={onUpdateGroupName}
+          />
+          {centerContent && (
+            <div className="flex-shrink-0">
+              {centerContent}
+            </div>
+          )}
         </div>
+        <div className="flex justify-center gap-2 items-center mt-2">
+          <button
+            onClick={onToggleLeftSidebar}
+            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+          >
+            <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Groups</span>
+          </button>
+          <StatButton isStatView={isStatView} onStatView={onStatView} />
+          <ShareButton groupId={groupId} />
+          <button
+            onClick={onToggleRightSidebar}
+            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+          >
+            <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Comments</span>
+          </button>
+        </div>
+      </div>
+
+      {/* desktop: auto | 1fr | auto */}
+      <div className="hidden lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-4 w-full">
+        {/* left */}
+        <div>
+          <CompactGroupHeader
+            groupName={groupName}
+            onUpdateName={onUpdateGroupName}
+          />
+        </div>
+
+        {/* center */}
         {centerContent && (
-          <div className="mt-2 sm:mt-0 w-full flex justify-center sm:absolute sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:pointer-events-none">
-            <div className="pointer-events-auto relative">{centerContent}</div>
+          <div className="justify-self-center">
+            {centerContent}
           </div>
         )}
-      </div>
-      <div className="flex gap-2 items-center justify-end mt-2 sm:mt-0">
-        <button
-          onClick={onToggleLeftSidebar}
-          className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-        >
-          <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
-          <span className="text-sm hidden sm:inline">Groups</span>
-        </button>
-        <div>
+
+        {/* right */}
+        <div className="justify-self-end flex gap-2 items-center">
+          <button
+            onClick={onToggleLeftSidebar}
+            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+          >
+            <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Groups</span>
+          </button>
           <StatButton isStatView={isStatView} onStatView={onStatView} />
-        </div>
-        <div>
           <ShareButton groupId={groupId} />
+          <button
+            onClick={onToggleRightSidebar}
+            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+          >
+            <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
+            <span className="text-sm hidden sm:inline">Comments</span>
+          </button>
         </div>
-        <button
-          onClick={onToggleRightSidebar}
-          className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-        >
-          <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
-          <span className="text-sm hidden sm:inline">Comments</span>
-        </button>
       </div>
     </div>
-  );
+  )
 }
-
