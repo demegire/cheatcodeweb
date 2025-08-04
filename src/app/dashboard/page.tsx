@@ -11,6 +11,7 @@ import { Task } from '../../types';
 import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
+import ConfirmModal from '../../components/modals/ConfirmModal';
 
 interface GroupData {
   id: string;
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
   const [isStatView, setStatView] = useState(false);
+  const [groupToLeave, setGroupToLeave] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -181,10 +183,9 @@ export default function DashboardPage() {
       }
     };
 
-    const handleLeaveGroup = async (groupId: string) => {
-        if (!user) return;
-        const confirmed = window.confirm('Are you sure you want to leave this group?');
-        if (!confirmed) return;
+    const handleLeaveGroup = async () => {
+        if (!user || !groupToLeave) return;
+        const groupId = groupToLeave;
 
         try {
           await updateDoc(doc(db, 'groups', groupId), {
@@ -205,8 +206,14 @@ export default function DashboardPage() {
           });
         } catch (error) {
           console.error('Error leaving group:', error);
+        } finally {
+          setGroupToLeave(null);
         }
       };
+
+    const promptLeaveGroup = (groupId: string) => {
+        setGroupToLeave(groupId);
+    };
 
 
 
@@ -267,39 +274,52 @@ export default function DashboardPage() {
   }
 
   return (
-    <MainLayout
-      groups={groups}
-      selectedGroup={selectedGroup}
-      onGroupSelect={handleGroupSelect}
-      onCreateGroup={handleCreateGroup}
-      onLeaveGroup={handleLeaveGroup}
-      groupId={selectedGroup?.id}
-      currentWeekId={currentISOWeek}
-      selectedTask={selectedTask}
-      onSelectTask={setSelectedTask}
-      >
-      {selectedGroup && !isStatView && (
-        <TaskTracker
-        groupId={selectedGroup?.id || ''}
-        groupName={selectedGroup?.name || ''}
-        members={selectedGroup?.members || []}
-        onGroupNameUpdate={handleGroupNameUpdate}
-        onSelectTask={setSelectedTask}
+    <>
+      <MainLayout
+        groups={groups}
+        selectedGroup={selectedGroup}
+        onGroupSelect={handleGroupSelect}
+        onCreateGroup={handleCreateGroup}
+        onLeaveGroup={promptLeaveGroup}
+        groupId={selectedGroup?.id}
+        currentWeekId={currentISOWeek}
         selectedTask={selectedTask}
-        onWeekChange={setCurrentISOWeek}
-        isStatView={isStatView}
-        onStatView={handleStatButtonPress}
-      />
-      )}
-      {selectedGroup && isStatView && (
-        <StatsView
-        groupID={selectedGroup?.id || ''}
-        groupName={selectedGroup?.name || ''}
-        members = {selectedGroup?.members || []}
-        isStatView={isStatView}
-        onStatView={handleStatButtonPress}
+        onSelectTask={setSelectedTask}
+        >
+        {selectedGroup && !isStatView && (
+          <TaskTracker
+          groupId={selectedGroup?.id || ''}
+          groupName={selectedGroup?.name || ''}
+          members={selectedGroup?.members || []}
+          onGroupNameUpdate={handleGroupNameUpdate}
+          onSelectTask={setSelectedTask}
+          selectedTask={selectedTask}
+          onWeekChange={setCurrentISOWeek}
+          isStatView={isStatView}
+          onStatView={handleStatButtonPress}
+        />
+        )}
+        {selectedGroup && isStatView && (
+          <StatsView
+          groupID={selectedGroup?.id || ''}
+          groupName={selectedGroup?.name || ''}
+          members = {selectedGroup?.members || []}
+          isStatView={isStatView}
+          onStatView={handleStatButtonPress}
+          />
+        )}
+      </MainLayout>
+
+      {groupToLeave && (
+        <ConfirmModal
+          title="Leave group?"
+          message="Are you sure you want to leave this group?"
+          confirmText="Leave"
+          cancelText="Cancel"
+          onConfirm={handleLeaveGroup}
+          onCancel={() => setGroupToLeave(null)}
         />
       )}
-    </MainLayout>
+    </>
   );
 }
