@@ -36,22 +36,23 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
             onChange={(e) => setName(e.target.value)}
             onKeyPress={handleKeyPress}
             className="border text-gray-800 rounded px-2 py-1 text-xl font-bold"
+            maxLength={24}
             autoFocus
           />
           <button
             onClick={handleSave}
-            className="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+            className="ml-2 px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
           >
-            Save
+            ✓
           </button>
           <button
             onClick={() => {
               setName(groupName);
               setIsEditing(false);
             }}
-            className="ml-2 bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+            className="ml-1 px-3 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
           >
-            Cancel
+            x
           </button>
         </div>
       ) : (
@@ -60,9 +61,9 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
           onClick={() => onUpdateName && setIsEditing(true)}
         >
           <span className="sm:hidden">
-            {groupName.length > 8 ? `${groupName.slice(0, 8)}...` : groupName}
+            {groupName.length > 8 ? `${groupName.slice(0, 12)}...` : groupName}
           </span>
-          <span className="hidden sm:inline">{groupName}</span>
+          <span className="hidden sm:inline">{groupName.length > 25 ? `${groupName.slice(0, 25)}...` : groupName}</span>
         </h1>
       )}
     </div>

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import StatButton from '../layout/StatsButton';
-import ShareButton from '../layout/ShareButton';
-import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import TopBar from '../layout/TopBar';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -336,35 +334,14 @@ export default function StatsView({
 
   return (
     <div className="flex flex-col h-screen overflow-y-auto p-4 relative">
-      <div className="flex justify-between items-center mb-3 relative">
-        {/* Left section: Group name */}
-        <div className="py-2 flex justify-center items-center">
-          <h1 className="text-2xl text-gray-800 font-bold">{groupName}</h1>
-        </div>
-        {/* Right section: buttons */}
-        <div className="flex gap-2 items-center">
-            <button
-              onClick={onToggleLeftSidebar}
-              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-            >
-              <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
-              <span className="text-sm hidden sm:inline">Groups</span>
-            </button>
-          <div>
-            <StatButton isStatView={isStatView} onStatView={onStatView} />
-          </div>
-          <div>
-            <ShareButton groupId={groupID} />
-          </div>
-            <button
-              onClick={onToggleRightSidebar}
-              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-            >
-              <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
-              <span className="text-sm hidden sm:inline">Comments</span>
-              </button>
-        </div>
-      </div>
+      <TopBar
+        groupId={groupID}
+        groupName={groupName}
+        isStatView={isStatView}
+        onStatView={onStatView}
+        onToggleLeftSidebar={onToggleLeftSidebar}
+        onToggleRightSidebar={onToggleRightSidebar}
+      />
 
       {/* Charts */}
       <div className="grid flex-1 grid-rows-3 md:grid-rows-2 md:grid-cols-2">

@@ -249,7 +249,7 @@ export default function CommentSection({
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="px-2 py-1 bg-theme text-white rounded hover:bg-theme-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>

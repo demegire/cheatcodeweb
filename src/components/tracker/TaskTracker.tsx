@@ -3,14 +3,11 @@ import { useAuth } from '../../lib/hooks/useAuth';
 import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
 import WeeklyNavigation from './WeeklyNavigation';
-import CompactGroupHeader from '../layout/CompactGroupHeader';
-import ShareButton from '../layout/ShareButton';
+import TopBar from '../layout/TopBar';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
-import StatButton from '../layout/StatsButton';
-import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 
 // Helper function to get day names with dates for a specific ISO week
 const getDayNames = (isoWeek: string) => {
@@ -458,26 +455,22 @@ export default function TaskTracker({
 
   return (
     <div className="flex flex-col h-full overflow-hidden p-4 relative">
-      <div className="flex justify-between items-center mb-3 relative">
-        {/* Left section: Group name */}
-        <div className="flex-shrink-0">
-          <CompactGroupHeader
-            groupName={currentGroupName}
-            onUpdateName={handleUpdateGroupName}
-          />
-        </div>
-        
-        {/* Middle section: Weekly navigation - absolutely positioned */}
-        <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
-          <div className="pointer-events-auto relative">
-            {/* Position ThisWeekButton absolutely relative to the centered WeeklyNavigation */}
+      <TopBar
+        groupId={groupId}
+        groupName={currentGroupName}
+        onUpdateGroupName={handleUpdateGroupName}
+        isStatView={isStatView}
+        onStatView={onStatView}
+        onToggleLeftSidebar={onToggleLeftSidebar}
+        onToggleRightSidebar={onToggleRightSidebar}
+        centerContent={
+          <div className="relative">
             <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2">
               <ThisWeekButton
                 currentISOWeek={currentISOWeek}
                 onCurrentWeek={handleCurrentWeek}
               />
             </div>
-            
             <WeeklyNavigation
               currentISOWeek={currentISOWeek}
               onPreviousWeek={handlePreviousWeek}
@@ -486,32 +479,8 @@ export default function TaskTracker({
               onYearSelect={handleYearSelect}
             />
           </div>
-        </div>
-        
-        {/* Right section: buttons */}
-        <div className="flex gap-2 items-center">
-            <button
-              onClick={onToggleLeftSidebar}
-              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-            >
-              <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
-              <span className="text-sm hidden sm:inline">Groups</span>
-              </button>
-          <div>
-            <StatButton isStatView={isStatView} onStatView={onStatView} />
-          </div>
-          <div>
-            <ShareButton groupId={groupId} />
-          </div>
-            <button
-              onClick={onToggleRightSidebar}
-              className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
-            >
-              <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
-              <span className="text-sm hidden sm:inline">Comments</span>
-            </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="flex-grow overflow-auto">
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 md:w-full table-fixed">
