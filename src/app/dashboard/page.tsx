@@ -73,20 +73,36 @@ export default function DashboardPage() {
           if (groupDocSnap.exists()) {
             const groupData = groupDocSnap.data();
 
-            const memberUids: Record<string, boolean> = groupData.memberUids || {};
-            const members: { id: string; name: string; color: string }[] = [];
-
-            for (const uid of Object.keys(memberUids)) {
-              const memberSnap = await getDoc(doc(db, 'users', uid));
-              if (memberSnap.exists()) {
-                const memberData = memberSnap.data();
-                members.push({
-                  id: uid,
-                  name: memberData.displayName || 'User',
-                  color: memberData.color || '#3B82F6'
-                });
-              }
-            }
+                    const memberUids: Record<string, boolean> = groupData.memberUids || {};
+                    const members: { id: string; name: string; color: string }[] = [];
+                    const me = authUser.uid;
+            
+                    // 1️⃣ Add me first (if I’m in this group)
+                    if (memberUids[me]) {
+                      const meSnap = await getDoc(doc(db, 'users', me));
+                      if (meSnap.exists()) {
+                        const { displayName, color } = meSnap.data();
+                        members.push({
+                          id: me,
+                          name: displayName || 'You',
+                          color: color || '#3B82F6'
+                        });
+                      }
+                    }
+            
+                    // 2️⃣ Then add everyone else
+                    for (const uid of Object.keys(memberUids)) {
+                      if (uid === me) continue;
+                      const memberSnap = await getDoc(doc(db, 'users', uid));
+                      if (memberSnap.exists()) {
+                        const { displayName, color } = memberSnap.data();
+                        members.push({
+                          id: uid,
+                          name: displayName || 'User',
+                          color: color || '#3B82F6'
+                        });
+                      }
+                    }
 
             groupsData.push({
               id: groupDocSnap.id,
