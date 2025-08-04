@@ -145,6 +145,27 @@ export default function TaskCell({
     }, [isExpanded, inputContainerRef]); // Add inputContainerRef to dependencies
 
     useEffect(() => {
+      const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+        // if you tapped or clicked anywhere _outside_ this <td>
+        if (cellRef.current && !cellRef.current.contains(e.target as Node)) {
+          setIsHovering(false);
+          // mirror your onMouseLeave collapse logic
+          setTimeout(() => {
+            if (!isFocused && !newTaskText.trim()) {
+              setIsExpanded(false);
+            }
+          }, 50);
+        }
+      };
+
+      document.addEventListener('touchstart', handlePointerDown);
+
+      return () => {
+        document.removeEventListener('touchstart', handlePointerDown);
+      };
+    }, [isFocused, newTaskText]);
+
+    useEffect(() => {
       // Add and remove document click listener
       document.addEventListener('click', handleDocumentClick);
       return () => {
@@ -185,6 +206,8 @@ export default function TaskCell({
           backgroundColor: `${color}10`
         }}
         onMouseEnter={() => setIsHovering(true)}
+        onTouchStart={() => setIsHovering(true)} 
+        onClick={() => setIsHovering(true)}
         onMouseLeave={() => {
             setIsHovering(false);
             // If input is not focused and is empty, close the options

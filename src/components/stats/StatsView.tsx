@@ -342,7 +342,7 @@ export default function StatsView({
           <h1 className="text-2xl text-gray-800 font-bold">{groupName}</h1>
         </div>
         {/* Right section: buttons */}
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 items-center">
             <button
               onClick={onToggleLeftSidebar}
               className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"

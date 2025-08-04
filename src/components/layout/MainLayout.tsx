@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../../lib/firebase';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ArrowLeftStartOnRectangleIcon } from '@heroicons/react/24/outline';
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -140,12 +140,21 @@ export default function MainLayout({
             </div>
           </div>
           
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className={`text-sm text-gray-600 hover:text-gray-900 ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-            >
-              Logout
+          <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+            <button 
+            onClick={handleLogout} 
+            className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+          >
+            <ArrowLeftStartOnRectangleIcon className="h-5 w-5" />
+            <span className="text-sm">Logout</span>
+          </button>
+            
+            <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
+              {sidebarCollapsed ? (
+                <ChevronRightIcon className="h-5 w-5" />
+              ) : (
+                <ChevronLeftIcon className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
