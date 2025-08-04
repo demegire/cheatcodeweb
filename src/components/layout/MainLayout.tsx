@@ -101,7 +101,9 @@ export default function MainLayout({
         className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
         ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-10'}`}
       >
-        <div className="h-full flex flex-col">
+        {!sidebarCollapsed &&
+        (
+          <div className="h-full flex flex-col">
           {!sidebarCollapsed && (
             <div className="p-4  mt-2 border-b border-gray-200 flex items-center justify-between">
               <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
@@ -153,6 +155,8 @@ export default function MainLayout({
             
           </div>
         </div>
+        )
+        }
       </div>
       
       {/* Main Content */}

@@ -8,8 +8,19 @@ export default function LoginForm() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-xs w-full">
-        <h1 className="text-3xl font-bold mb-8 text-blue-600 text-center">cheat-code.cc</h1>
-        <p className="mb-8 text-center max-w-md text-gray-600">
+      <div className="flex items-center justify-center mb-8">
+        <h1 className="text-3xl font-bold text-black">
+          cheat-code.
+        </h1>
+        <Image
+          src="/android-chrome-192x192.png"
+          alt="cc logo"
+          width={36}
+          height={36}
+          className="h-9 w-9 relative top-0.75"
+        />
+      </div>
+        <p className="mb-8 text-center max-w-md text-black">
           Stay accountable together.
         </p>
         
