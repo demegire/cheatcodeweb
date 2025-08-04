@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { collection, addDoc, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Comment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -33,6 +33,7 @@ export default function CommentSection({
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
@@ -111,9 +112,62 @@ export default function CommentSection({
   }, [comments.length]);
 
   // Filter comments based on selected task
-  const filteredComments = selectedTask 
+  const filteredComments = selectedTask
     ? comments.filter(comment => comment.taskId === selectedTask.id)
     : comments;
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!groupId) return;
+    try {
+      await deleteDoc(doc(db, 'groups', groupId, 'comments', commentId));
+      if (selectedCommentId === commentId) {
+        setSelectedCommentId(null);
+        setHighlightedCommentId(null);
+        onHighlightTask(null);
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleEditComment = async (commentId: string, newText: string) => {
+    if (!groupId) return;
+    try {
+      await updateDoc(doc(db, 'groups', groupId, 'comments', commentId), { text: newText });
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
+  };
+
+  const handleCommentHover = (comment: Comment) => {
+    setHighlightedCommentId(comment.id);
+    if (comment.taskId) {
+      onHighlightTask(comment.taskId);
+    }
+  };
+
+  const handleCommentLeave = (commentId: string) => {
+    if (selectedCommentId !== commentId) {
+      setHighlightedCommentId(null);
+      onHighlightTask(null);
+    }
+  };
+
+  const handleCommentClick = (comment: Comment) => {
+    if (selectedCommentId === comment.id) {
+      setSelectedCommentId(null);
+      setHighlightedCommentId(null);
+      onHighlightTask(null);
+    } else {
+      setSelectedCommentId(comment.id);
+      setHighlightedCommentId(comment.id);
+      if (comment.taskId) {
+        onHighlightTask(comment.taskId);
+      } else {
+        onHighlightTask(null);
+      }
+    }
+  };
 
   // Add a new comment
   const handleAddComment = async () => {
@@ -191,21 +245,18 @@ export default function CommentSection({
         )  : (
           <div className="p-4">
             {filteredComments.map(comment => (
-              <CommentItem 
+              <CommentItem
                 key={comment.id}
                 comment={comment}
-                isHighlighted={!!(comment.id === highlightedCommentId || 
+                isHighlighted={!!(comment.id === highlightedCommentId ||
                   (comment.taskId && comment.taskId === highlightedTaskId))}
-                onHover={() => {
-                  setHighlightedCommentId(comment.id);
-                  if (comment.taskId) {
-                    onHighlightTask(comment.taskId);
-                  }
-                }}
-                onLeave={() => {
-                  setHighlightedCommentId(null);
-                  onHighlightTask(null);
-                }}
+                onHover={() => handleCommentHover(comment)}
+                onLeave={() => handleCommentLeave(comment.id)}
+                onClick={() => handleCommentClick(comment)}
+                isOwnComment={comment.userId === user?.uid}
+                isSelected={selectedCommentId === comment.id}
+                onDelete={() => handleDeleteComment(comment.id)}
+                onEdit={(newText) => handleEditComment(comment.id, newText)}
               />
             ))}
             {filteredComments.length === 0 && (
