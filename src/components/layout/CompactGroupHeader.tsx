@@ -44,7 +44,7 @@ export default function CompactGroupHeader({
           />
           <button
             onClick={handleSave}
-            className="ml-2 h-full px-3 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+            className="w-8 h-8 ml-1 px-3 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
           >
             ✓
           </button>
@@ -53,7 +53,7 @@ export default function CompactGroupHeader({
               setName(groupName);
               setIsEditing(false);
             }}
-            className="ml-1 h-full px-3 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
+            className="w-8 h-8 ml-1 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
           >
             x
           </button>
