@@ -28,6 +28,7 @@ interface MainLayoutProps {
   selectedGroup?: GroupData | null;
   onGroupSelect?: (group: GroupData) => void;
   onCreateGroup?: () => void;
+  onLeaveGroup?: (groupId: string) => void;
   groupId?: string;
   currentWeekId?: string;
   selectedTask?: Task | null;
@@ -36,10 +37,11 @@ interface MainLayoutProps {
 
 export default function MainLayout({ 
   children, 
-  groups = [], 
+  groups = [],
   selectedGroup = null,
   onGroupSelect = () => {},
   onCreateGroup = () => {},
+  onLeaveGroup = () => {},
   groupId = '',
   currentWeekId = '',
   selectedTask = null,
@@ -49,6 +51,7 @@ export default function MainLayout({
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -118,15 +121,34 @@ export default function MainLayout({
             {/* Group list */}
             <ul className="space-y-1 px-2 mt-2">
               {groups.map(group => (
-                <li 
+                <li
                   key={group.id}
                   className={`rounded-lg transition-colors duration-500 cursor-pointer p-2 ${
                     selectedGroup?.id === group.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-200'
                   }`}
-                  onClick={() => onGroupSelect(group)}
+                  onMouseEnter={() => setActiveGroupId(group.id)}
+                  onMouseLeave={() => setActiveGroupId(null)}
+                  onClick={() => {
+                    onGroupSelect(group);
+                    setActiveGroupId(group.id);
+                  }}
                 >
                   {!sidebarCollapsed && (
-                    <div className="truncate text-gray-600">{group.name}</div>
+                    <div className="flex items-center justify-between truncate text-gray-600">
+                      <span className="truncate">{group.name}</span>
+                      {activeGroupId === group.id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onLeaveGroup(group.id);
+                          }}
+                          className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2"
+                          title="Leave group"
+                        >
+                          <ArrowLeftStartOnRectangleIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </li>
               ))}

@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import ProfileSetup from '../../components/auth/ProfileSetup';
 import MainLayout from '../../components/layout/MainLayout';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -11,6 +11,8 @@ import { Task } from '../../types';
 import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
+import ConfirmModal from '../../components/modals/ConfirmModal';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface GroupData {
   id: string;
@@ -32,6 +34,7 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
   const [isStatView, setStatView] = useState(false);
+  const [groupToLeave, setGroupToLeave] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -73,36 +76,39 @@ export default function DashboardPage() {
           if (groupDocSnap.exists()) {
             const groupData = groupDocSnap.data();
 
-                    const memberUids: Record<string, boolean> = groupData.memberUids || {};
-                    const members: { id: string; name: string; color: string }[] = [];
-                    const me = authUser.uid;
-            
-                    // 1️⃣ Add me first (if I’m in this group)
-                    if (memberUids[me]) {
-                      const meSnap = await getDoc(doc(db, 'users', me));
-                      if (meSnap.exists()) {
-                        const { displayName, color } = meSnap.data();
-                        members.push({
-                          id: me,
-                          name: displayName || 'You',
-                          color: color || '#3B82F6'
-                        });
-                      }
-                    }
-            
-                    // 2️⃣ Then add everyone else
-                    for (const uid of Object.keys(memberUids)) {
-                      if (uid === me) continue;
-                      const memberSnap = await getDoc(doc(db, 'users', uid));
-                      if (memberSnap.exists()) {
-                        const { displayName, color } = memberSnap.data();
-                        members.push({
-                          id: uid,
-                          name: displayName || 'User',
-                          color: color || '#3B82F6'
-                        });
-                      }
-                    }
+            const memberUids: Record<string, boolean> = groupData.memberUids || {};
+            // Skip groups where current user is marked as not a member
+            if (!memberUids[authUser.uid]) continue;
+
+            const members: { id: string; name: string; color: string }[] = [];
+            const me = authUser.uid;
+
+            // 1️⃣ Add me first (if I’m in this group)
+            if (memberUids[me]) {
+              const meSnap = await getDoc(doc(db, 'users', me));
+              if (meSnap.exists()) {
+                const { displayName, color } = meSnap.data();
+                members.push({
+                  id: me,
+                  name: displayName || 'You',
+                  color: color || '#3B82F6'
+                });
+              }
+            }
+
+            // 2️⃣ Then add everyone else
+            for (const uid of Object.keys(memberUids)) {
+              if (uid === me || !memberUids[uid]) continue;
+              const memberSnap = await getDoc(doc(db, 'users', uid));
+              if (memberSnap.exists()) {
+                const { displayName, color } = memberSnap.data();
+                members.push({
+                  id: uid,
+                  name: displayName || 'User',
+                  color: color || '#3B82F6'
+                });
+              }
+            }
 
             groupsData.push({
               id: groupDocSnap.id,
@@ -172,11 +178,43 @@ export default function DashboardPage() {
           setGroups(prev => [...prev, newGroup]);
           setSelectedGroup(newGroup);
           
+      } catch (error) {
+        console.error("Error creating group:", error);
+        alert("Failed to create group. Please try again.");
+      }
+    };
+
+    const handleLeaveGroup = async () => {
+        if (!user || !groupToLeave) return;
+        const groupId = groupToLeave;
+
+        try {
+          await updateDoc(doc(db, 'groups', groupId), {
+            [`memberUids.${user.uid}`]: false
+          });
+
+          await updateDoc(doc(db, 'users', user.uid), {
+            groups: arrayRemove(groupId),
+            deletedGroups: arrayUnion(groupId)
+          });
+
+          setGroups(prev => {
+            const updated = prev.filter(g => g.id !== groupId);
+            if (selectedGroup?.id === groupId) {
+              setSelectedGroup(updated[0] || null);
+            }
+            return updated;
+          });
         } catch (error) {
-          console.error("Error creating group:", error);
-          alert("Failed to create group. Please try again.");
+          console.error('Error leaving group:', error);
+        } finally {
+          setGroupToLeave(null);
         }
       };
+
+    const promptLeaveGroup = (groupId: string) => {
+        setGroupToLeave(groupId);
+    };
 
 
 
@@ -226,9 +264,10 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold mb-4">No Groups Found</h1>
           <p className="text-gray-600 mb-8">You are not a member of any groups yet.</p>
           <button 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-theme text-white px-4 py-2 rounded-full hover:bg-theme-hover flex items-center"
             onClick={handleCreateGroup}
           >
+            <PlusIcon className="mr-1 h-6 w-6 text-white" />
             Create New Group
           </button>
         </div>
@@ -237,38 +276,52 @@ export default function DashboardPage() {
   }
 
   return (
-    <MainLayout 
-      groups={groups}
-      selectedGroup={selectedGroup}
-      onGroupSelect={handleGroupSelect}
-      onCreateGroup={handleCreateGroup}
-      groupId={selectedGroup?.id}
-      currentWeekId={currentISOWeek}
-      selectedTask={selectedTask}
-      onSelectTask={setSelectedTask}
-      > 
-      {selectedGroup && !isStatView && (
-        <TaskTracker
-        groupId={selectedGroup?.id || ''}
-        groupName={selectedGroup?.name || ''}
-        members={selectedGroup?.members || []}
-        onGroupNameUpdate={handleGroupNameUpdate}
-        onSelectTask={setSelectedTask}
+    <>
+      <MainLayout
+        groups={groups}
+        selectedGroup={selectedGroup}
+        onGroupSelect={handleGroupSelect}
+        onCreateGroup={handleCreateGroup}
+        onLeaveGroup={promptLeaveGroup}
+        groupId={selectedGroup?.id}
+        currentWeekId={currentISOWeek}
         selectedTask={selectedTask}
-        onWeekChange={setCurrentISOWeek}
-        isStatView={isStatView}
-        onStatView={handleStatButtonPress}
-      />
-      )}
-      {selectedGroup && isStatView && (
-        <StatsView
-        groupID={selectedGroup?.id || ''}
-        groupName={selectedGroup?.name || ''}
-        members = {selectedGroup?.members || []}
-        isStatView={isStatView}
-        onStatView={handleStatButtonPress}
+        onSelectTask={setSelectedTask}
+        >
+        {selectedGroup && !isStatView && (
+          <TaskTracker
+          groupId={selectedGroup?.id || ''}
+          groupName={selectedGroup?.name || ''}
+          members={selectedGroup?.members || []}
+          onGroupNameUpdate={handleGroupNameUpdate}
+          onSelectTask={setSelectedTask}
+          selectedTask={selectedTask}
+          onWeekChange={setCurrentISOWeek}
+          isStatView={isStatView}
+          onStatView={handleStatButtonPress}
+        />
+        )}
+        {selectedGroup && isStatView && (
+          <StatsView
+          groupID={selectedGroup?.id || ''}
+          groupName={selectedGroup?.name || ''}
+          members = {selectedGroup?.members || []}
+          isStatView={isStatView}
+          onStatView={handleStatButtonPress}
+          />
+        )}
+      </MainLayout>
+
+      {groupToLeave && (
+        <ConfirmModal
+          title="Leave group?"
+          message="Are you sure you want to leave this group?"
+          confirmText="Leave"
+          cancelText="Cancel"
+          onConfirm={handleLeaveGroup}
+          onCancel={() => setGroupToLeave(null)}
         />
       )}
-    </MainLayout>
+    </>
   );
 }
