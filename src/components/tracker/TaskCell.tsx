@@ -59,6 +59,8 @@ export default function TaskCell({
     const cellRef = useRef<HTMLTableCellElement>(null);
     const tasksContainerRef = useRef<HTMLDivElement>(null);
     const inputContainerRef = useRef<HTMLDivElement>(null); // Ref for the input container
+    const isFocusedRef = useRef(isFocused);
+    const newTaskTextRef = useRef(newTaskText);
 
     // Removed cellWidth state and related effect as input width is now handled by flexbox
     // Removed local currentTaskType state and its localStorage effect
@@ -75,6 +77,13 @@ export default function TaskCell({
       }
     }, [isExpanded]); // Re-measure only when expanded state changes
 
+    useEffect(() => {
+      isFocusedRef.current = isFocused;
+    }, [isFocused]);
+
+    useEffect(() => {
+      newTaskTextRef.current = newTaskText;
+    }, [newTaskText]);
 
     const handleAddTask = () => {
       if (newTaskText.trim() && newTaskText.length <= 64) {
@@ -146,24 +155,22 @@ export default function TaskCell({
 
     useEffect(() => {
       const handlePointerDown = (e: MouseEvent | TouchEvent) => {
-        // if you tapped or clicked anywhere _outside_ this <td>
         if (cellRef.current && !cellRef.current.contains(e.target as Node)) {
           setIsHovering(false);
-          // mirror your onMouseLeave collapse logic
           setTimeout(() => {
-            if (!isFocused && !newTaskText.trim()) {
+            if (!isFocusedRef.current && !newTaskTextRef.current.trim()) {
               setIsExpanded(false);
             }
           }, 50);
         }
       };
 
-      document.addEventListener('touchstart', handlePointerDown);
+      document.addEventListener('touchstart', handlePointerDown, { passive: true });
 
       return () => {
         document.removeEventListener('touchstart', handlePointerDown);
       };
-    }, [isFocused, newTaskText]);
+    }, []);
 
     useEffect(() => {
       // Add and remove document click listener
