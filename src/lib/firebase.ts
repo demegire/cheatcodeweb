@@ -4,7 +4,7 @@ import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW5_FGdw751zrXx45PbfLsedU5T-mOW2o",
-  authDomain: "cheatcode-cc.firebaseapp.com",
+  authDomain: "auth.cheat-code.cc",
   projectId: "cheatcode-cc",
   storageBucket: "cheatcode-cc.firebasestorage.app",
   messagingSenderId: "369737877345",
