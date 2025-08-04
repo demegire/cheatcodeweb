@@ -40,18 +40,18 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
           />
           <button
             onClick={handleSave}
-            className="ml-2 bg-black text-white px-3 py-1 rounded"
+            className="ml-2 px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
           >
-            Save
+            ✓
           </button>
           <button
             onClick={() => {
               setName(groupName);
               setIsEditing(false);
             }}
-            className="ml-2 bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+            className="ml-1 px-3 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
           >
-            Cancel
+            x
           </button>
         </div>
       ) : (
