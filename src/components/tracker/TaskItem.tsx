@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
 import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
 
@@ -72,6 +72,19 @@ export default function TaskItem({
     setShowButtons(false);
   };
 
+  const handleClick = () => {
+    onSelect?.();
+    if (isCurrentUser) {
+      setShowButtons(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!isHighlighted) {
+      setShowButtons(false);
+    }
+  }, [isHighlighted]);
+
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(true);
@@ -100,7 +113,7 @@ export default function TaskItem({
         ${onSelect ? 'cursor-pointer' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={onSelect}
+      onClick={handleClick}
       data-task-item="true"
     >
       {/* Comment icon - shows in top right corner when task has comments */}

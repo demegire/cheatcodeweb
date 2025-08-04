@@ -89,10 +89,13 @@ export default function CommentSection({
   // Add an effect to handle clicks outside of the task cell
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      // If there's a selected task and the click is not within a task element
-      if (selectedTask && 
-          !(e.target as Element)?.closest('[data-task-item="true"]') && 
-          !containerRef.current?.contains(e.target as Node)) {
+      const target = e.target as Element;
+      if (
+        selectedTask &&
+        !target.closest('[data-task-item="true"]') &&
+        !containerRef.current?.contains(target) &&
+        !target.closest('[data-comment-toggle="true"]')
+      ) {
         onSelectTask(null);
       }
     };
