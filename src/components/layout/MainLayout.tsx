@@ -142,7 +142,7 @@ export default function MainLayout({
                             e.stopPropagation();
                             onLeaveGroup(group.id);
                           }}
-                          className="w-6 h-6 flex items-center justify-center rounded-full bg-theme hover:bg-theme-hover text-white ml-2"
+                          className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2"
                           title="Leave group"
                         >
                           <ArrowLeftStartOnRectangleIcon className="h-4 w-4" />

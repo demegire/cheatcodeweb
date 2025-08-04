@@ -12,6 +12,7 @@ import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface GroupData {
   id: string;
@@ -263,9 +264,10 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold mb-4">No Groups Found</h1>
           <p className="text-gray-600 mb-8">You are not a member of any groups yet.</p>
           <button 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-theme text-white px-4 py-2 rounded-full hover:bg-theme-hover flex items-center"
             onClick={handleCreateGroup}
           >
+            <PlusIcon className="mr-1 h-6 w-6 text-white" />
             Create New Group
           </button>
         </div>
