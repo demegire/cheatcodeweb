@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import ProfileSetup from '../../components/auth/ProfileSetup';
 import MainLayout from '../../components/layout/MainLayout';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -73,36 +73,39 @@ export default function DashboardPage() {
           if (groupDocSnap.exists()) {
             const groupData = groupDocSnap.data();
 
-                    const memberUids: Record<string, boolean> = groupData.memberUids || {};
-                    const members: { id: string; name: string; color: string }[] = [];
-                    const me = authUser.uid;
-            
-                    // 1️⃣ Add me first (if I’m in this group)
-                    if (memberUids[me]) {
-                      const meSnap = await getDoc(doc(db, 'users', me));
-                      if (meSnap.exists()) {
-                        const { displayName, color } = meSnap.data();
-                        members.push({
-                          id: me,
-                          name: displayName || 'You',
-                          color: color || '#3B82F6'
-                        });
-                      }
-                    }
-            
-                    // 2️⃣ Then add everyone else
-                    for (const uid of Object.keys(memberUids)) {
-                      if (uid === me) continue;
-                      const memberSnap = await getDoc(doc(db, 'users', uid));
-                      if (memberSnap.exists()) {
-                        const { displayName, color } = memberSnap.data();
-                        members.push({
-                          id: uid,
-                          name: displayName || 'User',
-                          color: color || '#3B82F6'
-                        });
-                      }
-                    }
+            const memberUids: Record<string, boolean> = groupData.memberUids || {};
+            // Skip groups where current user is marked as not a member
+            if (!memberUids[authUser.uid]) continue;
+
+            const members: { id: string; name: string; color: string }[] = [];
+            const me = authUser.uid;
+
+            // 1️⃣ Add me first (if I’m in this group)
+            if (memberUids[me]) {
+              const meSnap = await getDoc(doc(db, 'users', me));
+              if (meSnap.exists()) {
+                const { displayName, color } = meSnap.data();
+                members.push({
+                  id: me,
+                  name: displayName || 'You',
+                  color: color || '#3B82F6'
+                });
+              }
+            }
+
+            // 2️⃣ Then add everyone else
+            for (const uid of Object.keys(memberUids)) {
+              if (uid === me || !memberUids[uid]) continue;
+              const memberSnap = await getDoc(doc(db, 'users', uid));
+              if (memberSnap.exists()) {
+                const { displayName, color } = memberSnap.data();
+                members.push({
+                  id: uid,
+                  name: displayName || 'User',
+                  color: color || '#3B82F6'
+                });
+              }
+            }
 
             groupsData.push({
               id: groupDocSnap.id,
@@ -172,9 +175,36 @@ export default function DashboardPage() {
           setGroups(prev => [...prev, newGroup]);
           setSelectedGroup(newGroup);
           
+      } catch (error) {
+        console.error("Error creating group:", error);
+        alert("Failed to create group. Please try again.");
+      }
+    };
+
+    const handleLeaveGroup = async (groupId: string) => {
+        if (!user) return;
+        const confirmed = window.confirm('Are you sure you want to leave this group?');
+        if (!confirmed) return;
+
+        try {
+          await updateDoc(doc(db, 'groups', groupId), {
+            [`memberUids.${user.uid}`]: false
+          });
+
+          await updateDoc(doc(db, 'users', user.uid), {
+            groups: arrayRemove(groupId),
+            deletedGroups: arrayUnion(groupId)
+          });
+
+          setGroups(prev => {
+            const updated = prev.filter(g => g.id !== groupId);
+            if (selectedGroup?.id === groupId) {
+              setSelectedGroup(updated[0] || null);
+            }
+            return updated;
+          });
         } catch (error) {
-          console.error("Error creating group:", error);
-          alert("Failed to create group. Please try again.");
+          console.error('Error leaving group:', error);
         }
       };
 
@@ -237,16 +267,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <MainLayout 
+    <MainLayout
       groups={groups}
       selectedGroup={selectedGroup}
       onGroupSelect={handleGroupSelect}
       onCreateGroup={handleCreateGroup}
+      onLeaveGroup={handleLeaveGroup}
       groupId={selectedGroup?.id}
       currentWeekId={currentISOWeek}
       selectedTask={selectedTask}
       onSelectTask={setSelectedTask}
-      > 
+      >
       {selectedGroup && !isStatView && (
         <TaskTracker
         groupId={selectedGroup?.id || ''}
