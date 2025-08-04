@@ -36,6 +36,7 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
             onChange={(e) => setName(e.target.value)}
             onKeyPress={handleKeyPress}
             className="border text-gray-800 rounded px-2 py-1 text-xl font-bold"
+            maxLength={24}
             autoFocus
           />
           <button
@@ -62,7 +63,7 @@ export default function CompactGroupHeader({ groupName, onUpdateName }: CompactG
           <span className="sm:hidden">
             {groupName.length > 8 ? `${groupName.slice(0, 12)}...` : groupName}
           </span>
-          <span className="hidden sm:inline">{groupName}</span>
+          <span className="hidden sm:inline">{groupName.length > 25 ? `${groupName.slice(0, 25)}...` : groupName}</span>
         </h1>
       )}
     </div>
