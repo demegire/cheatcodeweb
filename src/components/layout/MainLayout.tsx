@@ -7,6 +7,7 @@ import TaskTracker from '../../components/tracker/TaskTracker';
 import StatsView from '../stats/StatsView';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import Image from 'next/image'
 
 type TaskTrackerComponentProps = React.ComponentProps<typeof TaskTracker>;
 type StatsViewComponentProps = React.ComponentProps<typeof StatsView>;
@@ -94,7 +95,7 @@ export default function MainLayout({
   };
 
   return (
-    <div className="flex h-screen relative">
+    <div className="flex h-screen relative overflow-x-hidden">
       {/* Left Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
@@ -102,8 +103,9 @@ export default function MainLayout({
       >
         <div className="h-full flex flex-col">
           {!sidebarCollapsed && (
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <div className="text-gray-600 font-bold">My Groups</div>
+            <div className="p-4  mt-2 border-b border-gray-200 flex items-center justify-between">
+              <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
+              <div className="text-black font-bold">cheat-code.cc</div>
               <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
@@ -112,7 +114,7 @@ export default function MainLayout({
           
           <div className="flex-1 overflow-y-auto">
             {/* Group list */}
-            <ul className="space-y-1 px-2">
+            <ul className="space-y-1 px-2 mt-2">
               {groups.map(group => (
                 <li 
                   key={group.id}
@@ -145,7 +147,7 @@ export default function MainLayout({
             onClick={handleLogout} 
             className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
           >
-            <ArrowLeftStartOnRectangleIcon className="h-5 w-5" />
+            <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
             <span className="text-sm">Logout</span>
           </button>
             
