@@ -259,7 +259,7 @@ export default function TaskItem({
           </button>
         </div>
       )}
-
+      {/* Time elapsed */}
       {!showButtons && !isEditing && (task.timerStartedAt || elapsed > 0) && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-gray-600">
           {formatTime(elapsed)}
@@ -288,8 +288,16 @@ export default function TaskItem({
           </button>
         </div>
       ) : (
-        <span className='ml-5 pl-1 block break-words overflow-hidden text-ellipsis'>
-          {task.text}
+        <span
+          className={`ml-5 pl-1 block break-words overflow-hidden text-ellipsis ${
+            !showButtons && 
+            !isEditing && 
+            (task.timerStartedAt || elapsed > 0)
+              ? 'max-w-7/10'
+              : ''
+          }`}
+        >
+            {task.text}
         </span>
       )}
     </div>
