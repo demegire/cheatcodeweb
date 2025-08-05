@@ -31,7 +31,9 @@ export default function TaskItem({
   onRejectTask,
   suggestedByColor,
   currentUserId,
-  hasComments = false
+  hasComments = false,
+  onStartTimer,
+  onStopTimer
 }: TaskItemProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
