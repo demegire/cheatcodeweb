@@ -7,6 +7,10 @@ export interface Task {
   createdAt: Date;
   weekId: string; // ISO week format like "2023-W42"
   suggestedBy?: string; // ID of the user who suggested this task (optional)
+  /** Timestamp when the timer was started. Null when timer is stopped */
+  timerStartedAt?: Date | null;
+  /** Total elapsed time in seconds for this task */
+  elapsedSeconds?: number;
   /**
    * Indicates that the task comes from the user's personal collection rather
    * than a group. This property is not persisted in Firestore and is derived
