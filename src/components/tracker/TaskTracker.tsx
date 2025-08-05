@@ -111,10 +111,21 @@ export default function TaskTracker({
           createdAt = new Date();
         }
 
+        let timerStartedAt;
+        if (data.timerStartedAt && typeof data.timerStartedAt.toDate === 'function') {
+          timerStartedAt = data.timerStartedAt.toDate();
+        } else if (data.timerStartedAt) {
+          timerStartedAt = new Date(data.timerStartedAt);
+        } else {
+          timerStartedAt = null;
+        }
+
         const task = {
           id: docSnap.id,
           ...data,
           createdAt,
+          timerStartedAt,
+          elapsedSeconds: data.elapsedSeconds || 0,
           isGlobal: false,
         } as Task;
 
@@ -176,10 +187,21 @@ export default function TaskTracker({
             createdAt = new Date();
           }
 
+          let timerStartedAt;
+          if (data.timerStartedAt && typeof data.timerStartedAt.toDate === 'function') {
+            timerStartedAt = data.timerStartedAt.toDate();
+          } else if (data.timerStartedAt) {
+            timerStartedAt = new Date(data.timerStartedAt);
+          } else {
+            timerStartedAt = null;
+          }
+
           globalTasks.push({
             id: docSnap.id,
             ...data,
             createdAt,
+            timerStartedAt,
+            elapsedSeconds: data.elapsedSeconds || 0,
             isGlobal: true,
           } as Task);
         });
@@ -264,7 +286,9 @@ export default function TaskTracker({
         day,
         createdBy: memberId,
         createdAt: new Date(),
-        weekId: currentISOWeek  // Using ISO week identifier
+        weekId: currentISOWeek, // Using ISO week identifier
+        timerStartedAt: null,
+        elapsedSeconds: 0,
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -283,7 +307,9 @@ export default function TaskTracker({
           day,
           createdBy: memberId,
           createdAt: new Date(),
-          weekId: currentISOWeek  // Using ISO week identifier
+          weekId: currentISOWeek, // Using ISO week identifier
+          timerStartedAt: null,
+          elapsedSeconds: 0,
         });
 
       // No need to update local state as the onSnapshot will handle that
@@ -378,6 +404,71 @@ export default function TaskTracker({
     }
   };
 
+  const handleStartTaskTimer = async (memberId: string, taskId: string) => {
+    if (!user) return;
+
+    try {
+      const memberTasks = tasks[memberId] || [];
+      const task = memberTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
+      const now = new Date();
+
+      await updateDoc(taskRef, {
+        timerStartedAt: now,
+      });
+
+      setTasks(prev => {
+        const memberTasks = prev[memberId] || [];
+        const updated = memberTasks.map(t =>
+          t.id === taskId ? { ...t, timerStartedAt: now } : t
+        );
+        return { ...prev, [memberId]: updated };
+      });
+    } catch (error) {
+      console.error('Error starting task timer:', error);
+    }
+  };
+
+  const handleStopTaskTimer = async (memberId: string, taskId: string) => {
+    if (!user) return;
+
+    try {
+      const memberTasks = tasks[memberId] || [];
+      const task = memberTasks.find(t => t.id === taskId);
+      if (!task || !task.timerStartedAt) return;
+
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
+      const now = new Date();
+      const elapsed = task.elapsedSeconds || 0;
+      const additional = Math.floor((now.getTime() - new Date(task.timerStartedAt).getTime()) / 1000);
+
+      const newElapsed = elapsed + additional;
+
+      await updateDoc(taskRef, {
+        elapsedSeconds: newElapsed,
+        timerStartedAt: null,
+      });
+
+      setTasks(prev => {
+        const memberTasks = prev[memberId] || [];
+        const updated = memberTasks.map(t =>
+          t.id === taskId ? { ...t, elapsedSeconds: newElapsed, timerStartedAt: null } : t
+        );
+        return { ...prev, [memberId]: updated };
+      });
+    } catch (error) {
+      console.error('Error stopping task timer:', error);
+    }
+  };
+
   const handleUpdateGroupName = async (newName: string) => {
     if (!groupId) return;
 
@@ -412,7 +503,9 @@ export default function TaskTracker({
         createdBy: forMemberId,  // This is who the task is FOR
         suggestedBy: user.uid,   // This is who SUGGESTED the task
         createdAt: new Date(),
-        weekId: currentISOWeek
+        weekId: currentISOWeek,
+        timerStartedAt: null,
+        elapsedSeconds: 0,
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -531,6 +624,8 @@ export default function TaskTracker({
                     onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
                     onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
                     onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
+                    onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
+                    onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
                     isCurrentUser={member.id === user?.uid}
                     onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
                     selectedTaskId={selectedTask?.id}

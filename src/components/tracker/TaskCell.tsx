@@ -16,6 +16,8 @@ interface TaskCellProps {
   onUpdateTaskStatus: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   onEditTask?: (taskId: string, newText: string) => void;
+  onStartTimer?: (taskId: string) => void;
+  onStopTimer?: (taskId: string) => void;
   isCurrentUser: boolean;
   onSelectTask?: (task: Task | null) => void;
   selectedTaskId?: string | null;
@@ -39,6 +41,8 @@ export default function TaskCell({
   onUpdateTaskStatus,
   onDeleteTask,
   onEditTask,
+  onStartTimer,
+  onStopTimer,
   isCurrentUser,
   onSelectTask,
   selectedTaskId,
@@ -229,6 +233,8 @@ export default function TaskCell({
               onUpdateStatus={() => onUpdateTaskStatus(task.id)}
               onDelete={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
               onEdit={onEditTask ? (newText) => onEditTask(task.id, newText) : undefined}
+              onStartTimer={onStartTimer ? () => onStartTimer(task.id) : undefined}
+              onStopTimer={onStopTimer ? () => onStopTimer(task.id) : undefined}
               isCurrentUser={isCurrentUser}
               isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
               onSelect={onSelectTask ? () => onSelectTask(task) : undefined}

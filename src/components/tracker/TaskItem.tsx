@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
-import { ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
   task: Task;
@@ -15,6 +15,8 @@ interface TaskItemProps {
   suggestedByColor?: string;
   currentUserId?: string;
   hasComments?: boolean;
+  onStartTimer?: () => void;
+  onStopTimer?: () => void;
 }
 
 export default function TaskItem({ 
@@ -34,6 +36,7 @@ export default function TaskItem({
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
+  const [elapsed, setElapsed] = useState(task.elapsedSeconds || 0);
 
   const isSuggested = !!task.suggestedBy;
   const isCurrentUserSuggester = currentUserId && task.suggestedBy === currentUserId;
@@ -84,6 +87,30 @@ export default function TaskItem({
       setShowButtons(false);
     }
   }, [isHighlighted]);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (task.timerStartedAt) {
+      interval = setInterval(() => {
+        const start = new Date(task.timerStartedAt!).getTime();
+        const now = Date.now();
+        const base = task.elapsedSeconds || 0;
+        setElapsed(base + Math.floor((now - start) / 1000));
+      }, 1000);
+    } else {
+      setElapsed(task.elapsedSeconds || 0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [task.timerStartedAt, task.elapsedSeconds]);
+
+  const formatTime = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return [hrs, mins, secs].map(v => v.toString().padStart(2, '0')).join(':');
+  };
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -195,6 +222,22 @@ export default function TaskItem({
       {/* Edit and delete buttons. Shown if  */}
       {((!isSuggested && isCurrentUser) || (isSuggested && isCurrentUserSuggester)) && showButtons && !isEditing && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
+            {!isSuggested && isCurrentUser && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (task.timerStartedAt) {
+                    onStopTimer?.();
+                  } else {
+                    onStartTimer?.();
+                  }
+                }}
+                className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center"
+                title={task.timerStartedAt ? 'Pause timer' : 'Start timer'}
+              >
+                {task.timerStartedAt ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+              </button>
+            )}
           <button
             onClick={handleEditClick}
             className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
@@ -212,6 +255,12 @@ export default function TaskItem({
           >
             <TrashIcon className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {!showButtons && !isEditing && (task.timerStartedAt || elapsed > 0) && (
+        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-gray-600">
+          {formatTime(elapsed)}
         </div>
       )}
 
