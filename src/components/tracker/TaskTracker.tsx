@@ -4,6 +4,7 @@ import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
 import WeeklyNavigation from './WeeklyNavigation';
 import TopBar from '../layout/TopBar';
+import BottomBar from '../layout/BottomBar';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
@@ -578,7 +579,7 @@ export default function TaskTracker({
         }
       />
 
-      <div className="flex-grow overflow-auto">
+      <div className="flex-grow overflow-auto pb-24">
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 md:w-full table-fixed">
           <thead>
             <tr>
@@ -652,6 +653,13 @@ export default function TaskTracker({
           </tbody>
         </table>
       </div>
+      <BottomBar
+        groupId={groupId}
+        isStatView={isStatView}
+        onStatView={onStatView}
+        onToggleLeftSidebar={onToggleLeftSidebar}
+        onToggleRightSidebar={onToggleRightSidebar}
+      />
     </div>
   );
 }
