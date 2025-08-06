@@ -6,7 +6,8 @@ import {
   signOut,
   User 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { auth, db } from '../firebase';
 
 interface AuthState {
@@ -40,7 +41,28 @@ export function useAuth() {
             profileCompleted: false,
             groups: []
           });
-          
+
+          // Only create a default group if the user is not joining via invite
+          const pendingInvite = typeof window !== 'undefined'
+            ? localStorage.getItem('pendingInvite')
+            : null;
+
+          if (!pendingInvite) {
+            const groupId = nanoid(10);
+            await setDoc(doc(db, 'groups', groupId), {
+              name: `New Group (click to change)`,
+              memberUids: {
+                [authUser.uid]: true
+              },
+              createdBy: authUser.uid,
+              createdAt: new Date()
+            });
+
+            await updateDoc(userRef, {
+              groups: arrayUnion(groupId)
+            });
+          }
+
           setAuthState({
             user: authUser,
             loading: false,
