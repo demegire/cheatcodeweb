@@ -289,8 +289,7 @@ export default function TaskItem({
         </div>
       ) : (
         <span
-          className={`ml-5 pl-1 block break-words overflow-hidden text-ellipsis ${
-            !showButtons && 
+          className={`ml-5 pl-1 block break-words overflow-hidden text-ellipsis ${ 
             !isEditing && 
             (task.timerStartedAt || elapsed > 0)
               ? 'max-w-7/10'
