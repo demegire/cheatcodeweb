@@ -11,6 +11,8 @@ export interface Task {
   timerStartedAt?: Date | null;
   /** Total elapsed time in seconds for this task */
   elapsedSeconds?: number;
+  /** Used to order tasks within a day */
+  order?: number;
   /**
    * Indicates that the task comes from the user's personal collection rather
    * than a group. This property is not persisted in Firestore and is derived

@@ -128,6 +128,7 @@ export default function TaskTracker({
           timerStartedAt,
           elapsedSeconds: data.elapsedSeconds || 0,
           isGlobal: false,
+          order: data.order ?? 0,
         } as Task;
 
         if (localData[task.createdBy]) {
@@ -135,9 +136,9 @@ export default function TaskTracker({
         }
       });
 
-      // Sort local tasks by creation date
+      // Sort local tasks by order
       members.forEach(member => {
-        localData[member.id].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        localData[member.id].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       });
 
       // Merge with any existing global tasks
@@ -145,7 +146,7 @@ export default function TaskTracker({
         const merged: Record<string, Task[]> = {};
         members.forEach(member => {
           const globals = prev[member.id]?.filter(t => t.isGlobal) || [];
-          merged[member.id] = [...localData[member.id], ...globals];
+          merged[member.id] = [...localData[member.id], ...globals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         });
 
         const scoreData: Record<string, number> = {};
@@ -204,16 +205,17 @@ export default function TaskTracker({
             timerStartedAt,
             elapsedSeconds: data.elapsedSeconds || 0,
             isGlobal: true,
+            order: data.order ?? 0,
           } as Task);
         });
 
-        // Sort global tasks by creation date
-        globalTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        // Sort global tasks by order
+        globalTasks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
         setTasks(prev => {
           const updated: Record<string, Task[]> = { ...prev };
           const localOnly = (updated[member.id] || []).filter(t => !t.isGlobal);
-          updated[member.id] = [...localOnly, ...globalTasks];
+          updated[member.id] = [...localOnly, ...globalTasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
           const scoreData: Record<string, number> = {};
           members.forEach(m => {
@@ -280,6 +282,9 @@ export default function TaskTracker({
     if (!user || !groupId) return;
 
     try {
+      const dayTasks = (tasks[memberId] || []).filter(t => t.day === day);
+      const maxOrder = dayTasks.reduce((max, t) => Math.max(max, t.order ?? 0), -1);
+
       // Add task to Firestore with ISO week ID
       await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
@@ -290,6 +295,7 @@ export default function TaskTracker({
         weekId: currentISOWeek, // Using ISO week identifier
         timerStartedAt: null,
         elapsedSeconds: 0,
+        order: maxOrder + 1,
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -301,6 +307,9 @@ export default function TaskTracker({
   const handleAddGlobalTask = async (memberId: string, day: number, text: string) => {
      if (!user) return;
      try {
+        const dayTasks = (tasks[memberId] || []).filter(t => t.day === day);
+        const maxOrder = dayTasks.reduce((max, t) => Math.max(max, t.order ?? 0), -1);
+
         // Add task to Firestore with ISO week ID
         await addDoc(collection(db, 'users', memberId, 'tasks'), {
           text,
@@ -311,6 +320,7 @@ export default function TaskTracker({
           weekId: currentISOWeek, // Using ISO week identifier
           timerStartedAt: null,
           elapsedSeconds: 0,
+          order: maxOrder + 1,
         });
 
       // No need to update local state as the onSnapshot will handle that
@@ -473,6 +483,49 @@ export default function TaskTracker({
     }
   };
 
+  const handleMoveTask = async (memberId: string, taskId: string, newDay: number, index?: number) => {
+    if (!user) return;
+
+    try {
+      const memberTasks = tasks[memberId] || [];
+      const task = memberTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const taskRef = task.isGlobal
+        ? doc(db, 'users', memberId, 'tasks', taskId)
+        : doc(db, 'groups', groupId!, 'tasks', taskId);
+
+      const targetTasks = memberTasks
+        .filter(t => t.id !== taskId && t.day === newDay)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      let newOrder: number;
+      if (targetTasks.length === 0) {
+        newOrder = 0;
+      } else if (index === undefined || index >= targetTasks.length) {
+        newOrder = (targetTasks[targetTasks.length - 1].order ?? 0) + 1;
+      } else if (index <= 0) {
+        newOrder = (targetTasks[0].order ?? 0) - 1;
+      } else {
+        const prev = targetTasks[index - 1].order ?? index - 1;
+        const next = targetTasks[index].order ?? index;
+        newOrder = (prev + next) / 2;
+      }
+
+      await updateDoc(taskRef, { day: newDay, order: newOrder });
+
+      setTasks(prev => {
+        const filtered = (prev[memberId] || []).filter(t => t.id !== taskId);
+        const updatedTask = { ...task, day: newDay, order: newOrder } as Task;
+        const updatedList = [...filtered, updatedTask];
+        const sorted = updatedList.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        return { ...prev, [memberId]: sorted };
+      });
+    } catch (error) {
+      console.error('Error moving task:', error);
+    }
+  };
+
   const handleUpdateGroupName = async (newName: string) => {
     if (!groupId) return;
 
@@ -499,6 +552,9 @@ export default function TaskTracker({
     if (!user || !groupId) return;
 
     try {
+      const dayTasks = (tasks[forMemberId] || []).filter(t => t.day === day);
+      const maxOrder = dayTasks.reduce((max, t) => Math.max(max, t.order ?? 0), -1);
+
       // Add suggested task to Firestore
       await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
@@ -510,6 +566,7 @@ export default function TaskTracker({
         weekId: currentISOWeek,
         timerStartedAt: null,
         elapsedSeconds: 0,
+        order: maxOrder + 1,
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -630,6 +687,7 @@ export default function TaskTracker({
                     onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
                     onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
                     onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
+                    onMoveTask={(taskId, newDay, index) => handleMoveTask(member.id, taskId, newDay, index)}
                     isCurrentUser={member.id === user?.uid}
                     onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
                     selectedTaskId={selectedTask?.id}

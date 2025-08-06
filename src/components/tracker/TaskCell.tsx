@@ -18,6 +18,7 @@ interface TaskCellProps {
   onEditTask?: (taskId: string, newText: string) => void;
   onStartTimer?: (taskId: string) => void;
   onStopTimer?: (taskId: string) => void;
+  onMoveTask: (taskId: string, day: number, index?: number) => void;
   isCurrentUser: boolean;
   onSelectTask?: (task: Task | null) => void;
   selectedTaskId?: string | null;
@@ -43,6 +44,7 @@ export default function TaskCell({
   onEditTask,
   onStartTimer,
   onStopTimer,
+  onMoveTask,
   isCurrentUser,
   onSelectTask,
   selectedTaskId,
@@ -63,6 +65,12 @@ export default function TaskCell({
     const cellRef = useRef<HTMLTableCellElement>(null);
     const tasksContainerRef = useRef<HTMLDivElement>(null);
     const inputContainerRef = useRef<HTMLDivElement>(null); // Ref for the input container
+
+    const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+    const [dragReadyTaskId, setDragReadyTaskId] = useState<string | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const [isDragOver, setIsDragOver] = useState(false);
 
     // Removed cellWidth state and related effect as input width is now handled by flexbox
     // Removed local currentTaskType state and its localStorage effect
@@ -112,6 +120,71 @@ export default function TaskCell({
     const handleTaskTypeChange = (type: TaskType) => {
       onTaskTypeChange(type); // Call the parent handler
       setIsExpanded(false); // Collapse after selection
+    };
+
+    const startLongPress = (taskId: string) => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      longPressTimer.current = setTimeout(() => {
+        setDragReadyTaskId(taskId);
+      }, 2000);
+    };
+
+    const cancelLongPress = () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    };
+
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: string) => {
+      setDraggingTaskId(taskId);
+      e.dataTransfer.setData('text/plain', JSON.stringify({ taskId, memberId }));
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+    };
+
+    const handleDragEnd = () => {
+      setDraggingTaskId(null);
+      setDragReadyTaskId(null);
+      setDragOverIndex(null);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLTableCellElement>) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setIsDragOver(true);
+      if (tasks.length === 0) {
+        setDragOverIndex(0);
+      } else if (e.target === e.currentTarget || e.target === tasksContainerRef.current) {
+        setDragOverIndex(tasks.length);
+      }
+    };
+
+    const handleItemDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const position = e.clientY - rect.top < rect.height / 2 ? index : index + 1;
+      setDragOverIndex(position);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLTableCellElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const data = e.dataTransfer.getData('text/plain');
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.memberId === memberId) {
+          const index = dragOverIndex !== null ? dragOverIndex : tasks.length;
+          onMoveTask(parsed.taskId, day, index);
+        }
+      } catch {
+        // ignore
+      }
+      setDragOverIndex(null);
+      setDragReadyTaskId(null);
+    };
+
+    const handleDragLeave = () => {
+      setIsDragOver(false);
+      setDragOverIndex(null);
     };
 
      // Handle blur specifically for the input field
@@ -205,12 +278,12 @@ export default function TaskCell({
     return (
       <td
         ref={cellRef}
-        className="p-1 relative align-top h-full overflow-hidden min-h-[150px]"
+        className={`p-1 relative align-top h-full overflow-hidden min-h-[150px] ${isDragOver ? 'ring-2 ring-theme' : ''}`}
         style={{
           backgroundColor: `${color}10`
         }}
         onMouseEnter={() => setIsHovering(true)}
-        onTouchStart={() => setIsHovering(true)} 
+        onTouchStart={() => setIsHovering(true)}
         onClick={() => setIsHovering(true)}
         onMouseLeave={() => {
             setIsHovering(false);
@@ -223,30 +296,50 @@ export default function TaskCell({
                 }
             }, 50); // 50ms delay
         }}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragLeave={handleDragLeave}
       >
         {/* Task list with minimum height */}
         <div ref={tasksContainerRef} className="m-1" style={getMinHeightStyle()}>
-          {tasks.map(task => (
-            <TaskItem
+          {tasks.map((task, index) => (
+            <div
               key={task.id}
-              task={task}
-              onUpdateStatus={() => onUpdateTaskStatus(task.id)}
-              onDelete={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
-              onEdit={onEditTask ? (newText) => onEditTask(task.id, newText) : undefined}
-              onStartTimer={onStartTimer ? () => onStartTimer(task.id) : undefined}
-              onStopTimer={onStopTimer ? () => onStopTimer(task.id) : undefined}
-              isCurrentUser={isCurrentUser}
-              isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
-              onSelect={onSelectTask ? () => onSelectTask(task) : undefined}
-              onAcceptTask={task.suggestedBy && isCurrentUser && onAcceptTask ?
-                () => onAcceptTask(task.id) : undefined}
-              onRejectTask={task.suggestedBy && isCurrentUser && onRejectTask ?
-                () => onRejectTask(task.id) : undefined}
-              suggestedByColor={getSuggestedByColor(task.suggestedBy)}
-              currentUserId={currentUserId}
-              hasComments={tasksWithComments.includes(task.id)}
-            />
+              draggable={isCurrentUser && dragReadyTaskId === task.id}
+              onMouseDown={() => startLongPress(task.id)}
+              onTouchStart={() => startLongPress(task.id)}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}
+              onTouchEnd={cancelLongPress}
+              onDragStart={(e) => handleDragStart(e, task.id)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleItemDragOver(e, index)}
+              className={`transition-all duration-200 ${draggingTaskId === task.id ? 'opacity-50' : ''} ${dragReadyTaskId === task.id ? 'cursor-grab' : ''} ${dragOverIndex === index ? 'border-t-2 border-theme' : ''} ${dragOverIndex === index + 1 ? 'border-b-2 border-theme' : ''}`}
+            >
+              <TaskItem
+                task={task}
+                onUpdateStatus={() => onUpdateTaskStatus(task.id)}
+                onDelete={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
+                onEdit={onEditTask ? (newText) => onEditTask(task.id, newText) : undefined}
+                onStartTimer={onStartTimer ? () => onStartTimer(task.id) : undefined}
+                onStopTimer={onStopTimer ? () => onStopTimer(task.id) : undefined}
+                isCurrentUser={isCurrentUser}
+                isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
+                onSelect={onSelectTask ? () => onSelectTask(task) : undefined}
+                onAcceptTask={task.suggestedBy && isCurrentUser && onAcceptTask ?
+                  () => onAcceptTask(task.id) : undefined}
+                onRejectTask={task.suggestedBy && isCurrentUser && onRejectTask ?
+                  () => onRejectTask(task.id) : undefined}
+                suggestedByColor={getSuggestedByColor(task.suggestedBy)}
+                currentUserId={currentUserId}
+                hasComments={tasksWithComments.includes(task.id)}
+              />
+            </div>
           ))}
+
+          {dragOverIndex === tasks.length && (
+            <div className="border-t-2 border-theme transition-all duration-200" />
+          )}
 
           {/* If the cell is empty, add invisible placeholder to maintain minimum height */}
           {tasks.length === 0 && (
