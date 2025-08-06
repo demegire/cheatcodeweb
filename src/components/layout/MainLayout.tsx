@@ -109,11 +109,11 @@ export default function MainLayout({
           <div className="h-full flex flex-col">
           {!sidebarCollapsed && (
             <div className="p-4  mt-2 border-b border-gray-200 flex items-center justify-between">
-              <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
-              <div className="text-black font-bold">cheat-code.cc</div>
               <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
+              <div className="text-black font-bold">cheat-code.cc</div>
+              <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
             </div>
           )}
           
