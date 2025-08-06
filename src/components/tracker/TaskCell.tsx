@@ -341,9 +341,10 @@ export default function TaskCell({
         {isExpanded && isCurrentUser && inputContainerRect && createPortal(
           <div
             style={{
-              position: 'absolute', // Position relative to the viewport/document
-              top: inputContainerRect.top-1,
-              left: inputContainerRect.right, // Position to the right of the input container
+              position: 'absolute', // Position relative to the document
+              // Account for page scroll so the menu appears next to the input on mobile
+              top: inputContainerRect.top + window.scrollY - 1,
+              left: inputContainerRect.right + window.scrollX, // Position to the right of the input container
               zIndex: 50, // High z-index to appear on top
               display: 'flex',
               flexDirection: 'row', // Buttons side-by-side
