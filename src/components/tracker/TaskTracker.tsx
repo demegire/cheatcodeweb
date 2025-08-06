@@ -49,6 +49,11 @@ interface TaskTrackerProps {
 // Task types enum for better type safety (Define it here too)
 type TaskType = 'local' | 'global';
 
+// Add this helper function at the top level
+const isCurrentWeek = (weekId: string) => {
+  return weekId === getCurrentISOWeek();
+};
+
 export default function TaskTracker({
   groupId,
   groupName,
@@ -569,7 +574,8 @@ export default function TaskTracker({
         onToggleRightSidebar={onToggleRightSidebar}
         centerContent={
           <div className="relative">
-            <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2">
+            {/* This Week button - only show on sm+ screens */}
+            <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2 hidden sm:block">
               <ThisWeekButton
                 currentISOWeek={currentISOWeek}
                 onCurrentWeek={handleCurrentWeek}
@@ -581,6 +587,8 @@ export default function TaskTracker({
               onNextWeek={handleNextWeek}
               onMonthSelect={handleMonthSelect}
               onYearSelect={handleYearSelect}
+              onCurrentWeek={handleCurrentWeek}
+              isCurrentWeek={isCurrentWeek(currentISOWeek)}
             />
           </div>
         }

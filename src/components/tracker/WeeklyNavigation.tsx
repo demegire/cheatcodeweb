@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { formatDateRange, getWeekDateRange} from '../../lib/dateUtils';
 import MonthlyNavigation from './MonthlyNavigation';
 import { ArrowRightIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon } from '@heroicons/react/24/solid'
 
 interface WeeklyNavigationProps {
   currentISOWeek: string;
@@ -9,6 +10,8 @@ interface WeeklyNavigationProps {
   onNextWeek: () => void;
   onMonthSelect?: (year: number, month: number) => void;
   onYearSelect?: (year: number) => void;
+  onCurrentWeek?: () => void;  // Add this prop
+  isCurrentWeek?: boolean;     // Add this prop
 }
 
 export default function WeeklyNavigation({ 
@@ -16,7 +19,9 @@ export default function WeeklyNavigation({
   onPreviousWeek, 
   onNextWeek,
   onMonthSelect,
-  onYearSelect
+  onYearSelect,
+  onCurrentWeek,
+  isCurrentWeek
 }: WeeklyNavigationProps) {
   const [showMonthlyPopup, setShowMonthlyPopup] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -75,10 +80,14 @@ export default function WeeklyNavigation({
       {/* Mobile view with calendar icon */}
       <button
         className="sm:hidden px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 cursor-pointer"
-        onClick={toggleMonthlyPopup}
-        aria-label="Open calendar"
+        onClick={!isCurrentWeek ? onCurrentWeek : toggleMonthlyPopup}
+        aria-label={!isCurrentWeek ? "Go to current week" : "Open calendar"}
       >
-        <CalendarIcon className="h-5 w-5" />
+        {isCurrentWeek ? (
+          <CalendarIcon className='size-5' />
+        ) : (
+          <MapPinIcon className='size-5' />
+        )}
       </button>
 
       <button
