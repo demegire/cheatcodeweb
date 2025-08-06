@@ -30,7 +30,7 @@ export default function CompactGroupHeader({
   };
 
   return (
-    <div className="h-12 flex justify-center items-center">
+    <div className="h-12 flex justify-start lg:justify-center items-center w-full">
       {isEditing ? (
         <div className="flex items-center h-full">
           <input
@@ -38,13 +38,13 @@ export default function CompactGroupHeader({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="h-full border text-gray-800 rounded px-2 text-xl font-bold"
+            className="h-full border text-gray-800 rounded px-2 text-xl font-bold max-w-[300px]"
             maxLength={24}
             autoFocus
           />
           <button
             onClick={handleSave}
-            className="w-8 h-8 ml-1 px-3 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+            className="flex-shrink-0 w-8 h-8 ml-1 px-3 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
           >
             ✓
           </button>
@@ -53,23 +53,18 @@ export default function CompactGroupHeader({
               setName(groupName);
               setIsEditing(false);
             }}
-            className="w-8 h-8 ml-1 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
+            className="flex-shrink-0 w-8 h-8 ml-1 px-3 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center"
           >
             x
           </button>
         </div>
       ) : (
         <h1
-          className="h-full flex items-center text-2xl text-gray-800 font-bold cursor-pointer hover:bg-gray-200 rounded-full px-2"
+          className="h-full flex items-center text-2xl text-gray-800 font-bold cursor-pointer hover:bg-gray-200 rounded-full px-2 max-w-full overflow-hidden whitespace-nowrap"
           onClick={() => onUpdateName && setIsEditing(true)}
         >
-          <span className="sm:hidden">
-            {groupName.length > 8 ? `${groupName.slice(0, 8)}...` : groupName}
-          </span>
-          <span className="hidden sm:inline">
-            {groupName.length > 27
-              ? `${groupName.slice(0, 27)}...`
-              : groupName}
+          <span className="truncate max-w-full">
+            {groupName}
           </span>
         </h1>
       )}
