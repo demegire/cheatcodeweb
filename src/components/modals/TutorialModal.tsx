@@ -65,7 +65,7 @@ export default function TutorialModal({ slides, onFinish }: TutorialModalProps) 
           </button>
           <button
             onClick={handleNext}
-            className="px-4 py-2 text-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+            className="px-4 py-2 text-sm rounded-full bg-theme hover:bg-theme-hover text-white"
           >
             {index === slides.length - 1 ? 'Finish' : 'Next'}
           </button>
