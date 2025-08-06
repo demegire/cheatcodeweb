@@ -12,6 +12,7 @@ import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import TutorialModal from '../../components/modals/TutorialModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface GroupData {
@@ -35,6 +36,21 @@ export default function DashboardPage() {
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
   const [isStatView, setStatView] = useState(false);
   const [groupToLeave, setGroupToLeave] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const tutorialSlides = [
+    {
+      image: '/android-chrome-192x192.png',
+      text: 'Track your tasks and stay organized.',
+    },
+    {
+      image: '/android-chrome-512x512.png',
+      text: 'Invite friends to collaborate in groups.',
+    },
+    {
+      image: '/google-logo.svg',
+      text: 'View statistics to see your progress.',
+    },
+  ];
 
 
   useEffect(() => {
@@ -57,10 +73,14 @@ export default function DashboardPage() {
       } else {
         setNeedsProfileSetup(false);
       }
-      
+
+      const userData = userDoc.data();
+      if (!userData.tutorialSeen) {
+        setShowTutorial(true);
+      }
+
       // Fetch user's groups
       try {
-        const userData = userDoc.data();
         const userGroups = userData.groups || [];
         
         if (userGroups.length === 0) {
@@ -184,7 +204,7 @@ export default function DashboardPage() {
       }
     };
 
-    const handleLeaveGroup = async () => {
+  const handleLeaveGroup = async () => {
         if (!user || !groupToLeave) return;
         const groupId = groupToLeave;
 
@@ -210,11 +230,18 @@ export default function DashboardPage() {
         } finally {
           setGroupToLeave(null);
         }
-      };
+  };
 
-    const promptLeaveGroup = (groupId: string) => {
-        setGroupToLeave(groupId);
-    };
+  const promptLeaveGroup = (groupId: string) => {
+    setGroupToLeave(groupId);
+  };
+
+  const handleFinishTutorial = async () => {
+    setShowTutorial(false);
+    if (user) {
+      await updateDoc(doc(db, 'users', user.uid), { tutorialSeen: true });
+    }
+  };
 
 
 
@@ -277,6 +304,12 @@ export default function DashboardPage() {
 
   return (
     <>
+      {showTutorial && (
+        <TutorialModal
+          slides={tutorialSlides}
+          onFinish={handleFinishTutorial}
+        />
+      )}
       <MainLayout
         groups={groups}
         selectedGroup={selectedGroup}
