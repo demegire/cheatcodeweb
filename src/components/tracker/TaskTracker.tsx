@@ -598,7 +598,7 @@ export default function TaskTracker({
                 return (
                   <th
                     key={index}
-                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[80vw] md:min-w-auto ${isCurrentDay && `inset-ring-2`}`}
+                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[80vw] md:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
                   >
                     {getDayName(day)}
                   </th>
