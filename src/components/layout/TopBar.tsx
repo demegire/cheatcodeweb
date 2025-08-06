@@ -29,38 +29,18 @@ export default function TopBar({
   centerContent,
 }: TopBarProps) {
   return (
-    <div className="mb-3 relative w-full">
-      {/* mobile: single-row + buttons below */}
-      <div className="lg:hidden">
-        <div className="flex items-center justify-between w-full">
-          <CompactGroupHeader
-            groupName={groupName}
-            onUpdateName={onUpdateGroupName}
-          />
-          {centerContent && (
-            <div className="flex-shrink-0">
-              {centerContent}
-            </div>
-          )}
-        </div>
-        <div className="flex justify-center gap-2 items-center mt-2">
-          <button
-            onClick={onToggleLeftSidebar}
-            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
-          >
-            <Bars3Icon className="h-5 w-5 mr-0 sm:mr-1" />
-          </button>
-          <StatButton isStatView={isStatView} onStatView={onStatView} />
-          <ShareButton groupId={groupId} />
-          <button
-            onClick={onToggleRightSidebar}
-            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
-            data-comment-toggle="true"
-          >
-            <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />
-            <span className="text-sm hidden sm:inline">Comments</span>
-          </button>
-        </div>
+    <div className="mb-3 relative w-full sticky top-0 z-20 bg-white">
+      {/* mobile: single-row */}
+      <div className="lg:hidden flex items-center justify-between w-full">
+        <CompactGroupHeader
+          groupName={groupName}
+          onUpdateName={onUpdateGroupName}
+        />
+        {centerContent && (
+          <div className="flex-shrink-0">
+            {centerContent}
+          </div>
+        )}
       </div>
 
       {/* desktop: auto | 1fr | auto */}

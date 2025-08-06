@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TopBar from '../layout/TopBar';
+import BottomBar from '../layout/BottomBar';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -333,7 +334,7 @@ export default function StatsView({
   });
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto p-4 relative">
+    <div className="flex flex-col h-screen overflow-y-auto p-4 pb-24 relative">
       <TopBar
         groupId={groupID}
         groupName={groupName}
@@ -392,6 +393,13 @@ export default function StatsView({
           </div>
         </div>
       </div>
+      <BottomBar
+        groupId={groupID}
+        isStatView={isStatView}
+        onStatView={onStatView}
+        onToggleLeftSidebar={onToggleLeftSidebar}
+        onToggleRightSidebar={onToggleRightSidebar}
+      />
     </div>
   );
 }

@@ -102,7 +102,7 @@ export default function MainLayout({
       {/* Left Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
-        ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-10'}`}
+        ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-50'}`}
       >
         {!sidebarCollapsed &&
         (
@@ -212,7 +212,7 @@ export default function MainLayout({
       {/* Right Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-500
-        ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-10'}`}
+        ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-50'}`}
       >
         {groupId && currentWeekId ? (
           <CommentSection 
