@@ -98,7 +98,7 @@ export default function MainLayout({
   };
 
   return (
-    <div className="flex h-screen relative overflow-x-hidden">
+    <div className="flex h-[100dvh] relative overflow-x-hidden">
       {/* Left Sidebar - always absolute positioned */}
       <div
         className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
