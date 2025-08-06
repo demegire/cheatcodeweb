@@ -150,10 +150,10 @@ export default function TaskTracker({
         const scoreData: Record<string, number> = {};
         members.forEach(member => {
           const memberTasks = merged[member.id] || [];
-          if (memberTasks.length > 0) {
+          const totalCount = memberTasks.filter(t => t.status !== 'suggested' && t.status !== 'info').length;
+          if (totalCount > 0) {
             const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-            const totalCount = memberTasks.filter(t => t.status != 'suggested').length;
-            scoreData[member.id] = (completedCount / totalCount ) * 100;
+            scoreData[member.id] = (completedCount / totalCount) * 100;
           }
         });
 
@@ -217,9 +217,9 @@ export default function TaskTracker({
           const scoreData: Record<string, number> = {};
           members.forEach(m => {
             const memberTasks = updated[m.id] || [];
-            if (memberTasks.length > 0) {
+            const totalCount = memberTasks.filter(t => t.status !== 'suggested' && t.status !== 'info').length;
+            if (totalCount > 0) {
               const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-              const totalCount = memberTasks.filter(t => t.status != 'suggested').length;
               scoreData[m.id] = (completedCount / totalCount) * 100;
             }
           });
@@ -329,8 +329,8 @@ export default function TaskTracker({
 
       if (!task) return;
 
-      // Determine next status (cycle through: not-done -> completed -> postponed -> not-done)
-      let nextStatus: 'not-done' | 'completed' | 'postponed';
+      // Determine next status (cycle through: not-done -> completed -> postponed -> info ->not-done)
+      let nextStatus: 'not-done' | 'completed' | 'postponed' | 'info';
       switch (task.status) {
         case 'not-done':
           nextStatus = 'completed';
@@ -339,6 +339,9 @@ export default function TaskTracker({
           nextStatus = 'postponed';
           break;
         case 'postponed':
+          nextStatus = 'info';
+          break;
+        case 'info':
           nextStatus = 'not-done';
           break;
         default:

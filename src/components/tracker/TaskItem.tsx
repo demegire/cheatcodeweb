@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
-import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface TaskItemProps {
   task: Task;
@@ -45,10 +45,11 @@ export default function TaskItem({
 
   const getStatusIcon = () => {
     switch (task.status) {
-      case 'completed': return '✓';
-      case 'postponed': return '-';
+      case 'completed': return <CheckIcon className="size-3 stroke-3" />;
+      case 'postponed': return <ArrowRightIcon className="size-3 stroke-3" />;
       case 'suggested': return '?';
-      default: return 'x';
+      case 'info': return 'i';
+      default: return <XMarkIcon className="size-3 stroke-3" />;
     }
   };
 
@@ -57,6 +58,7 @@ export default function TaskItem({
       case 'completed': return `${isCurrentUser ? "bg-green-400 hover:bg-green-500" : "bg-green-300"}`;
       case 'postponed': return `${isCurrentUser ? "bg-yellow-400 hover:bg-yellow-500" : "bg-yellow-300"}`;
       case 'not-done': return `${isCurrentUser ? "bg-red-400 hover:bg-red-500" : "bg-red-300"}`;
+      case 'info': return `${isCurrentUser ? "bg-gray-400 hover:bg-gray-500" : "bg-gray-300"}`;
     }
   };
 
@@ -65,6 +67,7 @@ export default function TaskItem({
       case 'completed': return 'Completed';
       case 'postponed': return 'Postponed';
       case 'suggested': return `Suggested by ${task.suggestedBy}`;
+      case 'info': return 'Info';
       default: return 'Not done';
     }
   };
@@ -161,7 +164,7 @@ export default function TaskItem({
           }}
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center font-bold
-            rounded-full text-white text-xs cursor-pointer
+            rounded-full text-white text-xs cursor-pointer font-serif italic
             ${getStatusBgColor()}`}
             title={getStatusTitle()}
         >
