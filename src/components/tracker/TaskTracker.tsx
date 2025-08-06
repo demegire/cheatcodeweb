@@ -595,10 +595,10 @@ export default function TaskTracker({
       />
 
       <div className="flex-grow overflow-auto pb-24">
-        <table className="border-separate border-spacing-x-1 border-spacing-y-2 md:w-full table-fixed">
+        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
-              <th className="p-1 text-black w-24"></th>
+              <th className="p-1 text-black min-w-18 w-18"></th>
               {days.map((day, index) => {
                 let isCurrentDay = day.getDate() === currentDay.getDate() && 
                                    day.getMonth() === currentDay.getMonth() && 
@@ -606,7 +606,7 @@ export default function TaskTracker({
                 return (
                   <th
                     key={index}
-                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[80vw] md:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
+                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[90vw] sm:min-w-[46vw] md:min-w-[31vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
                   >
                     {getDayName(day)}
                   </th>
@@ -619,10 +619,27 @@ export default function TaskTracker({
             {members.map(member => (
               <tr key={member.id}>
                 <td 
-                  className="rounded-l-2xl p-1 font-bold text-white text-center" 
-                  style={{ backgroundColor: member.color }}
+                  className="rounded-l-2xl p-1 font-bold text-white text-center relative" 
+                  style={{ 
+                    backgroundColor: member.color,
+                    width: '40px',
+                    height: '120px'
+                  }}
                 >
-                  {member.name}
+                  <div 
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
+                    style={{
+                      width: '120px', // This should match the td height
+                      maxHeight: '50px', // This should match the td width
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: '2',
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {member.name}
+                  </div>
                 </td>
 
                 {days.map((day, index) => (
