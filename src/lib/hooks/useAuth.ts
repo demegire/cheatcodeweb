@@ -6,8 +6,11 @@ import {
   signOut,
   User 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { auth, db } from '../firebase';
+
+let createUserPromise: Promise<void> | null = null;
 
 interface AuthState {
   user: User | null;
@@ -28,26 +31,53 @@ export function useAuth() {
         // Check if user exists in Firestore
         const userRef = doc(db, 'users', authUser.uid);
         const userSnap = await getDoc(userRef);
-        
+
         if (!userSnap.exists()) {
-          // Create new user document
-          await setDoc(userRef, {
-            uid: authUser.uid,
-            email: authUser.email,
-            displayName: authUser.displayName || '',
-            photoURL: authUser.photoURL,
-            createdAt: new Date(),
-            profileCompleted: false,
-            groups: []
-          });
-          
+          if (!createUserPromise) {
+            createUserPromise = (async () => {
+              try {
+                await setDoc(userRef, {
+                  uid: authUser.uid,
+                  email: authUser.email,
+                  displayName: authUser.displayName || '',
+                  photoURL: authUser.photoURL,
+                  createdAt: new Date(),
+                  profileCompleted: false,
+                  groups: []
+                });
+
+                const pendingInvite = typeof window !== 'undefined'
+                  ? localStorage.getItem('pendingInvite')
+                  : null;
+
+                if (!pendingInvite) {
+                  const groupId = nanoid(10);
+                  await setDoc(doc(db, 'groups', groupId), {
+                    name: `New Group (click to change)`,
+                    memberUids: {
+                      [authUser.uid]: true
+                    },
+                    createdBy: authUser.uid,
+                    createdAt: new Date()
+                  });
+
+                  await updateDoc(userRef, {
+                    groups: arrayUnion(groupId)
+                  });
+                }
+              } finally {
+                createUserPromise = null;
+              }
+            })();
+          }
+
+          await createUserPromise;
           setAuthState({
             user: authUser,
             loading: false,
             needsProfileSetup: true
           });
         } else {
-          // Check if profile is completed
           const userData = userSnap.data();
           setAuthState({
             user: authUser,
