@@ -82,10 +82,10 @@ export default function WeeklyNavigation({
       {/* Monthly Navigation Popup */}
       {showMonthlyPopup && onMonthSelect && (
         <div
-          className="hidden sm:block absolute z-10 top-full mt-2 left-1/2 transform -translate-x-1/2"
+          className="hidden sm:block fixed z-50 top-[55px] left-1/2 -translate-x-1/2 max-w-[95vw]"
           ref={popupRef}
         >
-          <div className="relative z-20 bg-white p-4 rounded-lg shadow-xl border border-gray-200 w-auto">
+          <div className="relative z-20 bg-white p-2 rounded-lg shadow-xl border border-gray-200 w-full overflow-hidden">
             <MonthlyNavigation
               currentISOWeek={currentISOWeek}
               onMonthSelect={(year, month) => {

@@ -37,17 +37,17 @@ export default function MonthlyNavigation({
   ];
   
   return (
-    <div className="flex flex-col border-t">
-      <div className="flex justify-center items-center px-4 py-1">
-        <div className="flex items-center w-full max-w-4xl mx-auto justify-between">
+    <div className="flex flex-col border-t w-full">
+      <div className="flex justify-start items-center px-2 py-1 w-full overflow-x-auto scrollbar-hide">
+        <div className="flex items-center justify-start min-w-max gap-2">
           <button
             onClick={() => setDisplayedYear(displayedYear - 1)}
-            className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm text-gray-800 font-medium flex-shrink-0 mr-2 flex items-center"
+            className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm text-gray-800 font-medium flex-shrink-0 flex items-center"
           >
             <span className="mr-1">←</span> {displayedYear - 1}
           </button>
           
-          <div className="flex flex-nowrap justify-center gap-2 overflow-x-auto">
+          <div className="flex flex-nowrap justify-start gap-2">
             {months.map((month, index) => {
               // Determine button color based on relation to current month/year
               let bgColorClass = "bg-gray-200 hover:bg-gray-300";
@@ -76,7 +76,7 @@ export default function MonthlyNavigation({
               }
               
               // Add border if this is the month being viewed
-              const borderClass = isViewedMonth ? "border-2 border-gray-700" : "";
+              const borderClass = isViewedMonth ? "inset-ring-2 inset-ring-gray-700" : "";
               const fontWeightClass = isViewedMonth ? "font-bold" : "";
               
               return (
@@ -93,7 +93,7 @@ export default function MonthlyNavigation({
           
           <button
             onClick={() => setDisplayedYear(displayedYear + 1)}
-            className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm text-gray-800 font-medium flex-shrink-0 ml-2 flex items-center"
+            className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm text-gray-800 font-medium flex-shrink-0 flex items-center"
           >
             {displayedYear + 1} <span className="ml-1">→</span>
           </button>
