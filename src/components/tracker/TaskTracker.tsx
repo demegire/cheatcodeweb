@@ -600,7 +600,7 @@ export default function TaskTracker({
             <tr>
               <th className="p-1 text-black min-w-18 w-18"></th>
               {days.map((day, index) => {
-                let isCurrentDay = day.getDate() === currentDay.getDate() && 
+                const isCurrentDay = day.getDate() === currentDay.getDate() && 
                                    day.getMonth() === currentDay.getMonth() && 
                                    day.getFullYear() === currentDay.getFullYear();
                 return (
