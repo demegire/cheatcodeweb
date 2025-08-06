@@ -29,6 +29,7 @@ export default function BottomBar({
           className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
         >
           <Bars3Icon className="h-5 w-5" />
+          <span className="ml-1 text-sm hidden sm:inline">Menu</span>
         </button>
         <StatButton isStatView={isStatView} onStatView={onStatView} />
         <ShareButton groupId={groupId} />
@@ -38,6 +39,7 @@ export default function BottomBar({
           data-comment-toggle="true"
         >
           <ChatBubbleLeftRightIcon className="h-5 w-5" />
+          <span className="ml-1 text-sm hidden sm:inline">Comments</span>
         </button>
       </div>
     </div>

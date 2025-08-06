@@ -10,17 +10,23 @@ import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
 
-// Helper function to get day names with dates for a specific ISO week
-const getDayNames = (isoWeek: string) => {
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Helper function to get list of dates for a specific ISO week
+const getDates = (isoWeek: string) => {
+  const days = [0, 1, 2, 3, 4, 5, 6]
   const mondayDate = getDateFromISOWeek(isoWeek);
 
-  return days.map((day, index) => {
+  return days.map((index) => {
     const date = new Date(mondayDate);
     date.setDate(mondayDate.getDate() + index);
-    return `${day} (${date.getDate()}/${date.getMonth() + 1})`;
+    return date;
   });
 };
+
+// Helper function to get day text from date
+const getDayName = (date: Date) => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return `${days[date.getDay()]} (${date.getDate()}/${date.getMonth() + 1})`
+}
 
 interface TaskTrackerProps {
   groupId: string;
@@ -42,6 +48,11 @@ interface TaskTrackerProps {
 
 // Task types enum for better type safety (Define it here too)
 type TaskType = 'local' | 'global';
+
+// Add this helper function at the top level
+const isCurrentWeek = (weekId: string) => {
+  return weekId === getCurrentISOWeek();
+};
 
 export default function TaskTracker({
   groupId,
@@ -79,7 +90,8 @@ export default function TaskTracker({
   }, [globalTaskType]);
 
 
-  const dayNames = getDayNames(currentISOWeek);
+  const days = getDates(currentISOWeek);
+  const currentDay = new Date();
 
   // Extract task IDs from comments
   const tasksWithComments = comments
@@ -562,7 +574,8 @@ export default function TaskTracker({
         onToggleRightSidebar={onToggleRightSidebar}
         centerContent={
           <div className="relative">
-            <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2">
+            {/* This Week button - only show on sm+ screens */}
+            <div className="absolute right-full w-[120px] top-1/2 -translate-y-1/2 hidden sm:block">
               <ThisWeekButton
                 currentISOWeek={currentISOWeek}
                 onCurrentWeek={handleCurrentWeek}
@@ -574,24 +587,31 @@ export default function TaskTracker({
               onNextWeek={handleNextWeek}
               onMonthSelect={handleMonthSelect}
               onYearSelect={handleYearSelect}
+              onCurrentWeek={handleCurrentWeek}
+              isCurrentWeek={isCurrentWeek(currentISOWeek)}
             />
           </div>
         }
       />
 
       <div className="flex-grow overflow-auto pb-24">
-        <table className="border-separate border-spacing-x-1 border-spacing-y-2 md:w-full table-fixed">
+        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
-              <th className="p-1 text-black w-24"></th>
-              {dayNames.map((day, index) => (
-                <th
-                  key={index}
-                  className="p-1 rounded-t-2xl bg-gray-100 text-black min-w-[80vw] md:min-w-auto"
-                >
-                  {day}
-                </th>
-              ))}
+              <th className="p-1 text-black min-w-18 w-18"></th>
+              {days.map((day, index) => {
+                const isCurrentDay = day.getDate() === currentDay.getDate() && 
+                                   day.getMonth() === currentDay.getMonth() && 
+                                   day.getFullYear() === currentDay.getFullYear();
+                return (
+                  <th
+                    key={index}
+                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[90vw] sm:min-w-[46vw] md:min-w-[31vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
+                  >
+                    {getDayName(day)}
+                  </th>
+                );
+              })}
               <th className="rounded-r-2xl p-1 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
             </tr>
           </thead>
@@ -599,50 +619,67 @@ export default function TaskTracker({
             {members.map(member => (
               <tr key={member.id}>
                 <td 
-                  className="rounded-l-2xl p-1 font-bold text-white text-center" 
-                  style={{ backgroundColor: member.color }}
+                  className="rounded-l-2xl p-1 font-bold text-white text-center relative" 
+                  style={{ 
+                    backgroundColor: member.color,
+                    width: '40px',
+                    height: '120px'
+                  }}
                 >
-                  {member.name}
+                  <div 
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
+                    style={{
+                      width: '120px', // This should match the td height
+                      maxHeight: '50px', // This should match the td width
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: '2',
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {member.name}
+                  </div>
                 </td>
 
-                {[0, 1, 2, 3, 4, 5, 6].map(day => (
-                  <TaskCell
-                    key={day}
-                    memberId={member.id}
-                    day={day}
-                    tasks={tasks[member.id]?.filter(t => t.day === day) || []}
-                    onAddTask={(text) => {
-                      // If adding task for current user, use handleAddTask (local)
-                      if (member.id === user?.uid) {
-                        handleAddTask(member.id, day, text);
+                {days.map((day, index) => (
+                    <TaskCell
+                      key={index}
+                      memberId={member.id}
+                      day={index}
+                      tasks={tasks[member.id]?.filter(t => t.day === index) || []}
+                      onAddTask={(text) => {
+                        // If adding task for current user, use handleAddTask (local)
+                        if (member.id === user?.uid) {
+                          handleAddTask(member.id, index, text);
+                        }
+                        // If adding task for another user, use handleSuggestTask (local suggestion)
+                        else {
+                          handleSuggestTask(member.id, index, text);
+                        }
+                      }}
+                      // Pass the global task handler
+                      onAddGlobalTask={
+                        member.id === user?.uid ? (text) => handleAddGlobalTask(member.id, index, text) : undefined
                       }
-                      // If adding task for another user, use handleSuggestTask (local suggestion)
-                      else {
-                        handleSuggestTask(member.id, day, text);
-                      }
-                    }}
-                    // Pass the global task handler
-                    onAddGlobalTask={
-                       member.id === user?.uid ? (text) => handleAddGlobalTask(member.id, day, text) : undefined
-                    }
-                    onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
-                    onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
-                    onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
-                    onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
-                    onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
-                    isCurrentUser={member.id === user?.uid}
-                    onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
-                    selectedTaskId={selectedTask?.id}
-                    highlightedTaskId={highlightedTaskId}
-                    onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
-                    onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
-                    members={members}
-                    currentUserId={user?.uid || ''}
-                    tasksWithComments={tasksWithComments}
-                    // Pass the global task type state and setter
-                    currentTaskType={globalTaskType}
-                    onTaskTypeChange={setGlobalTaskType}
-                  />
+                      onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
+                      onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
+                      onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
+                      onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
+                      onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
+                      isCurrentUser={member.id === user?.uid}
+                      onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
+                      selectedTaskId={selectedTask?.id}
+                      highlightedTaskId={highlightedTaskId}
+                      onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
+                      onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
+                      members={members}
+                      currentUserId={user?.uid || ''}
+                      tasksWithComments={tasksWithComments}
+                      // Pass the global task type state and setter
+                      currentTaskType={globalTaskType}
+                      onTaskTypeChange={setGlobalTaskType}
+                    />
                 ))}
                 
                 <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.color}}>

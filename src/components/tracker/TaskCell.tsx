@@ -245,6 +245,7 @@ export default function TaskCell({
               suggestedByColor={getSuggestedByColor(task.suggestedBy)}
               currentUserId={currentUserId}
               hasComments={tasksWithComments.includes(task.id)}
+              members={members}
             />
           ))}
 

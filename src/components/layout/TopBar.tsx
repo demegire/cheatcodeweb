@@ -29,13 +29,15 @@ export default function TopBar({
   centerContent,
 }: TopBarProps) {
   return (
-    <div className="mb-3 relative w-full sticky top-0 z-20 bg-white">
+    <div className="mb-3 w-full sticky top-0 z-20 bg-white">
       {/* mobile: single-row */}
-      <div className="lg:hidden flex items-center justify-between w-full">
-        <CompactGroupHeader
-          groupName={groupName}
-          onUpdateName={onUpdateGroupName}
-        />
+      <div className="lg:hidden flex items-center justify-between w-full gap-2">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <CompactGroupHeader
+            groupName={groupName}
+            onUpdateName={onUpdateGroupName}
+          />
+        </div>
         {centerContent && (
           <div className="flex-shrink-0">
             {centerContent}
@@ -46,14 +48,14 @@ export default function TopBar({
       {/* desktop: auto | 1fr | auto */}
       <div className="hidden lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-4 w-full lg:relative">
         {/* left */}
-        <div className="justify-self-end flex gap-2 items-center">
+        <div className="justify-self-end flex gap-2 items-center overflow-hidden">
           <button
-              onClick={onToggleLeftSidebar}
-              className="px-2 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center h-8 w-8"
-            >
-              <Bars3Icon className="h-7 w-7" />
+            onClick={onToggleLeftSidebar}
+            className="flex-shrink-0 px-2 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center h-8 w-8"
+          >
+            <Bars3Icon className="h-7 w-7" />
           </button>
-          <div>
+          <div className="min-w-0 overflow-hidden">
             <CompactGroupHeader
               groupName={groupName}
               onUpdateName={onUpdateGroupName}

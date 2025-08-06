@@ -17,6 +17,7 @@ interface TaskItemProps {
   hasComments?: boolean;
   onStartTimer?: () => void;
   onStopTimer?: () => void;
+  members: { id: string; name: string; color: string }[];
 }
 
 export default function TaskItem({ 
@@ -33,7 +34,8 @@ export default function TaskItem({
   currentUserId,
   hasComments = false,
   onStartTimer,
-  onStopTimer
+  onStopTimer,
+  members
 }: TaskItemProps) {
   const [showButtons, setShowButtons] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +68,7 @@ export default function TaskItem({
     switch (task.status) {
       case 'completed': return 'Completed';
       case 'postponed': return 'Postponed';
-      case 'suggested': return `Suggested by ${task.suggestedBy}`;
+      case 'suggested': return `Suggested by ${members.find(m => m.id === task.suggestedBy)?.name}`;
       case 'info': return 'Info';
       default: return 'Not done';
     }

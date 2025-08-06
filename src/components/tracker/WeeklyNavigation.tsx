@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { formatDateRange, getWeekDateRange} from '../../lib/dateUtils';
 import MonthlyNavigation from './MonthlyNavigation';
-import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon } from '@heroicons/react/24/solid'
 
 interface WeeklyNavigationProps {
   currentISOWeek: string;
@@ -9,6 +10,8 @@ interface WeeklyNavigationProps {
   onNextWeek: () => void;
   onMonthSelect?: (year: number, month: number) => void;
   onYearSelect?: (year: number) => void;
+  onCurrentWeek?: () => void;  // Add this prop
+  isCurrentWeek?: boolean;     // Add this prop
 }
 
 export default function WeeklyNavigation({ 
@@ -16,7 +19,9 @@ export default function WeeklyNavigation({
   onPreviousWeek, 
   onNextWeek,
   onMonthSelect,
-  onYearSelect
+  onYearSelect,
+  onCurrentWeek,
+  isCurrentWeek
 }: WeeklyNavigationProps) {
   const [showMonthlyPopup, setShowMonthlyPopup] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -59,6 +64,7 @@ export default function WeeklyNavigation({
         <ArrowLeftIcon className="h-5 w-5" />
       </button>
 
+      {/* Desktop view with date range */}
       <div
         className="hidden sm:flex flex-col hover:bg-gray-200 rounded-full items-center w-[265px] cursor-pointer"
         onClick={toggleMonthlyPopup}
@@ -71,6 +77,19 @@ export default function WeeklyNavigation({
         </span>
       </div>
 
+      {/* Mobile view with calendar icon */}
+      <button
+        className="sm:hidden px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 cursor-pointer"
+        onClick={!isCurrentWeek ? onCurrentWeek : toggleMonthlyPopup}
+        aria-label={!isCurrentWeek ? "Go to current week" : "Open calendar"}
+      >
+        {isCurrentWeek ? (
+          <CalendarIcon className='size-5' />
+        ) : (
+          <MapPinIcon className='size-5' />
+        )}
+      </button>
+
       <button
         onClick={onNextWeek}
         className="px-2 py-2 hover:bg-gray-200 rounded-full text-gray-700 text-lg ml-2 cursor-pointer"
@@ -79,13 +98,13 @@ export default function WeeklyNavigation({
         <ArrowRightIcon className="h-5 w-5" />
       </button>
       
-      {/* Monthly Navigation Popup */}
+      {/* Monthly Navigation Popup - Remove 'hidden sm:block' to show on all screens */}
       {showMonthlyPopup && onMonthSelect && (
         <div
-          className="hidden sm:block absolute z-10 top-full mt-2 left-1/2 transform -translate-x-1/2"
+          className="fixed z-50 top-[55px] left-1/2 -translate-x-1/2 max-w-[95vw]"
           ref={popupRef}
         >
-          <div className="relative z-20 bg-white p-4 rounded-lg shadow-xl border border-gray-200 w-auto">
+          <div className="relative z-20 bg-white p-2 rounded-lg shadow-xl border border-gray-200 w-full overflow-hidden">
             <MonthlyNavigation
               currentISOWeek={currentISOWeek}
               onMonthSelect={(year, month) => {
