@@ -163,6 +163,10 @@ export default function CommentSection({
   return (
     <div className="h-full flex flex-col" ref={containerRef}>
       <div className={`p-4 text-black mt-3 font-bold border-b border-gray-200 flex items-center justify-between ${isCollapsed ? 'text-center' : ''}`}> 
+      <div></div>
+        {!isCollapsed && (
+          <span>{selectedTask ? `Comments for "${selectedTask.text}"` : 'Comments'}</span>
+        )}
         <button onClick={onToggleCollapse} className="text-gray-600 hover:text-gray-900">
           {isCollapsed ? (
             <ChevronLeftIcon className="h-5 w-5" />
@@ -170,10 +174,6 @@ export default function CommentSection({
             <ChevronRightIcon className="h-5 w-5" />
           )}
         </button>
-        {!isCollapsed && (
-          <span>{selectedTask ? `Comments for "${selectedTask.text}"` : 'Comments'}</span>
-        )}
-        <div></div>
       </div>
       
       <div className="flex-1 overflow-y-auto" ref={commentsContainerRef}>

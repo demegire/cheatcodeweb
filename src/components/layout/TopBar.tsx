@@ -3,7 +3,7 @@ import CompactGroupHeader from './CompactGroupHeader'
 import ShareButton from './ShareButton'
 import StatButton from './StatsButton'
 import {
-  UserCircleIcon,
+  Bars3Icon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
 
@@ -48,8 +48,7 @@ export default function TopBar({
             onClick={onToggleLeftSidebar}
             className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
           >
-            <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
-            <span className="text-sm hidden sm:inline">Groups</span>
+            <Bars3Icon className="h-5 w-5 mr-0 sm:mr-1" />
           </button>
           <StatButton isStatView={isStatView} onStatView={onStatView} />
           <ShareButton groupId={groupId} />
@@ -67,13 +66,20 @@ export default function TopBar({
       {/* desktop: auto | 1fr | auto */}
       <div className="hidden lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-x-4 w-full lg:relative">
         {/* left */}
-        <div>
-          <CompactGroupHeader
-            groupName={groupName}
-            onUpdateName={onUpdateGroupName}
-          />
+        <div className="justify-self-end flex gap-2 items-center">
+          <button
+              onClick={onToggleLeftSidebar}
+              className="px-2 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center h-8 w-8"
+            >
+              <Bars3Icon className="h-7 w-7" />
+          </button>
+          <div>
+            <CompactGroupHeader
+              groupName={groupName}
+              onUpdateName={onUpdateGroupName}
+            />
+          </div>
         </div>
-
         {/* center */}
         {centerContent && (
           <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -83,13 +89,6 @@ export default function TopBar({
 
         {/* right */}
         <div className="justify-self-end flex gap-2 items-center">
-          <button
-            onClick={onToggleLeftSidebar}
-            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
-          >
-            <UserCircleIcon className="h-5 w-5 mr-0 sm:mr-1" />
-            <span className="text-sm hidden sm:inline">Groups</span>
-          </button>
           <StatButton isStatView={isStatView} onStatView={onStatView} />
           <ShareButton groupId={groupId} />
           <button

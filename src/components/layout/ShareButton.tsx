@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShareIcon } from '@heroicons/react/24/outline';
+import { ShareIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 
 interface ShareButtonProps {
   groupId: string;
@@ -35,7 +35,7 @@ export default function ShareButton({ groupId }: ShareButtonProps) {
       onClick={handleShare}
       className="px-3 py-2 text-sm rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
     >
-      <ShareIcon className="h-5 w-5 mr-0 sm:mr-1" />
+      {copied ? <ClipboardIcon className="h-5 w-5 mr-0 sm:mr-1" /> : <ShareIcon className="h-5 w-5 mr-0 sm:mr-1" />}
       <span className="text-sm hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
     </button>
   );
