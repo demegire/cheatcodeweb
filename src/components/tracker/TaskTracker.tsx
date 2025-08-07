@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { Task, Comment } from '../../types';
 import TaskCell from './TaskCell';
@@ -77,6 +77,8 @@ export default function TaskTracker({
   const [scores, setScores] = useState<Record<string, number>>({});
   const [currentGroupName, setCurrentGroupName] = useState(groupName);
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
   // State for the globally selected task type
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
     // Load from localStorage on initial render
@@ -91,12 +93,31 @@ export default function TaskTracker({
 
 
   const days = getDates(currentISOWeek);
-  const currentDay = new Date();
+  const currentDay = useMemo(() => new Date(), []);
 
   // Extract task IDs from comments
   const tasksWithComments = comments
     .filter(comment => comment.taskId !== null)
     .map(comment => comment.taskId as string);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth >= 640) return;
+    if (!isCurrentWeek(currentISOWeek)) return;
+    const container = tableContainerRef.current;
+    if (!container) return;
+    const weekDays = getDates(currentISOWeek);
+    const todayIndex = weekDays.findIndex(day =>
+      day.getDate() === currentDay.getDate() &&
+      day.getMonth() === currentDay.getMonth() &&
+      day.getFullYear() === currentDay.getFullYear()
+    );
+    if (todayIndex === -1) return;
+    const headerCell = container.querySelector(`[data-day-index="${todayIndex}"]`) as HTMLElement | null;
+    if (headerCell) {
+      container.scrollLeft = headerCell.offsetLeft;
+    }
+  }, [currentISOWeek, currentDay]);
 
   useEffect(() => {
     if (!groupId) return;
@@ -594,18 +615,19 @@ export default function TaskTracker({
         }
       />
 
-      <div className="flex-grow overflow-auto pb-24">
+      <div className="flex-grow overflow-auto pb-24" ref={tableContainerRef}>
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
-              <th className="p-1 text-black min-w-18 w-18"></th>
+              <th className="p-1 text-black min-w-18 w-18 sticky left-0 z-20 bg-gray-100"></th>
               {days.map((day, index) => {
-                const isCurrentDay = day.getDate() === currentDay.getDate() && 
-                                   day.getMonth() === currentDay.getMonth() && 
+                const isCurrentDay = day.getDate() === currentDay.getDate() &&
+                                   day.getMonth() === currentDay.getMonth() &&
                                    day.getFullYear() === currentDay.getFullYear();
                 return (
                   <th
                     key={index}
+                    data-day-index={index}
                     className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[90vw] sm:min-w-[46vw] md:min-w-[31vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
                   >
                     {getDayName(day)}
@@ -618,9 +640,9 @@ export default function TaskTracker({
           <tbody>
             {members.map(member => (
               <tr key={member.id}>
-                <td 
-                  className="rounded-l-2xl p-1 font-bold text-white text-center relative" 
-                  style={{ 
+                <td
+                  className="rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10"
+                  style={{
                     backgroundColor: member.color,
                     width: '40px',
                     height: '120px'
