@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../../lib/firebase';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ArrowLeftStartOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ArrowLeftStartOnRectangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -29,6 +29,8 @@ interface MainLayoutProps {
   onGroupSelect?: (group: GroupData) => void;
   onCreateGroup?: () => void;
   onLeaveGroup?: (groupId: string) => void;
+  onPinGroup?: (groupId: string) => void;
+  pinnedGroupId?: string | null;
   groupId?: string;
   currentWeekId?: string;
   selectedTask?: Task | null;
@@ -42,6 +44,8 @@ export default function MainLayout({
   onGroupSelect = () => {},
   onCreateGroup = () => {},
   onLeaveGroup = () => {},
+  onPinGroup = () => {},
+  pinnedGroupId = null,
   groupId = '',
   currentWeekId = '',
   selectedTask = null,
@@ -137,16 +141,32 @@ export default function MainLayout({
                     <div className="flex items-center justify-between truncate text-gray-600">
                       <span className="truncate">{group.name}</span>
                       {activeGroupId === group.id && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onLeaveGroup(group.id);
-                          }}
-                          className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2"
-                          title="Leave group"
-                        >
-                          <ArrowLeftStartOnRectangleIcon className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center ml-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPinGroup(group.id);
+                            }}
+                            className={`w-6 h-6 flex items-center justify-center rounded-full text-white ${
+                              pinnedGroupId === group.id
+                                ? 'bg-yellow-500 hover:bg-yellow-600'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                            }`}
+                            title={pinnedGroupId === group.id ? 'Unpin group' : 'Pin group'}
+                          >
+                            <MapPinIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onLeaveGroup(group.id);
+                            }}
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2"
+                            title="Leave group"
+                          >
+                            <ArrowLeftStartOnRectangleIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
