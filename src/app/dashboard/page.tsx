@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import ProfileSetup from '../../components/auth/ProfileSetup';
 import MainLayout from '../../components/layout/MainLayout';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [isStatView, setStatView] = useState(false);
   const [groupToLeave, setGroupToLeave] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [pinnedGroupId, setPinnedGroupId] = useState<string | null>(null);
   const tutorialSlides = [
     {
       image: '/android-chrome-192x192.png',
@@ -78,6 +79,7 @@ export default function DashboardPage() {
       if (!userData.tutorialSeen) {
         setShowTutorial(true);
       }
+      setPinnedGroupId(userData.pinnedGroup || null);
 
       // Fetch user's groups
       try {
@@ -138,11 +140,16 @@ export default function DashboardPage() {
           }
         }
         
+        if (userData.pinnedGroup) {
+          groupsData.sort((a, b) => (a.id === userData.pinnedGroup ? -1 : b.id === userData.pinnedGroup ? 1 : 0));
+        }
+
         setGroups(groupsData);
-        
-        // Auto-select the first group if available
+
+        // Auto-select pinned group if available, otherwise first group
         if (groupsData.length > 0) {
-          setSelectedGroup(groupsData[0]);
+          const initial = groupsData.find(g => g.id === userData.pinnedGroup) || groupsData[0];
+          setSelectedGroup(initial);
         }
       } catch (error) {
         console.error("Error fetching groups:", error);
@@ -213,10 +220,16 @@ export default function DashboardPage() {
             [`memberUids.${user.uid}`]: false
           });
 
-          await updateDoc(doc(db, 'users', user.uid), {
+          const updates: Record<string, any> = {
             groups: arrayRemove(groupId),
             deletedGroups: arrayUnion(groupId)
-          });
+          };
+          if (pinnedGroupId === groupId) {
+            updates.pinnedGroup = deleteField();
+            setPinnedGroupId(null);
+          }
+
+          await updateDoc(doc(db, 'users', user.uid), updates);
 
           setGroups(prev => {
             const updated = prev.filter(g => g.id !== groupId);
@@ -234,6 +247,26 @@ export default function DashboardPage() {
 
   const promptLeaveGroup = (groupId: string) => {
     setGroupToLeave(groupId);
+  };
+
+  const handlePinGroup = async (groupId: string) => {
+    if (!user) return;
+    try {
+      if (pinnedGroupId === groupId) {
+        await updateDoc(doc(db, 'users', user.uid), { pinnedGroup: deleteField() });
+        setPinnedGroupId(null);
+      } else {
+        await updateDoc(doc(db, 'users', user.uid), { pinnedGroup: groupId });
+        setPinnedGroupId(groupId);
+        setGroups(prev => {
+          const updated = [...prev];
+          updated.sort((a, b) => (a.id === groupId ? -1 : b.id === groupId ? 1 : 0));
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Error pinning group:', error);
+    }
   };
 
   const handleFinishTutorial = async () => {
@@ -316,6 +349,8 @@ export default function DashboardPage() {
         onGroupSelect={handleGroupSelect}
         onCreateGroup={handleCreateGroup}
         onLeaveGroup={promptLeaveGroup}
+        onPinGroup={handlePinGroup}
+        pinnedGroupId={pinnedGroupId}
         groupId={selectedGroup?.id}
         currentWeekId={currentISOWeek}
         selectedTask={selectedTask}
