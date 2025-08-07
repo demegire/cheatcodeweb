@@ -115,7 +115,7 @@ export default function TaskTracker({
     if (todayIndex === -1) return;
     const headerCell = container.querySelector(`[data-day-index="${todayIndex}"]`) as HTMLElement | null;
     if (headerCell) {
-      container.scrollLeft = headerCell.offsetLeft;
+      container.scrollLeft = headerCell.offsetLeft - 48; // Name cell width
     }
   }, [currentISOWeek, currentDay]);
 
@@ -619,7 +619,7 @@ export default function TaskTracker({
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
-              <th className="p-1 text-black min-w-18 w-18 sticky left-0 z-20 bg-gray-100"></th>
+              <th className="p-1 text-black min-w-12 w-12 sticky left-0 z-10 bg-white"></th>
               {days.map((day, index) => {
                 const isCurrentDay = day.getDate() === currentDay.getDate() &&
                                    day.getMonth() === currentDay.getMonth() &&
@@ -652,7 +652,7 @@ export default function TaskTracker({
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
                     style={{
                       width: '120px', // This should match the td height
-                      maxHeight: '50px', // This should match the td width
+                      maxHeight: '40px', // This should match the td width
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       display: '-webkit-box',

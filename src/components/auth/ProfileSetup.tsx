@@ -28,8 +28,8 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
       return;
     }
 
-    if (displayName.length > 20) {
-      setError('Display name must be 20 characters or less');
+    if (displayName.length > 12) {
+      setError('Display name must be 12 characters or less');
       return;
     }
 
@@ -91,14 +91,14 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
               required
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={20}
+              maxLength={12}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 
                        placeholder-gray-500 text-gray-900 rounded-md 
                        focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               placeholder="Enter a name that you always wanted to have."
             />
             <p className="text-xs text-gray-500">
-              {20 - displayName.length} characters remaining
+              {12 - displayName.length} characters remaining
             </p>
           </div>
           
