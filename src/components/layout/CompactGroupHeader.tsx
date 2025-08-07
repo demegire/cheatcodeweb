@@ -38,7 +38,7 @@ export default function CompactGroupHeader({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="h-full border text-gray-800 rounded px-2 text-xl font-bold max-w-[300px]"
+            className="h-full border text-gray-800 rounded px-2 text-xl font-bold max-w-[300px] w-4/5"
             maxLength={24}
             autoFocus
           />
