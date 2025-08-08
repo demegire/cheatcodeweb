@@ -88,6 +88,7 @@ export default function TaskTracker({
   );
   const [originalColor, setOriginalColor] = useState(selectedColor);
   const nameBarRef = useRef<HTMLTableCellElement>(null);
+  const isStandalone = !!(window.navigator as any).standalone;
 
   useEffect(() => {
     const myMember = members.find(m => m.id === user?.uid);
@@ -670,7 +671,7 @@ export default function TaskTracker({
         }
       />
 
-      <div className="flex-grow overflow-auto pb-14" ref={tableContainerRef}>
+      <div className={`flex-grow overflow-auto ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} ref={tableContainerRef}>
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
