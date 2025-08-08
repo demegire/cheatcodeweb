@@ -21,9 +21,11 @@ export default function BottomBar({
   onToggleLeftSidebar,
   onToggleRightSidebar,
 }: BottomBarProps) {
+  const isStandalone = !!(window.navigator as any).standalone;
+
   return (
     <div className="lg:hidden fixed bottom-0 left-0 w-full bg-black z-30">
-      <div className="flex justify-around items-center p-2">
+      <div className={`flex justify-around items-center p-2 ${isStandalone && "pb-6"}`}>
         <button
           onClick={onToggleLeftSidebar}
           className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
