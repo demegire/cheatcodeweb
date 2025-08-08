@@ -115,7 +115,7 @@ export default function TaskTracker({
     if (todayIndex === -1) return;
     const headerCell = container.querySelector(`[data-day-index="${todayIndex}"]`) as HTMLElement | null;
     if (headerCell) {
-      container.scrollLeft = headerCell.offsetLeft - 48; // Name cell width
+      container.scrollLeft = headerCell.offsetLeft - 54; // Name cell width
     }
   }, [currentISOWeek, currentDay]);
 
@@ -619,7 +619,7 @@ export default function TaskTracker({
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
-              <th className="p-1 text-black min-w-12 w-12 sticky left-0 z-10 bg-white"></th>
+              <th className="p-1 text-black min-w-[50px] w-[50px] sticky left-0 z-10 bg-white"></th>
               {days.map((day, index) => {
                 const isCurrentDay = day.getDate() === currentDay.getDate() &&
                                    day.getMonth() === currentDay.getMonth() &&
@@ -628,7 +628,7 @@ export default function TaskTracker({
                   <th
                     key={index}
                     data-day-index={index}
-                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[90vw] sm:min-w-[46vw] md:min-w-[31vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
+                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[75vw] sm:min-w-[42vw] md:min-w-[29vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
                   >
                     {getDayName(day)}
                   </th>
@@ -641,10 +641,10 @@ export default function TaskTracker({
             {members.map(member => (
               <tr key={member.id}>
                 <td
-                  className="rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10"
+                  className="rounded-l-2xl p-1 font-bold text-white text-center sticky left-0 z-10"
                   style={{
                     backgroundColor: member.color,
-                    width: '40px',
+                    width: '50px',
                     height: '120px'
                   }}
                 >
@@ -652,7 +652,7 @@ export default function TaskTracker({
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
                     style={{
                       width: '120px', // This should match the td height
-                      maxHeight: '40px', // This should match the td width
+                      maxHeight: '50px', // This should match the td width
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       display: '-webkit-box',
