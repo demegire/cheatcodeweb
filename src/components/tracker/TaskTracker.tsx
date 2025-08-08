@@ -697,7 +697,7 @@ export default function TaskTracker({
               <tr key={member.id}>
                 <td
                   ref={member.id === user?.uid ? nameBarRef : undefined}
-                  className={`rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10 ${member.id === user?.uid ? 'cursor-pointer' : ''}`}
+                  className={`rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10 ${member.id === user?.uid && !isColorPickerOpen ? 'cursor-pointer' : ''}`}
                   style={{
                     backgroundColor: member.id === user?.uid ? selectedColor : member.color,
                     width: '40px',
@@ -722,7 +722,7 @@ export default function TaskTracker({
                   {member.id === user?.uid && isColorPickerOpen && (
                     <>
                       <button
-                        className="absolute top-1 right-1 bg-black text-white rounded p-1 cursor-pointer z-30"
+                        className="absolute top-1 right-2 bg-black text-white rounded-full p-1 cursor-pointer z-30 h-7 w-7"
                         onClick={(e) => {
                           e.stopPropagation();
                           confirmColorChange();
