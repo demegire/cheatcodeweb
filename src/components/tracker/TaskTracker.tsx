@@ -86,26 +86,53 @@ export default function TaskTracker({
   const [selectedColor, setSelectedColor] = useState(
     members.find(m => m.id === user?.uid)?.color || '#3B82F6'
   );
+  const [originalColor, setOriginalColor] = useState(selectedColor);
+  const nameBarRef = useRef<HTMLTableCellElement>(null);
 
   useEffect(() => {
     const myMember = members.find(m => m.id === user?.uid);
     if (myMember) {
       setSelectedColor(myMember.color);
+      setOriginalColor(myMember.color);
     }
   }, [members, user?.uid]);
 
-  const handleMemberColorChange = async (color: string) => {
+  const handleNameBarClick = () => {
     if (!user?.uid) return;
-    setSelectedColor(color);
+    if (isColorPickerOpen) {
+      setSelectedColor(originalColor);
+      setIsColorPickerOpen(false);
+    } else {
+      setOriginalColor(selectedColor);
+      setIsColorPickerOpen(true);
+    }
+  };
+
+  const confirmColorChange = async () => {
+    if (!user?.uid) return;
     try {
       await updateDoc(doc(db, 'groups', groupId), {
-        [`memberColors.${user.uid}`]: color,
+        [`memberColors.${user.uid}`]: selectedColor,
       });
-      onMemberColorChange?.(user.uid, color);
+      onMemberColorChange?.(user.uid, selectedColor);
+      setOriginalColor(selectedColor);
     } catch (error) {
       console.error('Error updating member color:', error);
     }
+    setIsColorPickerOpen(false);
   };
+
+  useEffect(() => {
+    if (!isColorPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (nameBarRef.current && !nameBarRef.current.contains(e.target as Node)) {
+        setSelectedColor(originalColor);
+        setIsColorPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isColorPickerOpen, originalColor]);
 
   // State for the globally selected task type
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
@@ -669,13 +696,14 @@ export default function TaskTracker({
             {members.map(member => (
               <tr key={member.id}>
                 <td
-                  className="rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10"
+                  ref={member.id === user?.uid ? nameBarRef : undefined}
+                  className={`rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10 ${member.id === user?.uid ? 'cursor-pointer' : ''}`}
                   style={{
                     backgroundColor: member.id === user?.uid ? selectedColor : member.color,
                     width: '40px',
                     height: '120px'
                   }}
-                  onClick={member.id === user?.uid ? () => setIsColorPickerOpen(!isColorPickerOpen) : undefined}
+                  onClick={member.id === user?.uid ? handleNameBarClick : undefined}
                 >
                   <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
@@ -692,9 +720,20 @@ export default function TaskTracker({
                     {member.name}
                   </div>
                   {member.id === user?.uid && isColorPickerOpen && (
-                    <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
-                      <HexColorPicker color={selectedColor} onChange={handleMemberColorChange} />
-                    </div>
+                    <>
+                      <button
+                        className="absolute top-1 right-1 bg-black text-white rounded p-1 cursor-pointer z-30"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmColorChange();
+                        }}
+                      >
+                        ✓
+                      </button>
+                      <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
+                        <HexColorPicker color={selectedColor} onChange={setSelectedColor} />
+                      </div>
+                    </>
                   )}
                 </td>
 
