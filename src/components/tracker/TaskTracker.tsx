@@ -645,7 +645,8 @@ export default function TaskTracker({
                   style={{
                     backgroundColor: member.color,
                     width: '50px',
-                    height: '120px'
+                    height: '120px',
+                    boxShadow: '-10px 0 0 0 white' // Add white shadow to cover content bleeding from the left
                   }}
                 >
                   <div 

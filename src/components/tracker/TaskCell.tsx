@@ -270,7 +270,7 @@ export default function TaskCell({
               bottom: '4px',
               left: '4px',
               width: 'calc(100% - 8px)', // This container takes up most of the cell width
-              zIndex: 10, // Ensure input is above tasks
+              zIndex: 5, // Ensure input is above tasks
             }}
           >
             <div className="flex w-full items-center" style={{height: '32px'}}> {/* Flex container for input and buttons */}
@@ -310,7 +310,7 @@ export default function TaskCell({
                   bottom: '4px',
                   left: '4px',
                   width: 'calc(100% - 8px)', // This container takes up most of the cell width
-                  zIndex: 10, // Ensure input is above tasks
+                  zIndex: 5, // Ensure input is above tasks
                 }}
              >
                  <div className="flex w-full items-center" style={{height: '32px'}}>
