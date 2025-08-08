@@ -670,7 +670,7 @@ export default function TaskTracker({
         }
       />
 
-      <div className="flex-grow overflow-auto pb-24" ref={tableContainerRef}>
+      <div className="flex-grow overflow-auto pb-14" ref={tableContainerRef}>
         <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
           <thead>
             <tr>
