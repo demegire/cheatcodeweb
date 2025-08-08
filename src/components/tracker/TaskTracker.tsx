@@ -584,7 +584,7 @@ export default function TaskTracker({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-4 relative">
+    <div className="flex flex-col h-full overflow-hidden p-2 lg:p-4 relative">
       <TopBar
         groupId={groupId}
         groupName={currentGroupName}
@@ -628,7 +628,7 @@ export default function TaskTracker({
                   <th
                     key={index}
                     data-day-index={index}
-                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[75vw] sm:min-w-[42vw] md:min-w-[29vw] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
+                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
                   >
                     {getDayName(day)}
                   </th>
