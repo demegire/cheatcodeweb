@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, deleteField, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import ProfileSetup from '../../components/auth/ProfileSetup';
 import MainLayout from '../../components/layout/MainLayout';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -99,6 +99,7 @@ export default function DashboardPage() {
             const groupData = groupDocSnap.data();
 
             const memberUids: Record<string, boolean> = groupData.memberUids || {};
+            const memberColors: Record<string, string> = groupData.memberColors || {};
             // Skip groups where current user is marked as not a member
             if (!memberUids[authUser.uid]) continue;
 
@@ -113,7 +114,7 @@ export default function DashboardPage() {
                 members.push({
                   id: me,
                   name: displayName || 'You',
-                  color: color || '#3B82F6'
+                  color: memberColors[me] || color || '#3B82F6'
                 });
               }
             }
@@ -127,7 +128,7 @@ export default function DashboardPage() {
                 members.push({
                   id: uid,
                   name: displayName || 'User',
-                  color: color || '#3B82F6'
+                  color: memberColors[uid] || color || '#3B82F6'
                 });
               }
             }
@@ -217,8 +218,14 @@ export default function DashboardPage() {
 
         try {
           await updateDoc(doc(db, 'groups', groupId), {
-            [`memberUids.${user.uid}`]: false
+            [`memberUids.${user.uid}`]: false,
+            [`memberColors.${user.uid}`]: deleteField()
           });
+
+          const tasksRef = collection(db, 'groups', groupId, 'tasks');
+          const q = query(tasksRef, where('createdBy', '==', user.uid));
+          const snapshot = await getDocs(q);
+          await Promise.all(snapshot.docs.map(docSnap => deleteDoc(docSnap.ref)));
 
           const updates: Record<string, any> = {
             groups: arrayRemove(groupId),
@@ -267,6 +274,19 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error pinning group:', error);
     }
+  };
+
+  const handleMemberColorChange = (memberId: string, color: string) => {
+    setGroups(prev =>
+      prev.map(g =>
+        g.id === selectedGroup?.id
+          ? { ...g, members: g.members.map(m => (m.id === memberId ? { ...m, color } : m)) }
+          : g
+      )
+    );
+    setSelectedGroup(prev =>
+      prev ? { ...prev, members: prev.members.map(m => (m.id === memberId ? { ...m, color } : m)) } : prev
+    );
   };
 
   const handleFinishTutorial = async () => {
@@ -367,6 +387,7 @@ export default function DashboardPage() {
           onWeekChange={setCurrentISOWeek}
           isStatView={isStatView}
           onStatView={handleStatButtonPress}
+          onMemberColorChange={handleMemberColorChange}
         />
         )}
         {selectedGroup && isStatView && (

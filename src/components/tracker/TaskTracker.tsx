@@ -9,6 +9,7 @@ import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
+import { HexColorPicker } from 'react-colorful';
 
 // Helper function to get list of dates for a specific ISO week
 const getDates = (isoWeek: string) => {
@@ -44,6 +45,7 @@ interface TaskTrackerProps {
   onToggleRightSidebar?: () => void;
   isLeftSidebarCollapsed?: boolean;
   isRightSidebarCollapsed?: boolean;
+  onMemberColorChange?: (memberId: string, color: string) => void;
 }
 
 // Task types enum for better type safety (Define it here too)
@@ -69,7 +71,8 @@ export default function TaskTracker({
   onToggleLeftSidebar,
   onToggleRightSidebar,
   isLeftSidebarCollapsed,
-  isRightSidebarCollapsed
+  isRightSidebarCollapsed,
+  onMemberColorChange
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -78,6 +81,31 @@ export default function TaskTracker({
   const [currentGroupName, setCurrentGroupName] = useState(groupName);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(
+    members.find(m => m.id === user?.uid)?.color || '#3B82F6'
+  );
+
+  useEffect(() => {
+    const myMember = members.find(m => m.id === user?.uid);
+    if (myMember) {
+      setSelectedColor(myMember.color);
+    }
+  }, [members, user?.uid]);
+
+  const handleMemberColorChange = async (color: string) => {
+    if (!user?.uid) return;
+    setSelectedColor(color);
+    try {
+      await updateDoc(doc(db, 'groups', groupId), {
+        [`memberColors.${user.uid}`]: color,
+      });
+      onMemberColorChange?.(user.uid, color);
+    } catch (error) {
+      console.error('Error updating member color:', error);
+    }
+  };
 
   // State for the globally selected task type
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
@@ -643,12 +671,13 @@ export default function TaskTracker({
                 <td
                   className="rounded-l-2xl p-1 font-bold text-white text-center relative sticky left-0 z-10"
                   style={{
-                    backgroundColor: member.color,
+                    backgroundColor: member.id === user?.uid ? selectedColor : member.color,
                     width: '40px',
                     height: '120px'
                   }}
+                  onClick={member.id === user?.uid ? () => setIsColorPickerOpen(!isColorPickerOpen) : undefined}
                 >
-                  <div 
+                  <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
                     style={{
                       width: '120px', // This should match the td height
@@ -662,6 +691,11 @@ export default function TaskTracker({
                   >
                     {member.name}
                   </div>
+                  {member.id === user?.uid && isColorPickerOpen && (
+                    <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
+                      <HexColorPicker color={selectedColor} onChange={handleMemberColorChange} />
+                    </div>
+                  )}
                 </td>
 
                 {days.map((day, index) => (
@@ -704,7 +738,7 @@ export default function TaskTracker({
                     />
                 ))}
                 
-                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.color}}>
+                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>
