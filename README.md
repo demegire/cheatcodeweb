@@ -2,4 +2,4 @@
 
 Cheatcode is a collaborative calendar app to keep you honest, accountable and productive.
 
-[cheatcodeweb](https://cheatcodeweb.vercel.app)
+[cheatcodeweb](https://cheat-code.cc)

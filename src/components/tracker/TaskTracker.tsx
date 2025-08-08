@@ -9,6 +9,7 @@ import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
+import { HexColorPicker } from 'react-colorful';
 
 // Helper function to get list of dates for a specific ISO week
 const getDates = (isoWeek: string) => {
@@ -44,6 +45,7 @@ interface TaskTrackerProps {
   onToggleRightSidebar?: () => void;
   isLeftSidebarCollapsed?: boolean;
   isRightSidebarCollapsed?: boolean;
+  onMemberColorChange?: (memberId: string, color: string) => void;
 }
 
 // Task types enum for better type safety (Define it here too)
@@ -69,7 +71,8 @@ export default function TaskTracker({
   onToggleLeftSidebar,
   onToggleRightSidebar,
   isLeftSidebarCollapsed,
-  isRightSidebarCollapsed
+  isRightSidebarCollapsed,
+  onMemberColorChange
 }: TaskTrackerProps) {
   const { user } = useAuth();
   const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
@@ -78,6 +81,58 @@ export default function TaskTracker({
   const [currentGroupName, setCurrentGroupName] = useState(groupName);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(
+    members.find(m => m.id === user?.uid)?.color || '#3B82F6'
+  );
+  const [originalColor, setOriginalColor] = useState(selectedColor);
+  const nameBarRef = useRef<HTMLTableCellElement>(null);
+
+  useEffect(() => {
+    const myMember = members.find(m => m.id === user?.uid);
+    if (myMember) {
+      setSelectedColor(myMember.color);
+      setOriginalColor(myMember.color);
+    }
+  }, [members, user?.uid]);
+
+  const handleNameBarClick = () => {
+    if (!user?.uid) return;
+    if (isColorPickerOpen) {
+      setSelectedColor(originalColor);
+      setIsColorPickerOpen(false);
+    } else {
+      setOriginalColor(selectedColor);
+      setIsColorPickerOpen(true);
+    }
+  };
+
+  const confirmColorChange = async () => {
+    if (!user?.uid) return;
+    try {
+      await updateDoc(doc(db, 'groups', groupId), {
+        [`memberColors.${user.uid}`]: selectedColor,
+      });
+      onMemberColorChange?.(user.uid, selectedColor);
+      setOriginalColor(selectedColor);
+    } catch (error) {
+      console.error('Error updating member color:', error);
+    }
+    setIsColorPickerOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isColorPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (nameBarRef.current && !nameBarRef.current.contains(e.target as Node)) {
+        setSelectedColor(originalColor);
+        setIsColorPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isColorPickerOpen, originalColor]);
 
   // State for the globally selected task type
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
@@ -641,15 +696,17 @@ export default function TaskTracker({
             {members.map(member => (
               <tr key={member.id}>
                 <td
-                  className="rounded-l-2xl p-1 font-bold text-white text-center sticky left-0 z-10"
+                  ref={member.id === user?.uid ? nameBarRef : undefined}
+                  className={`rounded-l-2xl p-1 font-bold text-white text-center sticky left-0 z-10 ${member.id === user?.uid && !isColorPickerOpen ? 'cursor-pointer' : ''}`}
                   style={{
-                    backgroundColor: member.color,
+                    backgroundColor: member.id === user?.uid ? selectedColor : member.color,
                     width: '50px',
                     height: '120px',
-                    boxShadow: '-10px 0 0 0 white' // Add white shadow to cover content bleeding from the left
+                    boxShadow: '-10px 0 0 0 white'
                   }}
+                  onClick={member.id === user?.uid ? handleNameBarClick : undefined}
                 >
-                  <div 
+                  <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
                     style={{
                       width: '120px', // This should match the td height
@@ -663,6 +720,22 @@ export default function TaskTracker({
                   >
                     {member.name}
                   </div>
+                  {member.id === user?.uid && isColorPickerOpen && (
+                    <>
+                      <button
+                        className="absolute top-1 right-2 bg-black text-white rounded-full p-1 cursor-pointer z-30 h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmColorChange();
+                        }}
+                      >
+                        ✓
+                      </button>
+                      <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
+                        <HexColorPicker color={selectedColor} onChange={setSelectedColor} />
+                      </div>
+                    </>
+                  )}
                 </td>
 
                 {days.map((day, index) => (
@@ -705,7 +778,7 @@ export default function TaskTracker({
                     />
                 ))}
                 
-                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.color}}>
+                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>
