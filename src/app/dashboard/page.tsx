@@ -40,17 +40,37 @@ export default function DashboardPage() {
   const [pinnedGroupId, setPinnedGroupId] = useState<string | null>(null);
   const tutorialSlides = [
     {
-      image: '/android-chrome-192x192.png',
-      text: 'Track your tasks and stay organized.',
+      image: '/slide1.png',
+      text: 'Welcome! Hover over a day to add your first task...',
+    },
+    {
+      image: '/slide2.png',
+      text: 'Mark your tasks by clicking on the status button...',
+    },
+    {
+      image: '/slide3.png',
+      text: 'Hover over tasks to time, edit and delete...',
+    },
+    {
+      image: '/slide4.png',
+      text: 'Invite your friends by sending them an invite link...',
+    },
+    {
+      image: '/slide5.png',
+      text: 'Suggest tasks to friends and tap on them to comment...',
+    },
+    {
+      image: '/slide6.png',
+      text: 'Click on Stats to see who works the most...',
+    },
+    {
+      image: '/slide7.png',
+      text: ' And open the left sidebar to manage your groups.',
     },
     {
       image: '/android-chrome-512x512.png',
-      text: 'Invite friends to collaborate in groups.',
-    },
-    {
-      image: '/google-logo.svg',
-      text: 'View statistics to see your progress.',
-    },
+      text: "That's it! Have fun using cheat-code.cc!",
+    }
   ];
 
 
