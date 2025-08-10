@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '../../lib/hooks/useAuth';
 import TickCrossBackground from './TickCrossBackground';
 import TaskDemoBox from './TaskDemoBox';
@@ -41,6 +42,13 @@ export default function LoginForm() {
               Sign in with Google
             </button>
           </div>
+          <p className="mt-4 text-xs text-center text-gray-600">
+            By signing in you accept the{' '}
+            <Link href="/tos" className="underline">
+              Terms and Conditions
+            </Link>
+            .
+          </p>
         </div>
         <div className="order-3 md:order-3">
           <AnnouncementsBox />
