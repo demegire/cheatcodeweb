@@ -42,7 +42,7 @@ export default function LoginForm() {
               Sign in with Google
             </button>
           </div>
-          <p className="mt-4 text-xs text-center text-gray-600">
+          <p className="mt-4 text-xs text-center text-gray-500">
             By signing in you accept the{' '}
             <Link href="/tos" className="underline">
               Terms and Conditions

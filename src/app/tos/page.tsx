@@ -5,9 +5,9 @@ export default function TermsOfService() {
     <div className="relative flex items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
       <TickCrossBackground />
       <div className="relative z-10 w-full max-w-3xl bg-white p-8 rounded-lg shadow-md overflow-y-auto max-h-screen">
-        <h1 className="text-2xl font-bold mb-6">Terms and Conditions</h1>
+        <h1 className="text-2xl font-bold mb-6 text-black">Terms and Conditions</h1>
         <div className="space-y-4 text-sm text-gray-700">
-          <p>Welcome to cheat-code. By accessing or using our service, you agree to these Terms and Conditions. If you do not agree, please do not use the service.</p>
+          <p>By accessing or using our service, you agree to these Terms and Conditions. If you do not agree, please do not use the service.</p>
 
           <h2 className="text-lg font-semibold">Use of Service</h2>
           <p>The service is provided to help you stay accountable and productive. You must provide accurate information and use the service only for lawful purposes.</p>
@@ -31,7 +31,7 @@ export default function TermsOfService() {
           <p>We may update these Terms from time to time. Continued use of the service after changes are posted constitutes your acceptance of the updated Terms.</p>
 
           <h2 className="text-lg font-semibold">Contact</h2>
-          <p>If you have questions about these Terms, contact us at support@cheat-code.app.</p>
+          <p>If you have questions about these Terms, contact us at hi@cheat-code.cc.</p>
         </div>
       </div>
     </div>
