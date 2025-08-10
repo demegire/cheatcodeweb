@@ -6,9 +6,11 @@ interface CommentItemProps {
   onHover: () => void;
   onLeave: () => void;
   isHighlighted: boolean;
+  /** Color assigned to the comment's author */
+  color: string;
 }
 
-export default function CommentItem({ comment, onHover, onLeave, isHighlighted }: CommentItemProps) {
+export default function CommentItem({ comment, onHover, onLeave, isHighlighted, color }: CommentItemProps) {
   const formatDateTime = (date: Date) => {
     // Format with date and 24-hour time
     return `${date.toLocaleDateString()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -28,10 +30,10 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted }
   };
 
   return (
-    <div 
+    <div
       className={`p-3 rounded-lg mb-3 border-l-4 shadow-sm bg-white
         ${isHighlighted && comment.taskId ? 'ring-2 ring-blue-400' : ''}`}
-      style={{ borderLeftColor: comment.userColor }}
+      style={{ borderLeftColor: color }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
