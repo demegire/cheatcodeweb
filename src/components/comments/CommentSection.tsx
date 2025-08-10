@@ -180,40 +180,53 @@ export default function CommentSection({
         {/* Comment list */}
         {isCollapsed ? (
           <div className="px-2 py-4">
-            {comments.slice(0, 5).map(comment => (
-              <div 
-                key={comment.id}
-                className="h-8 w-8 rounded-full mb-2 flex items-center justify-center text-white font-medium"
-                style={{ backgroundColor: comment.userColor }}
-                title={`${comment.userName}: ${comment.text}`}
-              >
-                {comment.userName.charAt(0)}
-              </div>
-            ))}
+            {comments.slice(0, 5).map(comment => {
+              const memberColor =
+                members.find(m => m.id === comment.userId)?.color ||
+                comment.userColor ||
+                '#3B82F6';
+              return (
+                <div
+                  key={comment.id}
+                  className="h-8 w-8 rounded-full mb-2 flex items-center justify-center text-white font-medium"
+                  style={{ backgroundColor: memberColor }}
+                  title={`${comment.userName}: ${comment.text}`}
+                >
+                  {comment.userName.charAt(0)}
+                </div>
+              );
+            })}
           </div>
-        )  : (
+        ) : (
           <div className="p-4">
-            {filteredComments.map(comment => (
-              <CommentItem 
-                key={comment.id}
-                comment={comment}
-                isHighlighted={!!(comment.id === highlightedCommentId || 
-                  (comment.taskId && comment.taskId === highlightedTaskId))}
-                onHover={() => {
-                  setHighlightedCommentId(comment.id);
-                  if (comment.taskId) {
-                    onHighlightTask(comment.taskId);
-                  }
-                }}
-                onLeave={() => {
-                  setHighlightedCommentId(null);
-                  onHighlightTask(null);
-                }}
-              />
-            ))}
+            {filteredComments.map(comment => {
+              const memberColor =
+                members.find(m => m.id === comment.userId)?.color ||
+                comment.userColor ||
+                '#3B82F6';
+              return (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  color={memberColor}
+                  isHighlighted={!!(comment.id === highlightedCommentId ||
+                    (comment.taskId && comment.taskId === highlightedTaskId))}
+                  onHover={() => {
+                    setHighlightedCommentId(comment.id);
+                    if (comment.taskId) {
+                      onHighlightTask(comment.taskId);
+                    }
+                  }}
+                  onLeave={() => {
+                    setHighlightedCommentId(null);
+                    onHighlightTask(null);
+                  }}
+                />
+              );
+            })}
             {filteredComments.length === 0 && (
               <div className="text-gray-500 text-center italic">
-                {selectedTask ? "No comments for this task yet" : "No comments yet"}
+                {selectedTask ? 'No comments for this task yet' : 'No comments yet'}
               </div>
             )}
           </div>
