@@ -104,10 +104,10 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
           
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Choose Your Color Wisely...
+              Color
             </label>
             <p className="text-xs text-gray-500">
-              ... you will not be able to change it.
+              You can also change it per group.
             </p>
             <div className="relative">
               <button
