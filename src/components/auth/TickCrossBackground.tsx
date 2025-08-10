@@ -53,7 +53,7 @@ export default function TickCrossBackground() {
           onClick={() => toggle(idx)}
           className="flex items-center justify-center"
         >
-          <span className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center">
+          <span className="w-8 h-8 rounded-full gray-50 flex items-center justify-center">
             {isTick ? (
               <CheckIcon className="w-5 h-5 text-green-600" />
             ) : (

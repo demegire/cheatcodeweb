@@ -20,8 +20,8 @@ export default function TaskDemoBox() {
     alp: [
       {
         id: nanoid(),
-        text: 'Launch cheatcode',
-        status: 'not-done',
+        text: 'Launch cheat-code.cc',
+        status: 'completed',
         day: 0,
         createdBy: 'alp',
         createdAt: new Date(),
@@ -37,7 +37,17 @@ export default function TaskDemoBox() {
         weekId: 'demo',
       },
     ],
-    you: [],
+    you: [
+      {
+        id: nanoid(),
+        text: 'Start using cheat-code.cc 🫡',
+        status: 'not-done',
+        day: 0,
+        createdBy: 'you',
+        createdAt: new Date(),
+        weekId: 'demo',
+      },
+    ],
   });
 
   const handleAddTask = (memberId: string, text: string) => {
@@ -117,7 +127,7 @@ export default function TaskDemoBox() {
   const [currentTaskType, setCurrentTaskType] = useState<'local' | 'global'>('local');
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md max-w-xs w-full">
+    <div className="bg-white p-8 rounded-lg shadow-md max-w-sm w-full">
       <div className="text-center font-bold mb-4 text-black">{formattedDate}</div>
       <table className="border-separate border-spacing-x-1 border-spacing-y-2 w-full table-fixed">
         <tbody>
@@ -162,7 +172,7 @@ export default function TaskDemoBox() {
                 currentUserId={'you'}
                 currentTaskType={currentTaskType}
                 onTaskTypeChange={setCurrentTaskType}
-                minHeight={100}
+                minHeight={80}
               />
             </tr>
           ))}
