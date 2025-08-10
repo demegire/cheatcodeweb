@@ -41,8 +41,12 @@ export default function TickCrossBackground() {
 
   return (
     <div
-      className="absolute inset-0 grid"
+      className="fixed z-0 grid"
       style={{
+        left: `calc(50% - ${(cols * CELL_SIZE) / 2}px)`,
+        top: `calc(50% - ${(rows * CELL_SIZE) / 2}px)`,
+        width: `${cols * CELL_SIZE}px`,
+        height: `${rows * CELL_SIZE}px`,
         gridTemplateColumns: `repeat(${cols}, ${CELL_SIZE}px)`,
         gridTemplateRows: `repeat(${rows}, ${CELL_SIZE}px)`,
       }}
