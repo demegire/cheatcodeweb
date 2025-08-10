@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import TutorialModal from '../../components/modals/TutorialModal';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface GroupData {
   id: string;
@@ -324,7 +324,13 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-400 animate-spin">
+          <XMarkIcon className="w-8 h-8 text-white" />
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
