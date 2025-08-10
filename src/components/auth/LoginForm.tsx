@@ -1,13 +1,15 @@
 import React from 'react';
-import { useAuth } from '../../lib/hooks/useAuth';
 import Image from 'next/image';
+import { useAuth } from '../../lib/hooks/useAuth';
+import TickCrossBackground from './TickCrossBackground';
 
 export default function LoginForm() {
   const { signInWithGoogle } = useAuth();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-xs w-full">
+    <div className="relative flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
+      <TickCrossBackground />
+      <div className="relative z-10 bg-white p-8 rounded-lg shadow-md max-w-xs w-full">
       <div className="flex items-center justify-center mb-8">
         <h1 className="text-3xl font-bold text-black">
           cheat-code.
