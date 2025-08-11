@@ -39,6 +39,7 @@ export interface GroupData {
    * rules.
    */
   memberUids: Record<string, boolean>;
+  memberJoinDates?: Record<string, Date>;
   tasks: Record<string, Task[]>; // userId -> tasks
   createdAt: Date;
   createdBy: string;

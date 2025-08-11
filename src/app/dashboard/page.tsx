@@ -22,6 +22,7 @@ interface GroupData {
     id: string;
     name: string;
     color: string;
+    joinedAt?: number;
   }[];
 }
 
@@ -120,10 +121,11 @@ export default function DashboardPage() {
 
             const memberUids: Record<string, boolean> = groupData.memberUids || {};
             const memberColors: Record<string, string> = groupData.memberColors || {};
+            const memberJoinDates: Record<string, any> = groupData.memberJoinDates || {};
             // Skip groups where current user is marked as not a member
             if (!memberUids[authUser.uid]) continue;
 
-            const members: { id: string; name: string; color: string }[] = [];
+            const members: { id: string; name: string; color: string; joinedAt?: number }[] = [];
             const me = authUser.uid;
 
             // 1️⃣ Add me first (if I’m in this group)
@@ -134,24 +136,31 @@ export default function DashboardPage() {
                 members.push({
                   id: me,
                   name: displayName || 'You',
-                  color: memberColors[me] || color || '#3B82F6'
+                  color: memberColors[me] || color || '#3B82F6',
+                  joinedAt: memberJoinDates[me]?.toMillis ? memberJoinDates[me].toMillis() : undefined
                 });
               }
             }
 
-            // 2️⃣ Then add everyone else
+            // 2️⃣ Gather everyone else and sort by join date
+            const others: { id: string; name: string; color: string; joinedAt?: number }[] = [];
             for (const uid of Object.keys(memberUids)) {
               if (uid === me || !memberUids[uid]) continue;
               const memberSnap = await getDoc(doc(db, 'users', uid));
               if (memberSnap.exists()) {
                 const { displayName, color } = memberSnap.data();
-                members.push({
+                const joinDate = memberJoinDates[uid];
+                others.push({
                   id: uid,
                   name: displayName || 'User',
-                  color: memberColors[uid] || color || '#3B82F6'
+                  color: memberColors[uid] || color || '#3B82F6',
+                  joinedAt: joinDate?.toMillis ? joinDate.toMillis() : undefined
                 });
               }
             }
+
+            others.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+            members.push(...others);
 
             groupsData.push({
               id: groupDocSnap.id,
@@ -200,6 +209,9 @@ export default function DashboardPage() {
             memberUids: {
               [user.uid]: true
             },
+            memberJoinDates: {
+              [user.uid]: new Date()
+            },
             createdBy: user.uid,
             createdAt: new Date()
           });
@@ -217,7 +229,8 @@ export default function DashboardPage() {
               {
                 id: user.uid,
                 name: userData?.displayName || 'User',
-                color: userColor
+                color: userColor,
+                joinedAt: Date.now()
               }
             ]
           };
@@ -239,7 +252,8 @@ export default function DashboardPage() {
         try {
           await updateDoc(doc(db, 'groups', groupId), {
             [`memberUids.${user.uid}`]: false,
-            [`memberColors.${user.uid}`]: deleteField()
+            [`memberColors.${user.uid}`]: deleteField(),
+            [`memberJoinDates.${user.uid}`]: deleteField()
           });
 
           const tasksRef = collection(db, 'groups', groupId, 'tasks');

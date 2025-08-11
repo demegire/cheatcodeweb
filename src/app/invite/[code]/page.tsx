@@ -62,9 +62,10 @@ export default function InvitePage() {
         const userRef = doc(db, 'users', user.uid);
         await getDoc(userRef); // ensure user document exists
         
-        // Add user to group's member map
+        // Add user to group's member map and record join date
         await updateDoc(groupRef, {
-          [`memberUids.${user.uid}`]: true
+          [`memberUids.${user.uid}`]: true,
+          [`memberJoinDates.${user.uid}`]: new Date()
         });
         
         // Add group to user's groups
