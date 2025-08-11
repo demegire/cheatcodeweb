@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useParams } from 'next/navigation';
+import TickCrossBackground from '../../../components/auth/TickCrossBackground';
 
 export default function InvitePage() {
   const router = useRouter();
@@ -61,9 +62,10 @@ export default function InvitePage() {
         const userRef = doc(db, 'users', user.uid);
         await getDoc(userRef); // ensure user document exists
         
-        // Add user to group's member map
+        // Add user to group's member map and record join date
         await updateDoc(groupRef, {
-          [`memberUids.${user.uid}`]: true
+          [`memberUids.${user.uid}`]: true,
+          [`memberJoinDates.${user.uid}`]: new Date()
         });
         
         // Add group to user's groups
@@ -90,8 +92,9 @@ export default function InvitePage() {
   
   
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-xs w-full">        
+    <div className="relative flex items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
+      <TickCrossBackground />
+      <div className="relative z-10 bg-white p-8 rounded-lg shadow-md max-w-xs w-full">
         {error ? (
           <div className="text-red-500 text-center mb-4">{error}</div>
         ) : (

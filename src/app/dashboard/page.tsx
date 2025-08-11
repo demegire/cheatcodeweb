@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid';
 import StatsView from '../../components/stats/StatsView';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import TutorialModal from '../../components/modals/TutorialModal';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface GroupData {
   id: string;
@@ -22,6 +22,7 @@ interface GroupData {
     id: string;
     name: string;
     color: string;
+    joinedAt?: number;
   }[];
 }
 
@@ -40,17 +41,37 @@ export default function DashboardPage() {
   const [pinnedGroupId, setPinnedGroupId] = useState<string | null>(null);
   const tutorialSlides = [
     {
-      image: '/android-chrome-192x192.png',
-      text: 'Track your tasks and stay organized.',
+      image: '/slide1.png',
+      text: 'Welcome! Hover over a day to add your first task...',
+    },
+    {
+      image: '/slide2.png',
+      text: 'Mark your tasks by clicking on the status button...',
+    },
+    {
+      image: '/slide3.png',
+      text: 'Hover over tasks to time, edit and delete...',
+    },
+    {
+      image: '/slide4.png',
+      text: 'Invite your friends by sending them an invite link...',
+    },
+    {
+      image: '/slide5.png',
+      text: 'Suggest tasks to friends and tap on them to comment...',
+    },
+    {
+      image: '/slide6.png',
+      text: 'Click on Stats to see who works the most...',
+    },
+    {
+      image: '/slide7.png',
+      text: ' And open the left sidebar to manage your groups.',
     },
     {
       image: '/android-chrome-512x512.png',
-      text: 'Invite friends to collaborate in groups.',
-    },
-    {
-      image: '/google-logo.svg',
-      text: 'View statistics to see your progress.',
-    },
+      text: "That's it! Have fun using cheat-code.cc!",
+    }
   ];
 
 
@@ -100,10 +121,11 @@ export default function DashboardPage() {
 
             const memberUids: Record<string, boolean> = groupData.memberUids || {};
             const memberColors: Record<string, string> = groupData.memberColors || {};
+            const memberJoinDates: Record<string, any> = groupData.memberJoinDates || {};
             // Skip groups where current user is marked as not a member
             if (!memberUids[authUser.uid]) continue;
 
-            const members: { id: string; name: string; color: string }[] = [];
+            const members: { id: string; name: string; color: string; joinedAt?: number }[] = [];
             const me = authUser.uid;
 
             // 1️⃣ Add me first (if I’m in this group)
@@ -114,24 +136,31 @@ export default function DashboardPage() {
                 members.push({
                   id: me,
                   name: displayName || 'You',
-                  color: memberColors[me] || color || '#3B82F6'
+                  color: memberColors[me] || color || '#3B82F6',
+                  joinedAt: memberJoinDates[me]?.toMillis ? memberJoinDates[me].toMillis() : undefined
                 });
               }
             }
 
-            // 2️⃣ Then add everyone else
+            // 2️⃣ Gather everyone else and sort by join date
+            const others: { id: string; name: string; color: string; joinedAt?: number }[] = [];
             for (const uid of Object.keys(memberUids)) {
               if (uid === me || !memberUids[uid]) continue;
               const memberSnap = await getDoc(doc(db, 'users', uid));
               if (memberSnap.exists()) {
                 const { displayName, color } = memberSnap.data();
-                members.push({
+                const joinDate = memberJoinDates[uid];
+                others.push({
                   id: uid,
                   name: displayName || 'User',
-                  color: memberColors[uid] || color || '#3B82F6'
+                  color: memberColors[uid] || color || '#3B82F6',
+                  joinedAt: joinDate?.toMillis ? joinDate.toMillis() : undefined
                 });
               }
             }
+
+            others.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+            members.push(...others);
 
             groupsData.push({
               id: groupDocSnap.id,
@@ -180,6 +209,9 @@ export default function DashboardPage() {
             memberUids: {
               [user.uid]: true
             },
+            memberJoinDates: {
+              [user.uid]: new Date()
+            },
             createdBy: user.uid,
             createdAt: new Date()
           });
@@ -197,7 +229,8 @@ export default function DashboardPage() {
               {
                 id: user.uid,
                 name: userData?.displayName || 'User',
-                color: userColor
+                color: userColor,
+                joinedAt: Date.now()
               }
             ]
           };
@@ -219,7 +252,8 @@ export default function DashboardPage() {
         try {
           await updateDoc(doc(db, 'groups', groupId), {
             [`memberUids.${user.uid}`]: false,
-            [`memberColors.${user.uid}`]: deleteField()
+            [`memberColors.${user.uid}`]: deleteField(),
+            [`memberJoinDates.${user.uid}`]: deleteField()
           });
 
           const tasksRef = collection(db, 'groups', groupId, 'tasks');
@@ -304,7 +338,13 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-400 animate-spin">
+          <XMarkIcon className="w-8 h-8 text-white" />
+        </div>
+      </div>
+    );
   }
 
   if (!user) {

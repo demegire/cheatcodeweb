@@ -33,10 +33,10 @@ export default function TutorialModal({ slides, onFinish }: TutorialModalProps) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md"
+        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl"
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-full h-48 mb-4 relative">
+        <div className="w-full h-96 mb-4 relative">
           <Image
             src={current.image}
             alt="Tutorial step"
@@ -54,7 +54,7 @@ export default function TutorialModal({ slides, onFinish }: TutorialModalProps) 
             />
           ))}
         </div>
-        <p className="text-sm text-gray-700 mb-6">{current.text}</p>
+        <p className="text-lg text-black font-bold mb-6 text-center">{current.text}</p>
         <div className="flex justify-between">
           <button
             onClick={handlePrev}

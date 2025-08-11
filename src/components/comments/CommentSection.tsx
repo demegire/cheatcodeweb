@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { collection, addDoc, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Comment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -31,6 +31,7 @@ export default function CommentSection({
 }: CommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentTasks, setCommentTasks] = useState<Record<string, Task>>({});
   const [newComment, setNewComment] = useState('');
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
@@ -71,6 +72,72 @@ export default function CommentSection({
 
     return () => unsubscribe();
   }, [groupId, currentWeekId]);
+
+  // Fetch tasks referenced by comments
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const taskIds = Array.from(new Set(
+        comments
+          .filter(c => c.taskId)
+          .map(c => c.taskId as string)
+      ));
+      if (taskIds.length === 0) {
+        setCommentTasks({});
+        return;
+      }
+
+      const tasksMap: Record<string, Task> = {};
+      await Promise.all(
+        taskIds.map(async id => {
+          // 1. Try to fetch from group tasks
+          const groupRef = doc(db, 'groups', groupId, 'tasks', id);
+          let snap = await getDoc(groupRef);
+
+          // 2. If not found, try each member's personal tasks
+          if (!snap.exists()) {
+            for (const member of members) {
+              const personalRef = doc(db, 'users', member.id, 'tasks', id);
+              const personalSnap = await getDoc(personalRef);
+              if (personalSnap.exists()) {
+                snap = personalSnap;
+                break;
+              }
+            }
+          }
+
+          if (snap.exists()) {
+            const data = snap.data();
+
+            let createdAt: Date = new Date();
+            if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+              createdAt = data.createdAt.toDate();
+            } else if (data.createdAt) {
+              createdAt = new Date(data.createdAt);
+            }
+
+            let timerStartedAt: Date | null = null;
+            if (data.timerStartedAt && typeof data.timerStartedAt.toDate === 'function') {
+              timerStartedAt = data.timerStartedAt.toDate();
+            } else if (data.timerStartedAt) {
+              timerStartedAt = new Date(data.timerStartedAt);
+            }
+
+            tasksMap[id] = {
+              id: snap.id,
+              ...data,
+              createdAt,
+              timerStartedAt,
+              elapsedSeconds: data.elapsedSeconds || 0,
+              // Personal tasks are marked with isGlobal true
+              isGlobal: snap.ref.path.includes('/users/'),
+            } as Task;
+          }
+        })
+      );
+      setCommentTasks(tasksMap);
+    };
+    fetchTasks();
+  }, [comments, groupId, members]);
 
   // Add an effect to handle the Escape key press
   useEffect(() => {
@@ -148,6 +215,14 @@ export default function CommentSection({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteDoc(doc(db, 'groups', groupId, 'comments', commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
   // Handle key press in the input field
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -180,40 +255,64 @@ export default function CommentSection({
         {/* Comment list */}
         {isCollapsed ? (
           <div className="px-2 py-4">
-            {comments.slice(0, 5).map(comment => (
-              <div 
-                key={comment.id}
-                className="h-8 w-8 rounded-full mb-2 flex items-center justify-center text-white font-medium"
-                style={{ backgroundColor: comment.userColor }}
-                title={`${comment.userName}: ${comment.text}`}
-              >
-                {comment.userName.charAt(0)}
-              </div>
-            ))}
+            {comments.slice(0, 5).map(comment => {
+              const memberColor =
+                members.find(m => m.id === comment.userId)?.color ||
+                comment.userColor ||
+                '#3B82F6';
+              return (
+                <div
+                  key={comment.id}
+                  className="h-8 w-8 rounded-full mb-2 flex items-center justify-center text-white font-medium"
+                  style={{ backgroundColor: memberColor }}
+                  title={`${comment.userName}: ${comment.text}`}
+                >
+                  {comment.userName.charAt(0)}
+                </div>
+              );
+            })}
           </div>
-        )  : (
+        ) : (
           <div className="p-4">
-            {filteredComments.map(comment => (
-              <CommentItem 
-                key={comment.id}
-                comment={comment}
-                isHighlighted={!!(comment.id === highlightedCommentId || 
-                  (comment.taskId && comment.taskId === highlightedTaskId))}
-                onHover={() => {
-                  setHighlightedCommentId(comment.id);
-                  if (comment.taskId) {
-                    onHighlightTask(comment.taskId);
-                  }
-                }}
-                onLeave={() => {
-                  setHighlightedCommentId(null);
-                  onHighlightTask(null);
-                }}
-              />
-            ))}
+            {filteredComments.map(comment => {
+              const memberColor =
+                members.find(m => m.id === comment.userId)?.color ||
+                comment.userColor ||
+                '#3B82F6';
+              const task = comment.taskId ? commentTasks[comment.taskId] : undefined;
+              const taskOwner = task
+                ? (() => {
+                    const m = members.find(mem => mem.id === task.createdBy);
+                    return { name: m?.name || 'Unknown', color: m?.color || '#3B82F6' };
+                  })()
+                : null;
+              return (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  color={memberColor}
+                  task={task}
+                  taskOwner={taskOwner}
+                  isHighlighted={!!(comment.id === highlightedCommentId ||
+                    (comment.taskId && comment.taskId === highlightedTaskId))}
+                  onHover={() => {
+                    setHighlightedCommentId(comment.id);
+                    if (comment.taskId) {
+                      onHighlightTask(comment.taskId);
+                    }
+                  }}
+                  onLeave={() => {
+                    setHighlightedCommentId(null);
+                    onHighlightTask(null);
+                  }}
+                  canDelete={comment.userId === user?.uid}
+                  onDelete={() => handleDeleteComment(comment.id)}
+                />
+              );
+            })}
             {filteredComments.length === 0 && (
               <div className="text-gray-500 text-center italic">
-                {selectedTask ? "No comments for this task yet" : "No comments yet"}
+                {selectedTask ? 'No comments for this task yet' : 'No comments yet'}
               </div>
             )}
           </div>

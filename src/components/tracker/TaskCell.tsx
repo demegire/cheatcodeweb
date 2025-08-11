@@ -30,6 +30,8 @@ interface TaskCellProps {
   // New props for global task type state
   currentTaskType: TaskType;
   onTaskTypeChange: (type: TaskType) => void;
+  /** Optional minimum height for the cell in pixels */
+  minHeight?: number;
 }
 
 export default function TaskCell({
@@ -55,6 +57,7 @@ export default function TaskCell({
   // Destructure new props
   currentTaskType,
   onTaskTypeChange,
+  minHeight,
 }: TaskCellProps) {
     const [newTaskText, setNewTaskText] = useState('');
     const [isHovering, setIsHovering] = useState(false);
@@ -205,9 +208,10 @@ export default function TaskCell({
     return (
       <td
         ref={cellRef}
-        className="p-1 relative align-top h-full overflow-hidden min-h-[150px]"
+        className="p-1 relative align-top h-full overflow-hidden"
         style={{
-          backgroundColor: `${color}10`
+          backgroundColor: `${color}10`,
+          minHeight: minHeight ?? 150,
         }}
         onMouseEnter={() => setIsHovering(true)}
         onTouchStart={() => setIsHovering(true)} 
