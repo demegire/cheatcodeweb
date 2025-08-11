@@ -20,6 +20,7 @@ interface GroupData {
     id: string;
     name: string;
     color: string;
+    joinedAt?: number;
   }[];
 }
 
