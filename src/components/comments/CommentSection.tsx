@@ -89,16 +89,32 @@ export default function CommentSection({
       const tasksMap: Record<string, Task> = {};
       await Promise.all(
         taskIds.map(async id => {
-          const taskRef = doc(db, 'groups', groupId, 'tasks', id);
-          const snap = await getDoc(taskRef);
+          // 1. Try to fetch from group tasks
+          const groupRef = doc(db, 'groups', groupId, 'tasks', id);
+          let snap = await getDoc(groupRef);
+
+          // 2. If not found, try each member's personal tasks
+          if (!snap.exists()) {
+            for (const member of members) {
+              const personalRef = doc(db, 'users', member.id, 'tasks', id);
+              const personalSnap = await getDoc(personalRef);
+              if (personalSnap.exists()) {
+                snap = personalSnap;
+                break;
+              }
+            }
+          }
+
           if (snap.exists()) {
             const data = snap.data();
+
             let createdAt: Date = new Date();
             if (data.createdAt && typeof data.createdAt.toDate === 'function') {
               createdAt = data.createdAt.toDate();
             } else if (data.createdAt) {
               createdAt = new Date(data.createdAt);
             }
+
             let timerStartedAt: Date | null = null;
             if (data.timerStartedAt && typeof data.timerStartedAt.toDate === 'function') {
               timerStartedAt = data.timerStartedAt.toDate();
@@ -112,7 +128,8 @@ export default function CommentSection({
               createdAt,
               timerStartedAt,
               elapsedSeconds: data.elapsedSeconds || 0,
-              isGlobal: false,
+              // Personal tasks are marked with isGlobal true
+              isGlobal: snap.ref.path.includes('/users/'),
             } as Task;
           }
         })
@@ -120,7 +137,7 @@ export default function CommentSection({
       setCommentTasks(tasksMap);
     };
     fetchTasks();
-  }, [comments, groupId]);
+  }, [comments, groupId, members]);
 
   // Add an effect to handle the Escape key press
   useEffect(() => {
