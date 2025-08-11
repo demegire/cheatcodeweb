@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Comment, Task } from '../../types';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface CommentItemProps {
   comment: Comment;
@@ -12,9 +13,14 @@ interface CommentItemProps {
   task?: Task;
   /** Owner info for the referenced task */
   taskOwner?: { name: string; color: string } | null;
+  /** Whether the current user can delete this comment */
+  canDelete: boolean;
+  /** Delete handler */
+  onDelete: () => void;
 }
 
-export default function CommentItem({ comment, onHover, onLeave, isHighlighted, color, task, taskOwner }: CommentItemProps) {
+export default function CommentItem({ comment, onHover, onLeave, isHighlighted, color, task, taskOwner, canDelete, onDelete }: CommentItemProps) {
+  const [showDelete, setShowDelete] = useState(false);
   const formatDateTime = (date: Date) => {
     // Format with date and 24-hour time
     return `${date.toLocaleDateString()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -25,11 +31,21 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
     if (comment.taskId) {
       onHover();
     }
+    if (canDelete) {
+      setShowDelete(true);
+    }
   };
 
   const handleMouseLeave = () => {
     if (comment.taskId) {
       onLeave();
+    }
+    setShowDelete(false);
+  };
+
+  const handleClick = () => {
+    if (canDelete) {
+      setShowDelete(true);
     }
   };
 
@@ -40,10 +56,24 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
       style={{ borderLeftColor: color }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       <div className="flex justify-between items-start mb-1">
         <div className="font-medium text-sm text-gray-600">{comment.userName}</div>
-        <div className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</div>
+        <div className="flex items-start space-x-2">
+          {showDelete && canDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="w-5 h-5 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <div className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</div>
+        </div>
       </div>
       <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">{comment.text}</div>
       {task && taskOwner && (

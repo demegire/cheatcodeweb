@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Comment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -215,6 +215,14 @@ export default function CommentSection({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteDoc(doc(db, 'groups', groupId, 'comments', commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
   // Handle key press in the input field
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -297,6 +305,8 @@ export default function CommentSection({
                     setHighlightedCommentId(null);
                     onHighlightTask(null);
                   }}
+                  canDelete={comment.userId === user?.uid}
+                  onDelete={() => handleDeleteComment(comment.id)}
                 />
               );
             })}
