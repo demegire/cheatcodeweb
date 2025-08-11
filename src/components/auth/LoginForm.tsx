@@ -12,7 +12,7 @@ export default function LoginForm() {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
       <TickCrossBackground />
-      <div className="relative z-10 flex flex-col md:flex-row md:items-start gap-8 overflow-y-auto max-h-screen">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-start gap-8">
         <div className="order-2 md:order-1">
           <TaskDemoBox />
         </div>
