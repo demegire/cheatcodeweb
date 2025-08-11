@@ -1,5 +1,5 @@
 import React from 'react';
-import { Comment } from '../../types';
+import { Comment, Task } from '../../types';
 
 interface CommentItemProps {
   comment: Comment;
@@ -8,9 +8,13 @@ interface CommentItemProps {
   isHighlighted: boolean;
   /** Color assigned to the comment's author */
   color: string;
+  /** Optional task referenced by the comment */
+  task?: Task;
+  /** Owner info for the referenced task */
+  taskOwner?: { name: string; color: string } | null;
 }
 
-export default function CommentItem({ comment, onHover, onLeave, isHighlighted, color }: CommentItemProps) {
+export default function CommentItem({ comment, onHover, onLeave, isHighlighted, color, task, taskOwner }: CommentItemProps) {
   const formatDateTime = (date: Date) => {
     // Format with date and 24-hour time
     return `${date.toLocaleDateString()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -42,7 +46,17 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
         <div className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</div>
       </div>
       <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">{comment.text}</div>
-      
+      {task && taskOwner && (
+        <div className="mt-2 flex items-center">
+          <div
+            className="h-6 w-6 rounded-full flex items-center justify-center text-white text-xs mr-2"
+            style={{ backgroundColor: taskOwner.color }}
+          >
+            {taskOwner.name.charAt(0)}
+          </div>
+          <div className="text-xs text-gray-600 truncate flex-1">{task.text}</div>
+        </div>
+      )}
     </div>
   );
 }
