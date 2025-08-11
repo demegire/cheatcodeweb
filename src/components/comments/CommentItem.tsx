@@ -60,7 +60,7 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
     >
       <div className="flex justify-between items-start mb-1">
         <div className="font-medium text-sm text-gray-600">{comment.userName}</div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-start space-x-2">
           {showDelete && canDelete && (
             <button
               onClick={(e) => {
