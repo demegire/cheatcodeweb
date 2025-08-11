@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../../lib/firebase';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ArrowLeftStartOnRectangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, PlusIcon, ArrowLeftStartOnRectangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { GoPin } from "react-icons/go";
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
@@ -154,7 +155,7 @@ export default function MainLayout({
                             }`}
                             title={pinnedGroupId === group.id ? 'Unpin group' : 'Pin group'}
                           >
-                            <MapPinIcon className="h-4 w-4" />
+                            <GoPin className="h-4 w-4" />
                           </button>
                           <button
                             onClick={(e) => {
