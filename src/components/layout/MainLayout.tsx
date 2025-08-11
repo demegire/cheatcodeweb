@@ -104,10 +104,10 @@ export default function MainLayout({
   };
 
   return (
-    <div className="flex h-[100dvh] relative overflow-x-hidden">
+    <div className="flex h-[100dvh] relative overflow-x-hidden bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar - always absolute positioned */}
       <div
-        className={`absolute top-0 bottom-0 left-0 h-full bg-gray-100 border-r border-gray-200 transition-all duration-500
+        className={`absolute top-0 bottom-0 left-0 h-full bg-white/70 backdrop-blur-md border-r border-gray-200 transition-all duration-500
         ${sidebarCollapsed ? 'w-0' : 'w-full md:w-64 shadow-lg z-50'}`}
       >
         {!sidebarCollapsed &&
@@ -125,12 +125,12 @@ export default function MainLayout({
           
           <div className="flex-1 overflow-y-auto">
             {/* Group list */}
-            <ul className="space-y-1 px-2 mt-2">
+            <ul className="space-y-2 px-2 mt-2">
               {groups.map(group => (
                 <li
                   key={group.id}
-                  className={`rounded-lg transition-colors duration-500 cursor-pointer p-2 ${
-                    selectedGroup?.id === group.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-200'
+                  className={`rounded-xl transition-colors duration-200 cursor-pointer p-2 ${
+                    selectedGroup?.id === group.id ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' : 'hover:bg-gray-100'
                   }`}
                   onMouseEnter={() => setActiveGroupId(group.id)}
                   onMouseLeave={() => setActiveGroupId(null)}
@@ -178,9 +178,9 @@ export default function MainLayout({
             
             {/* Create new group button */}
             <div className="mt-4 px-2">
-              <button 
+              <button
                 onClick={onCreateGroup}
-                className={`flex items-center justify-${sidebarCollapsed ? 'center' : 'start'} w-full p-2 rounded-lg text-gray-700 hover:bg-gray-200`}
+                className={`flex items-center justify-${sidebarCollapsed ? 'center' : 'start'} w-full p-2 rounded-xl text-gray-700 hover:bg-gray-100`}
               >
                 <PlusIcon className="h-5 w-5 text-gray-600" />
                 {!sidebarCollapsed && <span className="ml-2">Create New Group</span>}
@@ -204,36 +204,38 @@ export default function MainLayout({
       </div>
       
       {/* Main Content */}
-      <div className="w-full h-full flex flex-col overflow-hidden">
-        {/* Clone children with additional props if it's a TaskTracker component */}
-        {React.Children.map(children, child => {
-          if (React.isValidElement(child)) {
-            if (child.type === TaskTracker) {
-              return React.cloneElement(child as React.ReactElement<TaskTrackerComponentProps>, {
-                highlightedTaskId: highlightedTaskId,
-                comments: comments,
-                onToggleLeftSidebar: toggleSidebar,
-                onToggleRightSidebar: toggleRightSidebar,
-                isLeftSidebarCollapsed: sidebarCollapsed,
-                isRightSidebarCollapsed: rightSidebarCollapsed,
-              });
+      <div className="w-full h-full flex flex-col overflow-hidden p-4">
+        <div className="flex-1 overflow-hidden bg-white/70 backdrop-blur-md rounded-xl shadow-sm">
+          {/* Clone children with additional props if it's a TaskTracker component */}
+          {React.Children.map(children, child => {
+            if (React.isValidElement(child)) {
+              if (child.type === TaskTracker) {
+                return React.cloneElement(child as React.ReactElement<TaskTrackerComponentProps>, {
+                  highlightedTaskId: highlightedTaskId,
+                  comments: comments,
+                  onToggleLeftSidebar: toggleSidebar,
+                  onToggleRightSidebar: toggleRightSidebar,
+                  isLeftSidebarCollapsed: sidebarCollapsed,
+                  isRightSidebarCollapsed: rightSidebarCollapsed,
+                });
+              }
+              if (child.type === StatsView) {
+                return React.cloneElement(child as React.ReactElement<StatsViewComponentProps>, {
+                  onToggleLeftSidebar: toggleSidebar,
+                  onToggleRightSidebar: toggleRightSidebar,
+                  isLeftSidebarCollapsed: sidebarCollapsed,
+                  isRightSidebarCollapsed: rightSidebarCollapsed,
+                });
+              }
             }
-            if (child.type === StatsView) {
-              return React.cloneElement(child as React.ReactElement<StatsViewComponentProps>, {
-                onToggleLeftSidebar: toggleSidebar,
-                onToggleRightSidebar: toggleRightSidebar,
-                isLeftSidebarCollapsed: sidebarCollapsed,
-                isRightSidebarCollapsed: rightSidebarCollapsed,
-              });
-            }
-          }
-          return child;
-        })}
+            return child;
+          })}
+        </div>
       </div>
       
       {/* Right Sidebar - always absolute positioned */}
       <div
-        className={`absolute top-0 bottom-0 right-0 h-full bg-gray-100 border-l border-gray-200 transition-all duration-500
+        className={`absolute top-0 bottom-0 right-0 h-full bg-white/70 backdrop-blur-md border-l border-gray-200 transition-all duration-500
         ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-50'}`}
       >
         {groupId && currentWeekId ? (
