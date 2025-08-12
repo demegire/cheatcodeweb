@@ -75,12 +75,13 @@ export default function CommentSection({
 
   // Fetch tasks referenced by comments
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchTasks = async () => {
-      const taskIds = Array.from(new Set(
-        comments
-          .filter(c => c.taskId)
-          .map(c => c.taskId as string)
-      ));
+      const taskIds = Array.from(
+        new Set(comments.filter(c => c.taskId).map(c => c.taskId as string))
+      );
+
       if (taskIds.length === 0) {
         setCommentTasks({});
         return;
@@ -134,10 +135,18 @@ export default function CommentSection({
           }
         })
       );
-      setCommentTasks(tasksMap);
+
+      if (!isCancelled) {
+        setCommentTasks(tasksMap);
+      }
     };
+
     fetchTasks();
-  }, [comments, groupId, members]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [comments, groupId, currentWeekId, members]);
 
   // Add an effect to handle the Escape key press
   useEffect(() => {
