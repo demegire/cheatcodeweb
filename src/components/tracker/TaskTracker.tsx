@@ -156,6 +156,13 @@ export default function TaskTracker({
     .filter(comment => comment.taskId !== null)
     .map(comment => comment.taskId as string);
 
+  const handleTaskDoubleClick = (task: Task) => {
+    onSelectTask?.(task);
+    if (isRightSidebarCollapsed && onToggleRightSidebar) {
+      onToggleRightSidebar();
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.innerWidth >= 640) return;
@@ -766,6 +773,7 @@ export default function TaskTracker({
                       onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
                       isCurrentUser={member.id === user?.uid}
                       onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
+                      onTaskDoubleClick={handleTaskDoubleClick}
                       selectedTaskId={selectedTask?.id}
                       highlightedTaskId={highlightedTaskId}
                       onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
