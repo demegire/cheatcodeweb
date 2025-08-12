@@ -41,7 +41,7 @@ export default function PlusInfo() {
           </li>
         </ul>
       </div>
-      <button className="w-full bg-theme hover:bg-theme-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+      <button className="w-full bg-theme hover:bg-theme-hover text-white font-semibold px-8 py-3 rounded-full transition-colors shadow-sm hover:shadow-md">
         Subscribe Now
       </button>
       <p className="text-xs text-gray-400 mt-4">Secure payment • SSL encrypted</p>

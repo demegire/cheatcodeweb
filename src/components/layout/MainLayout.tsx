@@ -196,15 +196,15 @@ export default function MainLayout({
             className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
           >
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
-            <span className="text-sm">Logout</span>
           </button>
 
           <button
             onClick={() => setShowPlusModal(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 hover:bg-green-600 text-white ml-2"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 hover:bg-green-300 text-green-700 ml-2"
             title="cheat-code Plus"
           >
-            <PlusIcon className="h-5 w-5" />
+            <PlusIcon className="h-5 w-5 stroke-2 text-green-600" />
+            <span className="text-sm text-green-600">Get Plus</span>
           </button>
 
           </div>
