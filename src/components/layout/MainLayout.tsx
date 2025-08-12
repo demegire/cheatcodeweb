@@ -6,6 +6,7 @@ import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
 import StatsView from '../stats/StatsView';
+import PlusModal from '../modals/PlusModal';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Image from 'next/image'
@@ -58,6 +59,7 @@ export default function MainLayout({
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [showPlusModal, setShowPlusModal] = useState(false);
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -189,14 +191,22 @@ export default function MainLayout({
           </div>
           
           <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
-            <button 
-            onClick={handleLogout} 
+            <button
+            onClick={handleLogout}
             className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
           >
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
             <span className="text-sm">Logout</span>
           </button>
-            
+
+          <button
+            onClick={() => setShowPlusModal(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 hover:bg-green-600 text-white ml-2"
+            title="cheat-code Plus"
+          >
+            <PlusIcon className="h-5 w-5" />
+          </button>
+
           </div>
         </div>
         )
@@ -254,6 +264,8 @@ export default function MainLayout({
           </div>
         )}
       </div>
+
+      {showPlusModal && <PlusModal onClose={() => setShowPlusModal(false)} />}
     </div>
   );
 }
