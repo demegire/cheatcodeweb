@@ -8,6 +8,7 @@ interface TaskItemProps {
   isCurrentUser: boolean;
   isHighlighted?: boolean;
   onSelect?: () => void;
+  onDoubleClick?: () => void;
   onDelete?: () => void;
   onEdit?: (newText: string) => void;
   onAcceptTask?: () => void;
@@ -23,9 +24,10 @@ interface TaskItemProps {
 export default function TaskItem({ 
   task, 
   onUpdateStatus, 
-  isCurrentUser , 
+  isCurrentUser ,
   isHighlighted = false,
   onSelect,
+  onDoubleClick,
   onDelete,
   onEdit,
   onAcceptTask,
@@ -148,6 +150,7 @@ export default function TaskItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      onDoubleClick={onDoubleClick}
       data-task-item="true"
     >
       {/* Comment icon - shows in top right corner when task has comments */}

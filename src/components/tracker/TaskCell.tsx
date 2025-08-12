@@ -20,6 +20,7 @@ interface TaskCellProps {
   onStopTimer?: (taskId: string) => void;
   isCurrentUser: boolean;
   onSelectTask?: (task: Task | null) => void;
+  onTaskDoubleClick?: (task: Task) => void;
   selectedTaskId?: string | null;
   highlightedTaskId?: string | null;
   onAcceptTask?: (taskId: string) => void;
@@ -47,6 +48,7 @@ export default function TaskCell({
   onStopTimer,
   isCurrentUser,
   onSelectTask,
+  onTaskDoubleClick,
   selectedTaskId,
   highlightedTaskId,
   onAcceptTask,
@@ -242,6 +244,7 @@ export default function TaskCell({
               isCurrentUser={isCurrentUser}
               isHighlighted={task.id === selectedTaskId || task.id === highlightedTaskId}
               onSelect={onSelectTask ? () => onSelectTask(task) : undefined}
+              onDoubleClick={onTaskDoubleClick ? () => onTaskDoubleClick(task) : undefined}
               onAcceptTask={task.suggestedBy && isCurrentUser && onAcceptTask ?
                 () => onAcceptTask(task.id) : undefined}
               onRejectTask={task.suggestedBy && isCurrentUser && onRejectTask ?
