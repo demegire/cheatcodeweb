@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth';
 import TickCrossBackground from './TickCrossBackground';
 import TaskDemoBox from './TaskDemoBox';
 import AnnouncementsBox from './AnnouncementsBox';
+import ContactBox from './ContactBox';
 
 export default function LoginForm() {
   const { signInWithGoogle } = useAuth();
@@ -50,8 +51,9 @@ export default function LoginForm() {
             .
           </p>
         </div>
-        <div className="order-3 md:order-3">
+        <div className="order-3 md:order-3 flex flex-col items-center gap-4">
           <AnnouncementsBox />
+          <ContactBox />
         </div>
       </div>
     </div>
