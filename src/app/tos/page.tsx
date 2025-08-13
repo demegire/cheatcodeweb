@@ -31,7 +31,7 @@ export default function TermsOfService() {
           <p>We may update these Terms from time to time. Continued use of the service after changes are posted constitutes your acceptance of the updated Terms.</p>
 
           <h2 className="text-lg font-semibold">Contact</h2>
-          <p>If you have questions about these Terms, contact us at hi@cheat-code.cc.</p>
+          <p>If you have questions about these Terms, contact us at ege@cheat-code.cc.</p>
         </div>
       </div>
     </div>

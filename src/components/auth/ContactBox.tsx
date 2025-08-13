@@ -9,10 +9,10 @@ export default function ContactBox() {
       📧
       </p>
       <a
-        href="mailto:hi@cheat-code.cc"
+        href="mailto:ege@cheat-code.cc"
         className="text-blue-600 underline hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
       >
-        hi@cheat-code.cc
+        ege@cheat-code.cc
       </a>
       </div>
     </div>
