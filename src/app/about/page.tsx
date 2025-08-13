@@ -26,7 +26,7 @@ export default function AboutPage() {
             >
               Ege
             </a>
-            , developers of cheat-code. Our friend group has been using cheat-code for 8 years (as a Google Sheet) so we wanted to make it accessible for everyone. It's a great tool for keeping up with your friends and sharing accountability with them, so you can actually get things done. Have fun using cheat-code!
+            , developers of cheat-code. Our friend group has been using cheat-code for 8 years (as a Google Sheet) so we wanted to make it accessible for everyone. It is a great tool for keeping up with your friends and sharing accountability with them, so you can actually get things done. Have fun using cheat-code!
           </p>
         </div>
       </div>
