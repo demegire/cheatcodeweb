@@ -44,7 +44,14 @@ export default function PlusInfo() {
       <button className="w-full bg-theme hover:bg-theme-hover text-white font-semibold px-8 py-3 rounded-full transition-colors shadow-sm hover:shadow-md">
         Subscribe Now
       </button>
-      <p className="text-xs text-gray-400 mt-4">Secure payment • SSL encrypted</p>
+      <p className="text-xs text-gray-400 mt-4 flex items-center justify-center gap-2">
+        Secure payment • SSL encrypted •
+        <img
+          src="/pay_with_iyzico_horizontal_colored.svg"
+          alt="Pay with iyzico"
+          className="h-4"
+        />
+      </p>
     </div>
   );
 }
