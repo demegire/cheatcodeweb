@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
 import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { linkifyText } from '../../lib/linkify';
 
 interface TaskItemProps {
   task: Task;
@@ -297,14 +298,14 @@ export default function TaskItem({
         </div>
       ) : (
         <span
-          className={`ml-5 pl-1 block break-words overflow-hidden text-ellipsis ${ 
-            !isEditing && 
+          className={`ml-5 pl-1 block break-words overflow-hidden text-ellipsis ${
+            !isEditing &&
             (task.timerStartedAt || elapsed > 0)
               ? 'max-w-7/10'
               : ''
           }`}
         >
-            {task.text}
+            {linkifyText(task.text)}
         </span>
       )}
     </div>

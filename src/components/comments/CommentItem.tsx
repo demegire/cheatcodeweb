@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Comment, Task } from '../../types';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import { linkifyText } from '../../lib/linkify';
 
 interface CommentItemProps {
   comment: Comment;
@@ -75,7 +76,9 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
           <div className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</div>
         </div>
       </div>
-      <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">{comment.text}</div>
+      <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+        {linkifyText(comment.text)}
+      </div>
       {task && taskOwner && (
         <div className="mt-2 flex items-center">
           <div
@@ -84,7 +87,9 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
           >
             {taskOwner.name.charAt(0)}
           </div>
-          <div className="text-xs text-gray-600 truncate flex-1">{task.text}</div>
+          <div className="text-xs text-gray-600 truncate flex-1">
+            {linkifyText(task.text)}
+          </div>
         </div>
       )}
     </div>
