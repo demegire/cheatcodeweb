@@ -52,6 +52,8 @@ export interface Comment {
   userName: string;
   userColor: string;
   taskId: string | null;
+  /** Array of user ids mentioned in this comment */
+  mentions?: string[];
   createdAt: Date;
   weekId: string;
 }

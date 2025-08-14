@@ -596,7 +596,7 @@ export default function TaskTracker({
 
     try {
       // Add suggested task to Firestore
-      await addDoc(collection(db, 'groups', groupId, 'tasks'), {
+      const taskRef = await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
         status: 'suggested',
         day,
@@ -606,6 +606,15 @@ export default function TaskTracker({
         weekId: currentISOWeek,
         timerStartedAt: null,
         elapsedSeconds: 0,
+      });
+
+      // Notify the user who received the suggestion
+      await addDoc(collection(db, 'users', forMemberId, 'notifications'), {
+        type: 'task_suggested',
+        taskId: taskRef.id,
+        groupId,
+        createdAt: new Date(),
+        read: false,
       });
 
       // No need to update local state as the onSnapshot will handle that
