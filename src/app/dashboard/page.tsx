@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const tutorialSlides = [
     {
       image: '/slide1.png',
-      text: 'Welcome! Hover over a day to add your first task...',
+      text: 'Welcome! Hover over/tap a day to add your first task...',
     },
     {
       image: '/slide2.png',

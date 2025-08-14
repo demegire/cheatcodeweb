@@ -30,7 +30,7 @@ export default function TaskDemoBox() {
       {
         id: nanoid(),
         text: 'Birthday',
-        status: 'not-done',
+        status: 'completed',
         day: 0,
         createdBy: 'alp',
         createdAt: new Date(),
