@@ -178,7 +178,7 @@ export default function TaskTracker({
     if (todayIndex === -1) return;
     const headerCell = container.querySelector(`[data-day-index="${todayIndex}"]`) as HTMLElement | null;
     if (headerCell) {
-      container.scrollLeft = headerCell.offsetLeft - 54; // Name cell width
+      container.scrollLeft = headerCell.offsetLeft - 62; // Name cell width
     }
   }, [currentISOWeek, currentDay]);
 
