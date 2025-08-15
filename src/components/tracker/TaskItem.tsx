@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
 import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { linkifyText } from '../../lib/linkify';
+import { FaInfo } from "react-icons/fa6";
 
 interface TaskItemProps {
   task: Task;
@@ -53,7 +54,7 @@ export default function TaskItem({
       case 'completed': return <CheckIcon className="size-3 stroke-3" />;
       case 'postponed': return <ArrowRightIcon className="size-3 stroke-3" />;
       case 'suggested': return '?';
-      case 'info': return 'i';
+      case 'info': return <FaInfo />;
       default: return <XMarkIcon className="size-3 stroke-3" />;
     }
   };
@@ -170,7 +171,7 @@ export default function TaskItem({
           }}
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center font-bold
-            rounded-full text-white text-xs cursor-pointer font-serif italic
+            rounded-full text-white text-xs cursor-pointer select-none
             ${getStatusBgColor()}`}
             title={getStatusTitle()}
         >
@@ -183,7 +184,7 @@ export default function TaskItem({
         <div
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center font-bold
-            rounded-full text-white text-xs cursor-default
+            rounded-full text-white text-xs cursor-default select-none
             ${getStatusBgColor()}`}
             title={getStatusTitle()}
         >
