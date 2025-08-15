@@ -246,15 +246,12 @@ export default function CommentSection({
   };
   return (
     <div className="h-full flex flex-col" ref={containerRef}>
-      <div className={`p-4 text-black mt-3 font-bold border-b border-gray-200 flex items-center justify-between ${isCollapsed ? 'text-center' : ''}`}> 
-      <div></div>
+      <div className={`text-black mt-3 font-bold border-b border-gray-200 flex items-center justify-between ${!isCollapsed && 'p-4'}`}> 
         {!isCollapsed && (
           <span>{selectedTask ? `Comments for "${selectedTask.text}"` : 'Comments'}</span>
         )}
         <button onClick={onToggleCollapse} className="text-gray-600 hover:text-gray-900">
-          {isCollapsed ? (
-            <ChevronLeftIcon className="h-5 w-5" />
-          ) : (
+          {!isCollapsed && (
             <ChevronRightIcon className="h-5 w-5" />
           )}
         </button>
@@ -262,26 +259,7 @@ export default function CommentSection({
       
       <div className="flex-1 overflow-y-auto" ref={commentsContainerRef}>
         {/* Comment list */}
-        {isCollapsed ? (
-          <div className="px-2 py-4">
-            {comments.slice(0, 5).map(comment => {
-              const memberColor =
-                members.find(m => m.id === comment.userId)?.color ||
-                comment.userColor ||
-                '#3B82F6';
-              return (
-                <div
-                  key={comment.id}
-                  className="h-8 w-8 rounded-full mb-2 flex items-center justify-center text-white font-medium"
-                  style={{ backgroundColor: memberColor }}
-                  title={`${comment.userName}: ${comment.text}`}
-                >
-                  {comment.userName.charAt(0)}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
+        {!isCollapsed && (
           <div className="p-4">
             {filteredComments.map(comment => {
               const memberColor =

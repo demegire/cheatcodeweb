@@ -678,8 +678,10 @@ export default function TaskTracker({
         }
       />
 
-      <div className={`flex-grow overflow-auto ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} ref={tableContainerRef}>
-        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-full table-fixed">
+      <div className={`flex-grow overflow-auto ${!isRightSidebarCollapsed ? "w-[calc(100vw-32px-240px)]" : "w-[calc(100vw-32px)]"} transition-all duration-500 ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} 
+        ref={tableContainerRef}
+      >
+        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-[calc(100vw-32px)] table-fixed">
           <thead>
             <tr>
               <th className="p-1 text-black min-w-[50px] w-[50px] sticky left-0 z-10 bg-white"></th>

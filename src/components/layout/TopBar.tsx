@@ -29,7 +29,7 @@ export default function TopBar({
   centerContent,
 }: TopBarProps) {
   return (
-    <div className="mb-3 w-full sticky top-0 z-20 bg-white">
+    <div className="mb-3 w-full sticky top-0 left-0 right-0 z-20 bg-white">
       {/* mobile: single-row */}
       <div className="lg:hidden flex items-center justify-between w-full gap-2">
         <div className="flex-1 min-w-0 overflow-hidden">
