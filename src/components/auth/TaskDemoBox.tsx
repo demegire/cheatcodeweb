@@ -173,6 +173,7 @@ export default function TaskDemoBox() {
                 currentTaskType={currentTaskType}
                 onTaskTypeChange={setCurrentTaskType}
                 minHeight={80}
+                isCurrentDay={false}
               />
             </tr>
           ))}
