@@ -117,7 +117,7 @@ export default function MainLayout({
           <div className="h-full flex flex-col">
           {!sidebarCollapsed && (
             <div className="p-4  mt-2 border-b border-gray-200 flex items-center justify-between">
-              <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900">
+              <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900 cursor-pointer">
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
               <div className="text-black font-bold">cheat-code.cc</div>
@@ -131,8 +131,8 @@ export default function MainLayout({
               {groups.map(group => (
                 <li
                   key={group.id}
-                  className={`rounded-lg transition-colors duration-500 cursor-pointer p-2 ${
-                    selectedGroup?.id === group.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-200'
+                  className={`rounded-lg p-2 ${
+                    selectedGroup?.id === group.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-200 cursor-pointer'
                   }`}
                   onMouseEnter={() => setActiveGroupId(group.id)}
                   onMouseLeave={() => setActiveGroupId(null)}
@@ -153,8 +153,8 @@ export default function MainLayout({
                             }}
                             className={`w-6 h-6 flex items-center justify-center rounded-full text-white ${
                               pinnedGroupId === group.id
-                                ? 'bg-yellow-500 hover:bg-yellow-600'
-                                : 'bg-blue-500 hover:bg-blue-600'
+                                ? 'bg-yellow-500'
+                                : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
                             }`}
                             title={pinnedGroupId === group.id ? 'Unpin group' : 'Pin group'}
                           >
@@ -165,7 +165,7 @@ export default function MainLayout({
                               e.stopPropagation();
                               onLeaveGroup(group.id);
                             }}
-                            className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2"
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white ml-2 cursor-pointer"
                             title="Leave group"
                           >
                             <ArrowLeftStartOnRectangleIcon className="h-4 w-4" />
@@ -182,7 +182,7 @@ export default function MainLayout({
             <div className="mt-4 px-2">
               <button 
                 onClick={onCreateGroup}
-                className={`flex items-center justify-${sidebarCollapsed ? 'center' : 'start'} w-full p-2 rounded-lg text-gray-700 hover:bg-gray-200`}
+                className={`flex items-center justify-${sidebarCollapsed ? 'center' : 'start'} w-full p-2 rounded-lg text-gray-700 hover:bg-gray-200 cursor-pointer`}
               >
                 <PlusIcon className="h-5 w-5 text-gray-600" />
                 {!sidebarCollapsed && <span className="ml-2">Create New Group</span>}
@@ -200,7 +200,7 @@ export default function MainLayout({
 
           <button
             onClick={() => setShowPlusModal(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 hover:bg-green-300 text-green-700 ml-2"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 hover:bg-green-300 text-green-700 ml-2 cursor-pointer"
             title="cheat-code Plus"
           >
             <PlusIcon className="h-5 w-5 stroke-2 text-green-600" />

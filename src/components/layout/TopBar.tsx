@@ -51,7 +51,7 @@ export default function TopBar({
         <div className="justify-self-end flex gap-2 items-center overflow-hidden">
           <button
             onClick={onToggleLeftSidebar}
-            className="flex-shrink-0 px-2 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center h-8 w-8"
+            className="flex-shrink-0 px-2 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center h-8 w-8 cursor-pointer"
           >
             <Bars3Icon className="h-7 w-7" />
           </button>
@@ -75,7 +75,7 @@ export default function TopBar({
           <ShareButton groupId={groupId} />
           <button
             onClick={onToggleRightSidebar}
-            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center"
+            className="px-3 py-2 rounded-full bg-theme hover:bg-theme-hover text-white flex items-center cursor-pointer"
             data-comment-toggle="true"
           >
             <ChatBubbleLeftRightIcon className="h-5 w-5 mr-0 sm:mr-1" />

@@ -297,13 +297,14 @@ export default function TaskCell({
               />
               <button
                 onClick={handleAddTask}
-                className="bg-theme hover:bg-theme-hover text-white w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer"
+                disabled={!newTaskText.trim()}
+                className="bg-theme hover:bg-theme-hover text-white w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer disabled:cursor-not-allowed"
               >
                 {currentTaskType === 'global' ? <GlobeAltIcon className="h-4 w-4" /> : '+'}
               </button>
               <button
                 onClick={toggleExpanded} // Chevron button triggers expansion
-                className={`bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 ${!isExpanded && "rounded-r"} w-[19px] flex-shrink-0 flex items-center justify-center h-full`}
+                className={`bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 ${!isExpanded && "rounded-r"} w-[19px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer`}
               >
                 <ChevronRightIcon className={`h-3 w-3 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}/>
               </button> 
@@ -337,7 +338,8 @@ export default function TaskCell({
                      />
                       <button
                         onClick={handleAddTask} // This will call the local handleAddTask (which calls handleSuggestTask)
-                        className={`bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full rounded-r`} // Apply rounded-r here for non-current user
+                        disabled={!newTaskText.trim()}
+                        className={`bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full rounded-r cursor-pointer disabled:cursor-not-allowed`} // Apply rounded-r here for non-current user
                       >
                         +
                       </button>
@@ -372,7 +374,7 @@ export default function TaskCell({
             {currentTaskType === 'local' && onAddGlobalTask && (
               <button
                 onClick={() => handleTaskTypeChange('global')} // Calls parent handler
-                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8" // Set fixed height
+                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
               >
                 <GlobeAltIcon className="h-4 w-4 mr-1" /> {/* Use h-4 w-4 for consistent icon size */}
                 <span>Global</span>
@@ -382,7 +384,7 @@ export default function TaskCell({
             {currentTaskType === 'global' && (
               <button
                 onClick={() => handleTaskTypeChange('local')} // Calls parent handler
-                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8" // Set fixed height
+                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
               >
                 <span className="mr-1">+</span>
                 <span>Local</span>
