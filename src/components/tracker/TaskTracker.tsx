@@ -691,7 +691,8 @@ export default function TaskTracker({
                   <th
                     key={index}
                     data-day-index={index}
-                    className={`p-1 rounded-t-2xl bg-gray-100 text-black min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto ${isCurrentDay && `bg-gray-200 inset-ring-1`}`}
+                    className={`p-1 rounded-t-2xl min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto 
+                      ${isCurrentDay ? "bg-theme text-white" : "bg-gray-200 text-black"}`}
                   >
                     {getDayName(day)}
                   </th>
@@ -746,7 +747,11 @@ export default function TaskTracker({
                   )}
                 </td>
 
-                {days.map((day, index) => (
+                {days.map((day, index) => {
+                  const isCurrentDay = day.getDate() === currentDay.getDate() &&
+                                      day.getMonth() === currentDay.getMonth() &&
+                                      day.getFullYear() === currentDay.getFullYear();
+                  return (
                     <TaskCell
                       key={index}
                       memberId={member.id}
@@ -784,10 +789,12 @@ export default function TaskTracker({
                       // Pass the global task type state and setter
                       currentTaskType={globalTaskType}
                       onTaskTypeChange={setGlobalTaskType}
+                      isCurrentDay={isCurrentDay}
                     />
-                ))}
+                );})}
                 
-                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
+                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" 
+                style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
                   {scores[member.id]?.toFixed(2) || '0.00'}%
                 </td>
               </tr>

@@ -33,6 +33,7 @@ interface TaskCellProps {
   onTaskTypeChange: (type: TaskType) => void;
   /** Optional minimum height for the cell in pixels */
   minHeight?: number;
+  isCurrentDay: boolean;
 }
 
 export default function TaskCell({
@@ -60,6 +61,7 @@ export default function TaskCell({
   currentTaskType,
   onTaskTypeChange,
   minHeight,
+  isCurrentDay,
 }: TaskCellProps) {
     const [newTaskText, setNewTaskText] = useState('');
     const [isHovering, setIsHovering] = useState(false);
@@ -212,7 +214,7 @@ export default function TaskCell({
         ref={cellRef}
         className="p-1 relative align-top h-full overflow-hidden"
         style={{
-          backgroundColor: `${color}10`,
+          backgroundColor: `${color}${isCurrentDay ? "20" : "10"}`,
           minHeight: minHeight ?? 150,
         }}
         onMouseEnter={() => setIsHovering(true)}
