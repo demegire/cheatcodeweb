@@ -169,6 +169,9 @@ export default function TaskItem({
             e.stopPropagation();
             onUpdateStatus();
           }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+          }}
           className={`absolute left-1 top-1/2 transform -translate-y-1/2
             w-5 h-5 flex items-center justify-center font-bold
             rounded-full text-white text-xs cursor-pointer select-none
@@ -231,7 +234,7 @@ export default function TaskItem({
         </div>
       )}
 
-      {/* Edit and delete buttons. Shown if  */}
+      {/* Edit and delete buttons. */}
       {((!isSuggested && isCurrentUser) || (isSuggested && isCurrentUserSuggester)) && showButtons && !isEditing && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex space-x-1">
             {!isSuggested && isCurrentUser && (
@@ -305,6 +308,12 @@ export default function TaskItem({
               ? 'max-w-7/10'
               : ''
           }`}
+          // Prevent double tap from selecting text
+          onMouseDown={(e) => {
+            if (e.detail > 1) {
+              e.preventDefault();
+            }
+          }}
         >
             {linkifyText(task.text)}
         </span>
