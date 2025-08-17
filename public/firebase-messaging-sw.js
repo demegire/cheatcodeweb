@@ -16,12 +16,12 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
 
-  const notificationIcon = "apple-touch-icon.png";
+  const notificationIcon = "/apple-touch-icon.png";
 
   const notificationOptions = {
-    body: payload.notification?.body,
+    body: payload.data?.body,
     icon: notificationIcon,
   };
 
-  self.registration.showNotification(payload.notification?.title || 'from cheat-code.cc', notificationOptions);
+  self.registration.showNotification(payload.data?.title || 'from cheat-code.cc', notificationOptions);
 });

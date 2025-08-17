@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { requestNotificationPermission } from '../../lib/notifications';
 
 interface Slide {
   image: string;
@@ -9,12 +10,16 @@ interface Slide {
 interface TutorialModalProps {
   slides: Slide[];
   onFinish: () => void;
+  userId?: string;
 }
 
-export default function TutorialModal({ slides, onFinish }: TutorialModalProps) {
+export default function TutorialModal({ slides, onFinish, userId }: TutorialModalProps) {
   const [index, setIndex] = useState(0);
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (index === 7 && userId) {
+      await requestNotificationPermission(userId);
+    }
     if (index === slides.length - 1) {
       onFinish();
     } else {

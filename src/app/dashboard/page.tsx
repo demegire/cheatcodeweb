@@ -405,6 +405,7 @@ export default function DashboardPage() {
         <TutorialModal
           slides={tutorialSlides}
           onFinish={handleFinishTutorial}
+          userId={user?.uid}
         />
       )}
       <MainLayout
