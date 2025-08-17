@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { sendUserNotification } from '../../lib/notifications';
 import { Comment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
 import CommentItem from './CommentItem';
@@ -33,12 +34,27 @@ export default function CommentSection({
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentTasks, setCommentTasks] = useState<Record<string, Task>>({});
   const [newComment, setNewComment] = useState('');
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionCursor, setMentionCursor] = useState(0);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
   // Add a ref to the main container to handle keyboard events
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const highlighterRef = useRef<HTMLDivElement>(null);
+
+  const escapeHTML = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+
+  const getMentionOverlayHTML = (text: string) => {
+    // Base text is transparent; only @mentions are visible in blue
+    const safe = escapeHTML(text);
+    return safe.replace(/(@[\w]+)/g, `<span class="text-blue-600 font-medium">$1</span>`);
+  };
+
   
   // Fetch comments for the current group and week
   useEffect(() => {
@@ -62,6 +78,7 @@ export default function CommentSection({
           userName: data.userName,
           userColor: data.userColor,
           taskId: data.taskId,
+          mentions: data.mentions || [],
           createdAt: data.createdAt.toDate(),
           weekId: data.weekId
         });
@@ -197,27 +214,73 @@ export default function CommentSection({
   // Add a new comment
   const handleAddComment = async () => {
     if (!newComment.trim() || !user || !groupId) return;
-    
+
     try {
       const currentMember = members.find(member => member.id === user.uid);
       const userData = {
         userName: currentMember?.name || 'Anonymous',
-        userColor: currentMember?.color || '#3B82F6' // Use member's color or default blue
+        userColor: currentMember?.color || '#3B82F6'
       };
-      
-      // Look up user's member color from the group
-      // This would require access to the current group members data
-      
-      await addDoc(collection(db, 'groups', groupId, 'comments'), {
+
+      // Parse mentions based on @name pattern
+      const mentionNames = Array.from(newComment.matchAll(/@([\w]+)/g)).map(m => m[1].toLowerCase());
+      const mentionIds = mentionNames
+        .map(name => members.find(mem => mem.name.toLowerCase() === name)?.id)
+        .filter((id): id is string => !!id);
+
+      const commentRef = await addDoc(collection(db, 'groups', groupId, 'comments'), {
         text: newComment.trim(),
         userId: user.uid,
         userName: userData.userName,
         userColor: userData.userColor,
         taskId: selectedTask?.id || null,
+        mentions: mentionIds,
         createdAt: new Date(),
         weekId: currentWeekId
       });
-      
+
+      const notifications: Promise<any>[] = [];
+
+      // Notify mentioned users
+      mentionIds.forEach(uid => {
+        if (uid !== user.uid) {
+          notifications.push(
+            addDoc(collection(db, 'users', uid, 'notifications'), {
+              type: 'mention',
+              commentId: commentRef.id,
+              groupId,
+              taskId: selectedTask?.id || null,
+              createdAt: new Date(),
+              read: false,
+            }),
+            sendUserNotification(uid, {
+              title: `${userData.userName} mentioned you`,
+              body: newComment.trim(),
+            })
+          );
+        }
+      });
+
+      // Notify owner of the task when someone comments on their task
+      if (selectedTask && selectedTask.createdBy !== user.uid) {
+        notifications.push(
+          addDoc(collection(db, 'users', selectedTask.createdBy, 'notifications'), {
+            type: 'comment',
+            commentId: commentRef.id,
+            taskId: selectedTask.id,
+            groupId,
+            createdAt: new Date(),
+            read: false,
+          }),
+          sendUserNotification(selectedTask.createdBy, {
+            title: `${userData.userName} commented on your task`,
+            body: newComment.trim(),
+          })
+        );
+      }
+
+      await Promise.all(notifications);
+
       setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -323,18 +386,80 @@ export default function CommentSection({
             </div>
           )}
           
-          <div className={`border rounded-lg overflow-hidden transition 
+          <div className={`relative border rounded-lg overflow-visible transition
             ${selectedTask ? 'border-blue-400' : 'border-gray-300'}`}>
+          <div className="relative">
+            {/* Textarea (real input) */}
             <textarea
               ref={inputRef}
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                const cursor = e.target.selectionStart || 0;
+                setNewComment(val);
+                const upToCursor = val.slice(0, cursor);
+                const match = upToCursor.match(/@([\w]*)$/);
+                if (match) {
+                  setMentionQuery(match[1]);
+                  setShowMentions(true);
+                  setMentionCursor(cursor);
+                } else {
+                  setShowMentions(false);
+                }
+              }}
+              onScroll={(e) => {
+                if (highlighterRef.current) {
+                  highlighterRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
+                }
+              }}
               onKeyPress={handleKeyPress}
               placeholder="Write a comment..."
-              className="bg-gray-50 w-full p-3 text-sm text-gray-700 focus:outline-none resize-none"
+              className="bg-transparent w-full p-3 text-sm text-gray-700 focus:outline-none resize-none relative z-0"
               rows={3}
             />
-            
+
+            {/* Overlay that highlights @mentions in blue */}
+            <div
+              aria-hidden="true"
+              ref={highlighterRef}
+              className="absolute inset-0 p-3 text-sm whitespace-pre-wrap break-words pointer-events-none z-10 text-transparent"
+              dangerouslySetInnerHTML={{
+                // extra space prevents last-line clipping in some browsers
+                __html: getMentionOverlayHTML(newComment) + (newComment.endsWith('\n') ? ' ' : ''),
+              }}
+            />
+
+            {/* Mentions dropdown (keeps working as before) */}
+            {showMentions && mentionQuery && (
+              <ul className="absolute bottom-full left-0 mb-1 z-20 bg-white border rounded shadow max-h-40 text-black overflow-auto">
+                {members
+                  .filter((m) => m.name.toLowerCase().startsWith(mentionQuery.toLowerCase()))
+                  .map((m) => (
+                    <li
+                      key={m.id}
+                      onClick={() => {
+                        const start = mentionCursor - mentionQuery.length;
+                        const before = newComment.slice(0, start);
+                        const after = newComment.slice(mentionCursor);
+                        const insert = m.name + ' ';
+                        const updated = before + insert + after;
+                        setNewComment(updated);
+                        setShowMentions(false);
+                        setTimeout(() => {
+                          inputRef.current?.focus();
+                          const pos = start + insert.length;
+                          inputRef.current?.setSelectionRange(pos, pos);
+                        }, 0);
+                      }}
+                      className="px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      {m.name}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+
             <div className="bg-gray-50 p-2 flex justify-end">
               <button
                 onClick={handleAddComment}

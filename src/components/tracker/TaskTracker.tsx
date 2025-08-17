@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
 import { HexColorPicker } from 'react-colorful';
+import { sendUserNotification } from '../../lib/notifications';
 
 // Helper function to get list of dates for a specific ISO week
 const getDates = (isoWeek: string) => {
@@ -596,7 +597,7 @@ export default function TaskTracker({
 
     try {
       // Add suggested task to Firestore
-      await addDoc(collection(db, 'groups', groupId, 'tasks'), {
+      const taskRef = await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
         status: 'suggested',
         day,
@@ -606,6 +607,20 @@ export default function TaskTracker({
         weekId: currentISOWeek,
         timerStartedAt: null,
         elapsedSeconds: 0,
+      });
+
+      // Notify the user who received the suggestion
+      await addDoc(collection(db, 'users', forMemberId, 'notifications'), {
+        type: 'task_suggested',
+        taskId: taskRef.id,
+        groupId,
+        createdAt: new Date(),
+        read: false,
+      });
+      const fromName = members.find(m => m.id === user.uid)?.name || 'Someone';
+      await sendUserNotification(forMemberId, {
+        title: `Suggestion by ${fromName}`,
+        body: `${text}`,
       });
 
       // No need to update local state as the onSnapshot will handle that

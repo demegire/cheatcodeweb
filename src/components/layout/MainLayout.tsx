@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../../lib/firebase';
-import { ChevronLeftIcon, PlusIcon, ArrowLeftStartOnRectangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, PlusIcon, ArrowLeftStartOnRectangleIcon, MapPinIcon, BellIcon } from '@heroicons/react/24/outline';
 import { GoPin } from "react-icons/go";
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
@@ -9,6 +9,8 @@ import StatsView from '../stats/StatsView';
 import PlusModal from '../modals/PlusModal';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { useAuth } from '../../lib/hooks/useAuth';
 import Image from 'next/image'
 
 type TaskTrackerComponentProps = React.ComponentProps<typeof TaskTracker>;
@@ -40,7 +42,7 @@ interface MainLayoutProps {
   onSelectTask?: (task: Task | null) => void;
 }
 
-export default function MainLayout({ 
+export default function MainLayout({
   children, 
   groups = [],
   selectedGroup = null,
@@ -60,6 +62,7 @@ export default function MainLayout({
   const [comments, setComments] = useState<Comment[]>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [showPlusModal, setShowPlusModal] = useState(false);
+  const { user } = useAuth();
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -191,22 +194,19 @@ export default function MainLayout({
           </div>
           
           <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
-            <button
+          <button
+            onClick={() => user && requestNotificationPermission(user.uid)}
+            className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+            title="Enable notifications"
+          >
+            <BellIcon className="h-5 w-5 min-h-8" />
+          </button>
+          <button
             onClick={handleLogout}
             className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
           >
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
           </button>
-
-          <button
-            onClick={() => setShowPlusModal(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 hover:bg-green-300 text-green-700 ml-2"
-            title="cheat-code Plus"
-          >
-            <PlusIcon className="h-5 w-5 stroke-2 text-green-600" />
-            <span className="text-sm text-green-600">Get Plus</span>
-          </button>
-
           </div>
         </div>
         )
