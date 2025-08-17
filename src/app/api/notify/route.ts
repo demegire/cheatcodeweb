@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminMessaging } from '@/lib/firebaseAdmin';
+import { adminDb, adminMessaging } from '../../../lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
   const { userId, notification } = await req.json();
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       .doc(userId)
       .collection('fcmTokens')
       .get();
-    const tokens = tokenSnap.docs.map((d) => d.id);
+    const tokens = tokenSnap.docs.map((d: any) => d.id);
 
     if (tokens.length === 0) {
       return NextResponse.json({ success: true });

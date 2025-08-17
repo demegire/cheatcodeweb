@@ -1,21 +1,27 @@
-import { initializeApp } from 'firebase/app';
-import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
 // Firebase configuration (values should be provided via env injection at build time)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCW5_FGdw751zrXx45PbfLsedU5T-mOW2o",
+  authDomain: "auth.cheat-code.cc",
+  projectId: "cheatcode-cc",
+  storageBucket: "cheatcode-cc.firebasestorage.app",
+  messagingSenderId: "369737877345",
+  appId: "1:369737877345:web:8511e3d48e9be09a9f2720",
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
 
-onBackgroundMessage(messaging, (payload) => {
-  self.registration.showNotification(payload.notification?.title || '', {
+messaging.onBackgroundMessage((payload) => {
+
+  const notificationIcon = "apple-touch-icon.png";
+
+  const notificationOptions = {
     body: payload.notification?.body,
-  });
+    icon: notificationIcon,
+  };
+
+  self.registration.showNotification(payload.notification?.title || 'from cheat-code.cc', notificationOptions);
 });

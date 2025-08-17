@@ -207,16 +207,6 @@ export default function MainLayout({
           >
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
           </button>
-
-          <button
-            onClick={() => setShowPlusModal(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-50 hover:bg-green-300 text-green-700 ml-2"
-            title="cheat-code Plus"
-          >
-            <PlusIcon className="h-5 w-5 stroke-2 text-green-600" />
-            <span className="text-sm text-green-600">Get Plus</span>
-          </button>
-
           </div>
         </div>
         )

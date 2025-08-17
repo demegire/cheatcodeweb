@@ -619,8 +619,8 @@ export default function TaskTracker({
       });
       const fromName = members.find(m => m.id === user.uid)?.name || 'Someone';
       await sendUserNotification(forMemberId, {
-        title: 'Task suggestion',
-        body: `${fromName} suggested: ${text}`,
+        title: `Suggestion by ${fromName}`,
+        body: `${text}`,
       });
 
       // No need to update local state as the onSnapshot will handle that

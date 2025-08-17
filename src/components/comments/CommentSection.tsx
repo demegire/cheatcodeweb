@@ -43,6 +43,18 @@ export default function CommentSection({
   
   // Add a ref to the main container to handle keyboard events
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const highlighterRef = useRef<HTMLDivElement>(null);
+
+  const escapeHTML = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+
+  const getMentionOverlayHTML = (text: string) => {
+    // Base text is transparent; only @mentions are visible in blue
+    const safe = escapeHTML(text);
+    return safe.replace(/(@[\w]+)/g, `<span class="text-blue-600 font-medium">$1</span>`);
+  };
+
   
   // Fetch comments for the current group and week
   useEffect(() => {
@@ -398,6 +410,8 @@ export default function CommentSection({
           
           <div className={`relative border rounded-lg overflow-visible transition
             ${selectedTask ? 'border-blue-400' : 'border-gray-300'}`}>
+          <div className="relative">
+            {/* Textarea (real input) */}
             <textarea
               ref={inputRef}
               value={newComment}
@@ -415,16 +429,34 @@ export default function CommentSection({
                   setShowMentions(false);
                 }
               }}
+              onScroll={(e) => {
+                if (highlighterRef.current) {
+                  highlighterRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
+                }
+              }}
               onKeyPress={handleKeyPress}
               placeholder="Write a comment..."
-              className="bg-gray-50 w-full p-3 text-sm text-gray-700 focus:outline-none resize-none"
+              className="bg-transparent w-full p-3 text-sm text-gray-700 focus:outline-none resize-none relative z-0"
               rows={3}
             />
+
+            {/* Overlay that highlights @mentions in blue */}
+            <div
+              aria-hidden="true"
+              ref={highlighterRef}
+              className="absolute inset-0 p-3 text-sm whitespace-pre-wrap break-words pointer-events-none z-10 text-transparent"
+              dangerouslySetInnerHTML={{
+                // extra space prevents last-line clipping in some browsers
+                __html: getMentionOverlayHTML(newComment) + (newComment.endsWith('\n') ? ' ' : ''),
+              }}
+            />
+
+            {/* Mentions dropdown (keeps working as before) */}
             {showMentions && mentionQuery && (
-              <ul className="absolute bottom-full left-0 mb-1 z-10 bg-white border rounded shadow max-h-40 overflow-auto">
+              <ul className="absolute bottom-full left-0 mb-1 z-20 bg-white border rounded shadow max-h-40 text-black overflow-auto">
                 {members
-                  .filter(m => m.name.toLowerCase().startsWith(mentionQuery.toLowerCase()))
-                  .map(m => (
+                  .filter((m) => m.name.toLowerCase().startsWith(mentionQuery.toLowerCase()))
+                  .map((m) => (
                     <li
                       key={m.id}
                       onClick={() => {
@@ -448,6 +480,7 @@ export default function CommentSection({
                   ))}
               </ul>
             )}
+          </div>
 
             <div className="bg-gray-50 p-2 flex justify-end">
               <button
