@@ -12,4 +12,16 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-firebase.messaging();
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+
+  const notificationIcon = "/apple-touch-icon.png";
+
+  const notificationOptions = {
+    body: payload.data?.body,
+    icon: notificationIcon,
+  };
+
+  self.registration.showNotification(payload.data?.title || 'from cheat-code.cc', notificationOptions);
+});

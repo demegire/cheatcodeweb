@@ -21,11 +21,7 @@ export async function POST(req: NextRequest) {
 
     await adminMessaging.sendEachForMulticast({
       tokens,
-      notification: {
-        title: notification.title,
-        body: notification.body,
-      },
-      data: notification.data || {},
+      data: notification,
     });
 
     return NextResponse.json({ success: true });
