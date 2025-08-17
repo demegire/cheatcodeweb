@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { sendUserNotification } from '../../lib/notifications';
 import { Comment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
 import CommentItem from './CommentItem';
@@ -239,6 +240,10 @@ export default function CommentSection({
               taskId: selectedTask?.id || null,
               createdAt: new Date(),
               read: false,
+            }),
+            sendUserNotification(uid, {
+              title: `${userData.userName} mentioned you`,
+              body: newComment.trim(),
             })
           );
         }
@@ -254,6 +259,10 @@ export default function CommentSection({
             groupId,
             createdAt: new Date(),
             read: false,
+          }),
+          sendUserNotification(selectedTask.createdBy, {
+            title: `${userData.userName} commented on your task`,
+            body: newComment.trim(),
           })
         );
       }

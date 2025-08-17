@@ -15,7 +15,6 @@ export async function requestNotificationPermission(userId: string) {
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     const messaging = getMessaging(app);
     const token = await getToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
       serviceWorkerRegistration: registration,
     });
     if (token) {
@@ -26,5 +25,23 @@ export async function requestNotificationPermission(userId: string) {
     }
   } catch (err) {
     console.error('Unable to get permission to notify.', err);
+  }
+}
+
+/**
+ * Send a push notification to a user by calling the server-side API.
+ */
+export async function sendUserNotification(
+  userId: string,
+  notification: { title: string; body: string; data?: Record<string, string> }
+) {
+  try {
+    await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, notification }),
+    });
+  } catch (err) {
+    console.error('Failed to send push notification', err);
   }
 }
