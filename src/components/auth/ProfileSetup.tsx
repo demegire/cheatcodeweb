@@ -6,7 +6,6 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/hooks/useAuth';
 import TickCrossBackground from './TickCrossBackground';
-import { requestNotificationPermission } from '../../lib/notifications';
 
 interface ProfileSetupProps {
   userId: string;
@@ -49,9 +48,6 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
       // Update auth state so that needsProfileSetup becomes false
       await completeProfile();
 
-      // Ask for notification permissions as final onboarding step
-      await requestNotificationPermission(userId);
-      
       // Redirect based on any pending invite stored in localStorage
       const pendingInvite = localStorage.getItem('pendingInvite');
       if (pendingInvite) {

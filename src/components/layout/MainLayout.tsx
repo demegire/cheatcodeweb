@@ -63,6 +63,7 @@ export default function MainLayout({
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [showPlusModal, setShowPlusModal] = useState(false);
   const { user } = useAuth();
+  const [notificationsGranted, setNotificationsGranted] = useState(false);
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -106,6 +107,21 @@ export default function MainLayout({
 
   const toggleRightSidebar = () => {
     setRightSidebarCollapsed(!rightSidebarCollapsed);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
+      setNotificationsGranted(true);
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    if (user) {
+      await requestNotificationPermission(user.uid);
+      if (Notification.permission === 'granted') {
+        setNotificationsGranted(true);
+      }
+    }
   };
 
   return (
@@ -195,8 +211,8 @@ export default function MainLayout({
           
           <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
           <button
-            onClick={() => user && requestNotificationPermission(user.uid)}
-            className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+            onClick={handleEnableNotifications}
+            className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${notificationsGranted ? 'bg-green-500 hover:bg-green-600' : 'bg-theme hover:bg-theme-hover'} ${sidebarCollapsed ? 'sr-only' : 'block'}`}
             title="Enable notifications"
           >
             <BellIcon className="h-5 w-5 min-h-8" />
