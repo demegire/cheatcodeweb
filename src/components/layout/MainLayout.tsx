@@ -7,6 +7,7 @@ import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
 import StatsView from '../stats/StatsView';
 import PlusModal from '../modals/PlusModal';
+import TutorialModal from '../modals/TutorialModal';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { requestNotificationPermission } from '../../lib/notifications';
@@ -65,6 +66,18 @@ export default function MainLayout({
   const { user } = useAuth();
   const [notificationsGranted, setNotificationsGranted] = useState(false);
   const [notificationsSupported, setNotificationsSupported] = useState(false);
+  const [showInstallTutorial, setShowInstallTutorial] = useState(false);
+
+  const installSlides = [
+    {
+      image: '/ios-share.png',
+      text: 'Tap the share button in Safari',
+    },
+    {
+      image: '/ios-add.png',
+      text: 'Select "Add to Home Screen"',
+    },
+  ];
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -216,22 +229,30 @@ export default function MainLayout({
           
           <div
             className={`p-4 flex items-center ${
-              sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'
-            } ${notificationsSupported ? 'justify-between' : 'justify-end'}`}
+              sidebarCollapsed ? 'hidden' : 'border-t border-gray-200 justify-between'
+            }`}
           >
-            {notificationsSupported && (
-              <button
-                onClick={handleEnableNotifications}
-                className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${
-                  notificationsGranted
+            <button
+              onClick={
+                notificationsSupported
+                  ? handleEnableNotifications
+                  : () => setShowInstallTutorial(true)
+              }
+              className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${
+                notificationsSupported
+                  ? notificationsGranted
                     ? 'bg-green-500 hover:bg-green-600'
                     : 'bg-theme hover:bg-theme-hover'
-                } ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-                title="Enable notifications"
-              >
-                <BellIcon className="h-5 w-5 min-h-8" />
-              </button>
-            )}
+                  : 'bg-red-500 hover:bg-red-600'
+              } ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+              title={
+                notificationsSupported
+                  ? 'Enable notifications'
+                  : 'Add to home screen'
+              }
+            >
+              <BellIcon className="h-5 w-5 min-h-8" />
+            </button>
             <button
               onClick={handleLogout}
               className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${
@@ -298,6 +319,12 @@ export default function MainLayout({
         )}
       </div>
 
+      {showInstallTutorial && (
+        <TutorialModal
+          slides={installSlides}
+          onFinish={() => setShowInstallTutorial(false)}
+        />
+      )}
       {showPlusModal && <PlusModal onClose={() => setShowPlusModal(false)} />}
     </div>
   );
