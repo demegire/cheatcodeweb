@@ -70,12 +70,12 @@ export default function MainLayout({
 
   const installSlides = [
     {
-      image: '/ios-share.png',
-      text: 'Tap the share button in Safari',
+      image: '/ios-share.jpg',
+      text: 'Your browser does not support notifications. To enable notifications tap the "Share" button in Safari...',
     },
     {
-      image: '/ios-add.png',
-      text: 'Select "Add to Home Screen"',
+      image: '/ios-add.jpg',
+      text: 'And select "Add to Home Screen". Then log in to cc from your Home Screen. cc works best with notifications from your friends!',
     },
   ];
 
