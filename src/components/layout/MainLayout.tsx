@@ -7,6 +7,7 @@ import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
 import StatsView from '../stats/StatsView';
 import PlusModal from '../modals/PlusModal';
+import TutorialModal from '../modals/TutorialModal';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { requestNotificationPermission } from '../../lib/notifications';
@@ -64,6 +65,19 @@ export default function MainLayout({
   const [showPlusModal, setShowPlusModal] = useState(false);
   const { user } = useAuth();
   const [notificationsGranted, setNotificationsGranted] = useState(false);
+  const [notificationsSupported, setNotificationsSupported] = useState(false);
+  const [showInstallTutorial, setShowInstallTutorial] = useState(false);
+
+  const installSlides = [
+    {
+      image: '/ios-share.jpg',
+      text: 'Your browser does not support notifications. To enable notifications tap the "Share" button in Safari...',
+    },
+    {
+      image: '/ios-add.jpg',
+      text: 'And select "Add to Home Screen". Then log in to cc from your Home Screen. cc works best with notifications from your friends!',
+    },
+  ];
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -110,15 +124,19 @@ export default function MainLayout({
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
-      setNotificationsGranted(true);
+    if (typeof window !== 'undefined') {
+      const supported = 'Notification' in window && 'serviceWorker' in navigator;
+      setNotificationsSupported(supported);
+      if (supported && Notification.permission === 'granted') {
+        setNotificationsGranted(true);
+      }
     }
   }, []);
 
   const handleEnableNotifications = async () => {
-    if (user) {
+    if (user && notificationsSupported) {
       await requestNotificationPermission(user.uid);
-      if (Notification.permission === 'granted') {
+      if ('Notification' in window && Notification.permission === 'granted') {
         setNotificationsGranted(true);
       }
     }
@@ -209,20 +227,40 @@ export default function MainLayout({
             </div>
           </div>
           
-          <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
-          <button
-            onClick={handleEnableNotifications}
-            className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${notificationsGranted ? 'bg-green-500 hover:bg-green-600' : 'bg-theme hover:bg-theme-hover'} ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-            title="Enable notifications"
+          <div
+            className={`p-4 flex items-center ${
+              sidebarCollapsed ? 'hidden' : 'border-t border-gray-200 justify-between'
+            }`}
           >
-            <BellIcon className="h-5 w-5 min-h-8" />
-          </button>
-          <button
-            onClick={handleLogout}
-            className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-          >
-            <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
-          </button>
+            <button
+              onClick={
+                notificationsSupported
+                  ? handleEnableNotifications
+                  : () => setShowInstallTutorial(true)
+              }
+              className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${
+                notificationsSupported
+                  ? notificationsGranted
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-theme hover:bg-theme-hover'
+                  : 'bg-red-500 hover:bg-red-600'
+              } ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+              title={
+                notificationsSupported
+                  ? 'Enable notifications'
+                  : 'Add to home screen'
+              }
+            >
+              <BellIcon className="h-5 w-5 min-h-8" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${
+                sidebarCollapsed ? 'sr-only' : 'block'
+              }`}
+            >
+              <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
+            </button>
           </div>
         </div>
         )
@@ -281,6 +319,12 @@ export default function MainLayout({
         )}
       </div>
 
+      {showInstallTutorial && (
+        <TutorialModal
+          slides={installSlides}
+          onFinish={() => setShowInstallTutorial(false)}
+        />
+      )}
       {showPlusModal && <PlusModal onClose={() => setShowPlusModal(false)} />}
     </div>
   );
