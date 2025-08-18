@@ -7,7 +7,13 @@ import { doc, setDoc } from 'firebase/firestore';
  * Can be triggered during onboarding or later via a bell icon.
  */
 export async function requestNotificationPermission(userId: string) {
-  if (typeof window === 'undefined') return;
+  if (
+    typeof window === 'undefined' ||
+    !('Notification' in window) ||
+    !('serviceWorker' in navigator)
+  ) {
+    return;
+  }
   try {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;

@@ -64,6 +64,7 @@ export default function MainLayout({
   const [showPlusModal, setShowPlusModal] = useState(false);
   const { user } = useAuth();
   const [notificationsGranted, setNotificationsGranted] = useState(false);
+  const [notificationsSupported, setNotificationsSupported] = useState(false);
 
   // Fetch comments when group or week changes
   useEffect(() => {
@@ -110,15 +111,19 @@ export default function MainLayout({
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
-      setNotificationsGranted(true);
+    if (typeof window !== 'undefined') {
+      const supported = 'Notification' in window && 'serviceWorker' in navigator;
+      setNotificationsSupported(supported);
+      if (supported && Notification.permission === 'granted') {
+        setNotificationsGranted(true);
+      }
     }
   }, []);
 
   const handleEnableNotifications = async () => {
-    if (user) {
+    if (user && notificationsSupported) {
       await requestNotificationPermission(user.uid);
-      if (Notification.permission === 'granted') {
+      if ('Notification' in window && Notification.permission === 'granted') {
         setNotificationsGranted(true);
       }
     }
@@ -209,20 +214,32 @@ export default function MainLayout({
             </div>
           </div>
           
-          <div className={`p-4 flex items-center justify-between ${sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'}`}>
-          <button
-            onClick={handleEnableNotifications}
-            className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${notificationsGranted ? 'bg-green-500 hover:bg-green-600' : 'bg-theme hover:bg-theme-hover'} ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-            title="Enable notifications"
+          <div
+            className={`p-4 flex items-center ${
+              sidebarCollapsed ? 'hidden' : 'border-t border-gray-200'
+            } ${notificationsSupported ? 'justify-between' : 'justify-end'}`}
           >
-            <BellIcon className="h-5 w-5 min-h-8" />
-          </button>
-          <button
-            onClick={handleLogout}
-            className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${sidebarCollapsed ? 'sr-only' : 'block'}`}
-          >
-            <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
-          </button>
+            {notificationsSupported && (
+              <button
+                onClick={handleEnableNotifications}
+                className={`inline-flex items-center px-5 text-sm rounded-full text-white cursor-pointer ${
+                  notificationsGranted
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-theme hover:bg-theme-hover'
+                } ${sidebarCollapsed ? 'sr-only' : 'block'}`}
+                title="Enable notifications"
+              >
+                <BellIcon className="h-5 w-5 min-h-8" />
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              className={`inline-flex items-center px-5 text-sm rounded-full bg-theme hover:bg-theme-hover text-white cursor-pointer ${
+                sidebarCollapsed ? 'sr-only' : 'block'
+              }`}
+            >
+              <ArrowLeftStartOnRectangleIcon className="h-5 w-5 min-h-8" />
+            </button>
           </div>
         </div>
         )
