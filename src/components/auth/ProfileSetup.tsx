@@ -47,7 +47,7 @@ export default function ProfileSetup({ userId }: ProfileSetupProps) {
 
       // Update auth state so that needsProfileSetup becomes false
       await completeProfile();
-      
+
       // Redirect based on any pending invite stored in localStorage
       const pendingInvite = localStorage.getItem('pendingInvite');
       if (pendingInvite) {

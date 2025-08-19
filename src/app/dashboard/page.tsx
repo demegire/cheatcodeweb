@@ -66,7 +66,11 @@ export default function DashboardPage() {
     },
     {
       image: '/slide7.png',
-      text: ' And open the left sidebar to manage your groups.',
+      text: ' Open the left sidebar to manage your groups.',
+    },
+    {
+      image: '/slide8.png',
+      text: ' And do not forget to enable notifications.',
     },
     {
       image: '/android-chrome-512x512.png',
@@ -401,6 +405,7 @@ export default function DashboardPage() {
         <TutorialModal
           slides={tutorialSlides}
           onFinish={handleFinishTutorial}
+          userId={user?.uid}
         />
       )}
       <MainLayout
