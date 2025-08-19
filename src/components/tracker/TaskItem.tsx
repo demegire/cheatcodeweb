@@ -216,7 +216,7 @@ export default function TaskItem({
               e.stopPropagation();
               onAcceptTask();
             }}
-            className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center"
+            className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center cursor-pointer"
             title="Accept task"
           >
             ✓
@@ -226,7 +226,7 @@ export default function TaskItem({
               e.stopPropagation();
               onRejectTask();
             }}
-            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center cursor-pointer"
             title="Reject task"
           >
             ×
@@ -247,7 +247,7 @@ export default function TaskItem({
                     onStartTimer?.();
                   }
                 }}
-                className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center"
+                className="w-6 h-6 bg-green-500 rounded-full text-white hover:bg-green-600 flex items-center justify-center cursor-pointer"
                 title={task.timerStartedAt ? 'Pause timer' : 'Start timer'}
               >
                 {task.timerStartedAt ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
@@ -255,7 +255,7 @@ export default function TaskItem({
             )}
           <button
             onClick={handleEditClick}
-            className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center"
+            className="w-6 h-6 bg-blue-500 rounded-full text-white hover:bg-blue-600 flex items-center justify-center cursor-pointer"
             title="Edit"
           >
             ✎
@@ -265,7 +265,7 @@ export default function TaskItem({
               e.stopPropagation();
               onDelete?.();
             }}
-            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center"
+            className="w-6 h-6 bg-red-500 rounded-full text-white hover:bg-red-600 flex items-center justify-center cursor-pointer"
             title="Delete"
           >
             <TrashIcon className="h-4 w-4" />
@@ -273,7 +273,7 @@ export default function TaskItem({
         </div>
       )}
       {/* Time elapsed */}
-      {!showButtons && !isEditing && (task.timerStartedAt || elapsed > 0) && (
+      {(!showButtons || !isCurrentUser) && !isEditing && (task.timerStartedAt || elapsed > 0) && (
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-gray-600">
           {formatTime(elapsed)}
         </div>

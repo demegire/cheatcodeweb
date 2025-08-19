@@ -313,7 +313,7 @@ export default function CommentSection({
         {!isCollapsed && (
           <span>{selectedTask ? `Comments for "${selectedTask.text}"` : 'Comments'}</span>
         )}
-        <button onClick={onToggleCollapse} className="text-gray-600 hover:text-gray-900">
+        <button onClick={onToggleCollapse} className="text-gray-600 hover:text-gray-900 cursor-pointer">
           {!isCollapsed && (
             <ChevronRightIcon className="h-5 w-5" />
           )}
@@ -464,7 +464,7 @@ export default function CommentSection({
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className="px-2 py-1 bg-theme text-white rounded hover:bg-theme-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="px-2 py-1 bg-theme text-white rounded hover:bg-theme-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
