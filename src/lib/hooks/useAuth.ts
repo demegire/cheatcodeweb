@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { 
-  signInWithPopup, 
+import {
+  signInWithPopup,
   GoogleAuthProvider,
-  onAuthStateChanged, 
+  onAuthStateChanged,
   signOut,
-  User 
+  User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { auth, db } from '../firebase';
+import { getCurrentISOWeek } from '../dateUtils';
 
 let createUserPromise: Promise<void> | null = null;
 
@@ -63,6 +64,19 @@ export function useAuth() {
 
                   await updateDoc(userRef, {
                     groups: arrayUnion(groupId)
+                  });
+
+                  const today = new Date();
+                  const day = (today.getDay() + 6) % 7;
+                  await addDoc(collection(db, 'groups', groupId, 'tasks'), {
+                    text: 'Invite a friend',
+                    status: 'not-done',
+                    day,
+                    createdBy: authUser.uid,
+                    createdAt: today,
+                    weekId: getCurrentISOWeek(),
+                    timerStartedAt: null,
+                    elapsedSeconds: 0
                   });
                 }
               } finally {
