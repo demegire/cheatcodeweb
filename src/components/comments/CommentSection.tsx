@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { sendUserNotification } from '../../lib/notifications';
@@ -39,20 +39,75 @@ export default function CommentSection({
   const [mentionCursor, setMentionCursor] = useState(0);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  
+  const inputRef = useRef<HTMLDivElement>(null);
+
   // Add a ref to the main container to handle keyboard events
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const highlighterRef = useRef<HTMLDivElement>(null);
 
   const escapeHTML = (s: string) =>
     s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
-  const getMentionOverlayHTML = (text: string) => {
-    // Base text is transparent; only @mentions are visible in blue
+  const getMentionHTML = useCallback((text: string) => {
     const safe = escapeHTML(text);
     return safe.replace(/(@[\w]+)/g, `<span class="text-blue-600 font-medium">$1</span>`);
+  }, []);
+
+  const getCaretPosition = (element: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 0;
+    const range = selection.getRangeAt(0);
+    const preRange = range.cloneRange();
+    preRange.selectNodeContents(element);
+    preRange.setEnd(range.endContainer, range.endOffset);
+    return preRange.toString().length;
+  };
+
+  const setCaretPosition = (element: HTMLElement, index: number) => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    let pos = index;
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+    let node: Node | null = walker.nextNode();
+    while (node) {
+      const textLength = node.textContent?.length || 0;
+      if (textLength >= pos) {
+        const range = document.createRange();
+        range.setStart(node, pos);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return;
+      }
+      pos -= textLength;
+      node = walker.nextNode();
+    }
+  };
+
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.innerText !== newComment) {
+      inputRef.current.innerHTML = getMentionHTML(newComment);
+    }
+  }, [newComment, getMentionHTML]);
+
+  const handleInputChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const cursor = getCaretPosition(el);
+    const val = el.innerText;
+    setNewComment(val);
+    const upToCursor = val.slice(0, cursor);
+    const match = upToCursor.match(/@([\w]*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+      setShowMentions(true);
+      setMentionCursor(cursor);
+    } else {
+      setShowMentions(false);
+    }
+    const html = getMentionHTML(val);
+    if (el.innerHTML !== html) {
+      el.innerHTML = html;
+      setCaretPosition(el, cursor);
+    }
   };
 
   
@@ -296,7 +351,7 @@ export default function CommentSection({
   };
 
   // Handle key press in the input field
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAddComment();
@@ -389,44 +444,17 @@ export default function CommentSection({
           <div className={`relative border rounded-lg overflow-visible transition
             ${selectedTask ? 'border-blue-400' : 'border-gray-300'}`}>
           <div className="relative">
-            {/* Textarea (real input) */}
-            <textarea
-              ref={inputRef}
-              value={newComment}
-              onChange={(e) => {
-                const val = e.target.value;
-                const cursor = e.target.selectionStart || 0;
-                setNewComment(val);
-                const upToCursor = val.slice(0, cursor);
-                const match = upToCursor.match(/@([\w]*)$/);
-                if (match) {
-                  setMentionQuery(match[1]);
-                  setShowMentions(true);
-                  setMentionCursor(cursor);
-                } else {
-                  setShowMentions(false);
-                }
-              }}
-              onScroll={(e) => {
-                if (highlighterRef.current) {
-                  highlighterRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
-                }
-              }}
-              onKeyPress={handleKeyPress}
-              placeholder="Write a comment..."
-              className="bg-transparent w-full p-3 text-sm text-gray-700 focus:outline-none resize-none relative z-0"
-              rows={3}
-            />
-
-            {/* Overlay that highlights @mentions in blue */}
+            {!newComment && (
+              <div className="absolute p-3 text-sm text-gray-400 pointer-events-none">
+                Write a comment...
+              </div>
+            )}
             <div
-              aria-hidden="true"
-              ref={highlighterRef}
-              className="absolute inset-0 p-3 text-sm whitespace-pre-wrap break-words pointer-events-none z-10 text-transparent"
-              dangerouslySetInnerHTML={{
-                // extra space prevents last-line clipping in some browsers
-                __html: getMentionOverlayHTML(newComment) + (newComment.endsWith('\n') ? ' ' : ''),
-              }}
+              ref={inputRef}
+              contentEditable
+              onInput={handleInputChange}
+              onKeyDown={handleKeyPress}
+              className="bg-transparent w-full p-3 text-sm text-gray-700 focus:outline-none resize-none min-h-[3rem]"
             />
 
             {/* Mentions dropdown (keeps working as before) */}
@@ -446,9 +474,12 @@ export default function CommentSection({
                         setNewComment(updated);
                         setShowMentions(false);
                         setTimeout(() => {
-                          inputRef.current?.focus();
-                          const pos = start + insert.length;
-                          inputRef.current?.setSelectionRange(pos, pos);
+                          if (inputRef.current) {
+                            inputRef.current.focus();
+                            inputRef.current.innerHTML = getMentionHTML(updated);
+                            const pos = start + insert.length;
+                            setCaretPosition(inputRef.current, pos);
+                          }
                         }, 0);
                       }}
                       className="px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm"
