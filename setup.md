@@ -40,4 +40,10 @@ When the dev server is started, you can see a local version of the website by go
 
 We use cursor for development. You could also use VS Code if you don't want to vibecode. Following extensions are recommended on either:
 
-- 
+- Tailwind CSS IntelliSense
+
+# Contributing
+
+Create a new branch for each issue and create pull request to main when done.
+
+Reach out to alp@cheat-code.cc for any queries.
