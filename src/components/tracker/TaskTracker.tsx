@@ -720,7 +720,7 @@ export default function TaskTracker({
                   </th>
                 );
               })}
-              <th className="rounded-r-2xl p-1 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
+              <th className="p-1 sticky bg-white top-0 right-0 z-30 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
             </tr>
           </thead>
           <tbody>
