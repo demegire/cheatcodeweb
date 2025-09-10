@@ -694,7 +694,7 @@ export default function TaskTracker({
       />
 
       <div
-        className={`overflow-auto snap-x scroll-pl-[54px] lg:snap-none snap-mandatory
+        className={`overflow-auto snap-x scroll-pl-[54px] lg:snap-none
                     ${!isRightSidebarCollapsed ? "lg:w-[calc(100vw-32px-240px)]" : "w-[calc(100vw-16px)] lg:w-[calc(100vw-32px)]"} 
                     transition-all duration-500 ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} 
         ref={tableContainerRef}
