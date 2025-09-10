@@ -28,7 +28,7 @@ export default function LoginForm() {
               className="h-9 w-9 relative top-0.75"
             />
           </div>
-          <p className="mb-8 text-center max-w-md text-black">Stay accountable together.</p>
+          <p className="mb-8 text-center max-w-md text-black">Peer pressure makes diamonds</p>
           <div className="flex justify-center">
             <button
               onClick={signInWithGoogle}

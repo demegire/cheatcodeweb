@@ -694,11 +694,13 @@ export default function TaskTracker({
       />
 
       <div
-        className={`flex-grow overflow-auto ${!isRightSidebarCollapsed ? "lg:w-[calc(100vw-32px-240px)]" : "w-[calc(100vw-16px)] lg:w-[calc(100vw-32px)]"} 
+        className={`overflow-auto snap-x scroll-pl-[54px] lg:snap-none snap-mandatory
+                    ${!isRightSidebarCollapsed ? "lg:w-[calc(100vw-32px-240px)]" : "w-[calc(100vw-16px)] lg:w-[calc(100vw-32px)]"} 
                     transition-all duration-500 ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} 
         ref={tableContainerRef}
       >
-        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-[calc(100vw-32px)] table-fixed">
+        <table className={`border-separate border-spacing-x-1 border-spacing-y-2 
+                          ${isRightSidebarCollapsed ? 'lg:w-full' : 'lg:w-[calc(100%+240px)]'} transition-all duration-500 table-fixed`}>
           <thead>
             <tr>
               <th className="p-1 text-black min-w-[50px] w-[50px] sticky left-0 top-0 z-30 bg-white"></th>
@@ -710,7 +712,7 @@ export default function TaskTracker({
                   <th
                     key={index}
                     data-day-index={index}
-                    className={`p-1 sticky top-0 z-20 rounded-t-2xl min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto 
+                    className={`p-1 snap-start sticky top-0 z-20 rounded-t-2xl min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto 
                       ${isCurrentDay ? "bg-theme text-white" : "bg-gray-200 text-black"}`}
                     style={{
                       boxShadow: '0 -10px 0 0 white'
@@ -720,7 +722,7 @@ export default function TaskTracker({
                   </th>
                 );
               })}
-              <th className="rounded-r-2xl p-1 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
+              <th className="p-1 snap-end sticky bg-white top-0 z-30 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
             </tr>
           </thead>
           <tbody>

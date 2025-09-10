@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "cheat-code.cc",
-  description: "Stay accountable together",
+  description: "Peer pressure makes diamonds",
 };
 
 export default function RootLayout({
