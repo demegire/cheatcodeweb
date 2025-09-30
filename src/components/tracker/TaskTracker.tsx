@@ -140,7 +140,7 @@ export default function TaskTracker({
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
     // Load from localStorage on initial render
     const savedType = localStorage.getItem('preferredTaskType');
-    return (savedType === 'global' ? 'global' : 'local') as TaskType;
+    return (savedType === 'local' ? 'local' : 'global') as TaskType;
   });
 
   // Effect to save the preferred task type to localStorage whenever it changes
@@ -662,7 +662,7 @@ export default function TaskTracker({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-2 lg:p-4 relative">
+    <div className="flex flex-col h-full">
       <TopBar
         groupId={groupId}
         groupName={currentGroupName}
@@ -692,137 +692,141 @@ export default function TaskTracker({
           </div>
         }
       />
-
-      <div
-        className={`flex-grow overflow-auto ${!isRightSidebarCollapsed ? "lg:w-[calc(100vw-32px-240px)]" : "w-[calc(100vw-16px)] lg:w-[calc(100vw-32px)]"} 
-                    transition-all duration-500 ${isStandalone ? "pb-14" : "pb-10"} lg:pb-0`} 
-        ref={tableContainerRef}
+      <div className={`overflow-y-auto lg:snap-none pl-2 lg:pl-4 
+                      ${!isRightSidebarCollapsed ? "lg:w-[calc(100vw-16px-240px)]" : "w-full pr-2 lg:pr-4"} 
+                      transition-all duration-500 ${isStandalone ? "pb-16" : "pb-12"} lg:pb-0`}
       >
-        <table className="border-separate border-spacing-x-1 border-spacing-y-2 lg:w-[calc(100vw-32px)] table-fixed">
-          <thead>
-            <tr>
-              <th className="p-1 text-black min-w-[50px] w-[50px] sticky left-0 top-0 z-30 bg-white"></th>
-              {days.map((day, index) => {
-                const isCurrentDay = day.getDate() === currentDay.getDate() &&
-                                   day.getMonth() === currentDay.getMonth() &&
-                                   day.getFullYear() === currentDay.getFullYear();
-                return (
-                  <th
-                    key={index}
-                    data-day-index={index}
-                    className={`p-1 sticky top-0 z-20 rounded-t-2xl min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto 
-                      ${isCurrentDay ? "bg-theme text-white" : "bg-gray-200 text-black"}`}
-                    style={{
-                      boxShadow: '0 -10px 0 0 white'
-                    }}
-                  >
-                    {getDayName(day)}
-                  </th>
-                );
-              })}
-              <th className="rounded-r-2xl p-1 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map(member => (
-              <tr key={member.id}>
-                <td
-                  ref={member.id === user?.uid ? nameBarRef : undefined}
-                  className={`rounded-l-2xl p-1 font-bold text-white text-center sticky left-0 z-10 ${member.id === user?.uid && !isColorPickerOpen ? 'cursor-pointer' : ''}`}
-                  style={{
-                    backgroundColor: member.id === user?.uid ? selectedColor : member.color,
-                    width: '50px',
-                    height: '120px',
-                    boxShadow: '-10px 0 0 0 white'
-                  }}
-                  onClick={member.id === user?.uid ? handleNameBarClick : undefined}
-                >
-                  <div
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
-                    style={{
-                      width: '120px', // This should match the td height
-                      maxHeight: '50px', // This should match the td width
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: '2',
-                      WebkitBoxOrient: 'vertical'
-                    }}
-                  >
-                    {member.name}
-                  </div>
-                  {member.id === user?.uid && isColorPickerOpen && (
-                    <>
-                      <button
-                        className="absolute top-1 right-2 bg-black text-white rounded-full p-1 cursor-pointer z-30 h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          confirmColorChange();
-                        }}
-                      >
-                        ✓
-                      </button>
-                      <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
-                        <HexColorPicker color={selectedColor} onChange={setSelectedColor} />
-                      </div>
-                    </>
-                  )}
-                </td>
-
+        <div
+          className={`overflow-x-auto snap-x scroll-pl-[54px] snap-mandatory`} 
+          ref={tableContainerRef}
+        >
+          <table className={`border-separate border-spacing-x-1 border-spacing-y-2 
+                            ${isRightSidebarCollapsed ? 'lg:w-full' : 'lg:w-[calc(100%+240px)]'} transition-all duration-500 table-fixed`}>
+            <thead>
+              <tr>
+                <th className="p-1 text-black min-w-[50px] w-[50px] sticky top-0 left-0 z-30 bg-white"></th>
                 {days.map((day, index) => {
                   const isCurrentDay = day.getDate() === currentDay.getDate() &&
-                                      day.getMonth() === currentDay.getMonth() &&
-                                      day.getFullYear() === currentDay.getFullYear();
+                                    day.getMonth() === currentDay.getMonth() &&
+                                    day.getFullYear() === currentDay.getFullYear();
                   return (
-                    <TaskCell
+                    <th
                       key={index}
-                      memberId={member.id}
-                      day={index}
-                      tasks={tasks[member.id]?.filter(t => t.day === index) || []}
-                      onAddTask={(text) => {
-                        // If adding task for current user, use handleAddTask (local)
-                        if (member.id === user?.uid) {
-                          handleAddTask(member.id, index, text);
-                        }
-                        // If adding task for another user, use handleSuggestTask (local suggestion)
-                        else {
-                          handleSuggestTask(member.id, index, text);
-                        }
+                      data-day-index={index}
+                      className={`p-1 snap-start sticky top-0 z-20 rounded-t-2xl min-w-[calc(100vw-74px)] sm:min-w-[calc((100vw-78px)/2)] md:min-w-[calc((100vw-82px)/3)] lg:min-w-auto 
+                        ${isCurrentDay ? "bg-theme text-white" : "bg-gray-200 text-black"}`}
+                      style={{
+                        boxShadow: '0 -10px 0 0 white'
                       }}
-                      // Pass the global task handler
-                      onAddGlobalTask={
-                        member.id === user?.uid ? (text) => handleAddGlobalTask(member.id, index, text) : undefined
-                      }
-                      onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
-                      onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
-                      onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
-                      onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
-                      onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
-                      isCurrentUser={member.id === user?.uid}
-                      onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
-                      onTaskDoubleClick={handleTaskDoubleClick}
-                      selectedTaskId={selectedTask?.id}
-                      highlightedTaskId={highlightedTaskId}
-                      onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
-                      onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
-                      members={members}
-                      currentUserId={user?.uid || ''}
-                      tasksWithComments={tasksWithComments}
-                      // Pass the global task type state and setter
-                      currentTaskType={globalTaskType}
-                      onTaskTypeChange={setGlobalTaskType}
-                      isCurrentDay={isCurrentDay}
-                    />
-                );})}
-                
-                <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" 
-                style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
-                  {scores[member.id]?.toFixed(2) || '0.00'}%
-                </td>
+                    >
+                      {getDayName(day)}
+                    </th>
+                  );
+                })}
+                <th className="p-1 snap-end sticky top-0 bg-white z-20 text-black" style={{ width: '70px', minWidth: '70px', maxWidth: '70px' }}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {members.map(member => (
+                <tr key={member.id}>
+                  <td
+                    ref={member.id === user?.uid ? nameBarRef : undefined}
+                    className={`rounded-l-2xl p-1 font-bold text-white text-center sticky left-0 z-10 ${member.id === user?.uid && !isColorPickerOpen ? 'cursor-pointer' : ''}`}
+                    style={{
+                      backgroundColor: member.id === user?.uid ? selectedColor : member.color,
+                      width: '50px',
+                      height: '120px',
+                      boxShadow: '-10px 0 0 0 white'
+                    }}
+                    onClick={member.id === user?.uid ? handleNameBarClick : undefined}
+                  >
+                    <div
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform -rotate-90 break-words"
+                      style={{
+                        width: '120px', // This should match the td height
+                        maxHeight: '50px', // This should match the td width
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: '2',
+                        WebkitBoxOrient: 'vertical'
+                      }}
+                    >
+                      {member.name}
+                    </div>
+                    {member.id === user?.uid && isColorPickerOpen && (
+                      <>
+                        <button
+                          className="absolute top-1 right-2 bg-black text-white rounded-full p-1 cursor-pointer z-30 h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmColorChange();
+                          }}
+                        >
+                          ✓
+                        </button>
+                        <div className="absolute left-full top-0 ml-2 z-20" onClick={(e) => e.stopPropagation()}>
+                          <HexColorPicker color={selectedColor} onChange={setSelectedColor} />
+                        </div>
+                      </>
+                    )}
+                  </td>
+
+                  {days.map((day, index) => {
+                    const isCurrentDay = day.getDate() === currentDay.getDate() &&
+                                        day.getMonth() === currentDay.getMonth() &&
+                                        day.getFullYear() === currentDay.getFullYear();
+                    return (
+                      <TaskCell
+                        key={index}
+                        memberId={member.id}
+                        day={index}
+                        tasks={tasks[member.id]?.filter(t => t.day === index) || []}
+                        onAddTask={(text) => {
+                          // If adding task for current user, use handleAddTask (local)
+                          if (member.id === user?.uid) {
+                            handleAddTask(member.id, index, text);
+                          }
+                          // If adding task for another user, use handleSuggestTask (local suggestion)
+                          else {
+                            handleSuggestTask(member.id, index, text);
+                          }
+                        }}
+                        // Pass the global task handler
+                        onAddGlobalTask={
+                          member.id === user?.uid ? (text) => handleAddGlobalTask(member.id, index, text) : undefined
+                        }
+                        onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
+                        onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}
+                        onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
+                        onStartTimer={(taskId) => handleStartTaskTimer(member.id, taskId)}
+                        onStopTimer={(taskId) => handleStopTaskTimer(member.id, taskId)}
+                        isCurrentUser={member.id === user?.uid}
+                        onSelectTask={onSelectTask ? (task) => onSelectTask(task) : undefined}
+                        onTaskDoubleClick={handleTaskDoubleClick}
+                        selectedTaskId={selectedTask?.id}
+                        highlightedTaskId={highlightedTaskId}
+                        onAcceptTask={(taskId) => handleAcceptTask(member.id, taskId)}
+                        onRejectTask={(taskId) => handleRejectTask(member.id, taskId)}
+                        members={members}
+                        currentUserId={user?.uid || ''}
+                        tasksWithComments={tasksWithComments}
+                        // Pass the global task type state and setter
+                        currentTaskType={globalTaskType}
+                        onTaskTypeChange={setGlobalTaskType}
+                        isCurrentDay={isCurrentDay}
+                      />
+                  );})}
+                  
+                  <td className="rounded-r-2xl p-1 text-center font-bold text-gray-100" 
+                  style={{ width: '70px', minWidth: '70px', maxWidth: '70px', overflow: 'hidden', backgroundColor: member.id === user?.uid ? selectedColor : member.color}}>
+                    {scores[member.id]?.toFixed(2) || '0.00'}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <BottomBar
         groupId={groupId}
