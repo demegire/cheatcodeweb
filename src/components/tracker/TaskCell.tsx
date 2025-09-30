@@ -304,7 +304,7 @@ export default function TaskCell({
               </button>
               <button
                 onClick={toggleExpanded} // Chevron button triggers expansion
-                className={`bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 ${!isExpanded && "rounded-r"} w-[19px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer`}
+                className={`bg-theme hover:bg-theme-hover text-white border-l border-white px-1 py-1 rounded-tr ${!isExpanded && "rounded-br"} w-[19px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer`}
               >
                 <ChevronRightIcon className={`h-3 w-3 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}/>
               </button> 
@@ -351,30 +351,24 @@ export default function TaskCell({
         {/* Expanded options rendered outside the cell flow when visible */}
         {isExpanded && isCurrentUser && inputContainerRect && createPortal(
           <div
+            className='absolute flex flex-row z-50 overflow-hidden rounded-b border-t border-white'
             style={{
-              position: 'absolute', // Position relative to the document
-              // Account for page scroll so the menu appears next to the input on mobile
-              top: inputContainerRect.top + window.scrollY - 1,
-              left: inputContainerRect.right + window.scrollX, // Position to the right of the input container
-              zIndex: 50, // High z-index to appear on top
-              display: 'flex',
-              flexDirection: 'row', // Buttons side-by-side
-              backgroundColor: 'white', // Add a background
-              border: '1px solid #d1d5db', // Add a border
-              borderRadius: '0 4px 4px 0', // Match input border radius on the right
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)', // Add a shadow
-              overflow: 'hidden', // Hide overflow during transition
-               // Smooth transition for appearing
+              // Position below the input container
+              top: inputContainerRect.bottom + window.scrollY,
+              // Anchor the menu's right edge to the input's right edge
+              left: inputContainerRect.right + window.scrollX,
+              transform: 'translateX(-100%)',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
               transition: 'opacity 0.3s ease-in-out',
               opacity: isExpanded ? 1 : 0,
-              pointerEvents: isExpanded ? 'auto' : 'none', // Disable pointer events when hidden
+              pointerEvents: isExpanded ? 'auto' : 'none',
             }}
           >
             {/* Only show the option to switch if the alternative handler is available */}
             {currentTaskType === 'local' && onAddGlobalTask && (
               <button
                 onClick={() => handleTaskTypeChange('global')} // Calls parent handler
-                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
+                className="bg-theme text-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
               >
                 <GlobeAltIcon className="h-4 w-4 mr-1" /> {/* Use h-4 w-4 for consistent icon size */}
                 <span>Global</span>
@@ -384,7 +378,7 @@ export default function TaskCell({
             {currentTaskType === 'global' && (
               <button
                 onClick={() => handleTaskTypeChange('local')} // Calls parent handler
-                className="bg-theme text-white border-l border-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
+                className="bg-theme text-white px-2 py-1 flex items-center justify-center hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer" // Set fixed height
               >
                 <span className="mr-1">+</span>
                 <span>Local</span>
