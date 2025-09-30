@@ -140,7 +140,7 @@ export default function TaskTracker({
   const [globalTaskType, setGlobalTaskType] = useState<TaskType>(() => {
     // Load from localStorage on initial render
     const savedType = localStorage.getItem('preferredTaskType');
-    return (savedType === 'global' ? 'global' : 'local') as TaskType;
+    return (savedType === 'local' ? 'local' : 'global') as TaskType;
   });
 
   // Effect to save the preferred task type to localStorage whenever it changes
