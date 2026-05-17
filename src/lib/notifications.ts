@@ -1,10 +1,12 @@
 import { app, db } from './firebase';
-import { getMessaging, getToken } from 'firebase/messaging';
 import { doc, setDoc } from 'firebase/firestore';
 
 /**
  * Request browser notification permission and store the FCM token for the user.
  * Can be triggered during onboarding or later via a bell icon.
+ *
+ * `firebase/messaging` is imported dynamically so its ~100 KB doesn't ship in
+ * the initial dashboard bundle. Most users never hit this path.
  */
 export async function requestNotificationPermission(userId: string) {
   if (
@@ -19,6 +21,7 @@ export async function requestNotificationPermission(userId: string) {
     if (permission !== 'granted') return;
 
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const { getMessaging, getToken } = await import('firebase/messaging');
     const messaging = getMessaging(app);
     const token = await getToken(messaging, {
       serviceWorkerRegistration: registration,

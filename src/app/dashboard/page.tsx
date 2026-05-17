@@ -10,10 +10,11 @@ import TaskTracker from '../../components/tracker/TaskTracker';
 import { Task } from '../../types';
 import { getCurrentISOWeek } from '../../lib/dateUtils';
 import { nanoid } from 'nanoid';
-import StatsView from '../../components/stats/StatsView';
+import StatsView from '../../components/stats/StatsView.lazy';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import TutorialModal from '../../components/modals/TutorialModal';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { readDashboardCache, writeDashboardCache } from '../../lib/dashboardCache';
 
 interface GroupData {
   id: string;
@@ -86,9 +87,24 @@ export default function DashboardPage() {
         router.push('/');
         return;
       }
-      
+
       setUser(authUser);
-      
+
+      // Cache-first paint: if we have a recent snapshot of this user's
+      // group graph, render it immediately while we revalidate below.
+      const cached = readDashboardCache(authUser.uid);
+      if (cached && cached.groups.length > 0) {
+        setNeedsProfileSetup(false);
+        setPinnedGroupId(cached.pinnedGroupId);
+        setGroups(cached.groups);
+        const initial =
+          cached.groups.find(g => g.id === cached.selectedGroupId) ??
+          cached.groups.find(g => g.id === cached.pinnedGroupId) ??
+          cached.groups[0];
+        setSelectedGroup(initial);
+        setLoading(false);
+      }
+
       // Check if profile is completed
       const userDoc = await getDoc(doc(db, 'users', authUser.uid));
       
@@ -109,70 +125,91 @@ export default function DashboardPage() {
       // Fetch user's groups
       try {
         const userGroups = userData.groups || [];
-        
+
         if (userGroups.length === 0) {
           setLoading(false);
           return;
         }
-        
-        const groupsData: GroupData[] = [];
 
-        for (const groupId of userGroups) {
-          const groupDocSnap = await getDoc(doc(db, 'groups', groupId));
+        const me = authUser.uid;
 
-          if (groupDocSnap.exists()) {
-            const groupData = groupDocSnap.data();
+        // Layer 1: fetch all groups in parallel.
+        const groupSnaps = await Promise.all(
+          userGroups.map((id: string) => getDoc(doc(db, 'groups', id)))
+        );
 
-            const memberUids: Record<string, boolean> = groupData.memberUids || {};
-            const memberColors: Record<string, string> = groupData.memberColors || {};
-            const memberJoinDates: Record<string, any> = groupData.memberJoinDates || {};
-            // Skip groups where current user is marked as not a member
-            if (!memberUids[authUser.uid]) continue;
+        const validGroupSnaps = groupSnaps.filter(snap => {
+          if (!snap.exists()) return false;
+          const memberUids: Record<string, boolean> = snap.data().memberUids || {};
+          return !!memberUids[me];
+        });
 
-            const members: { id: string; name: string; color: string; joinedAt?: number }[] = [];
-            const me = authUser.uid;
+        // Layer 2: fetch each unique non-self member doc once, in parallel.
+        const otherUidSet = new Set<string>();
+        validGroupSnaps.forEach(snap => {
+          const memberUids: Record<string, boolean> = snap.data().memberUids || {};
+          Object.entries(memberUids).forEach(([uid, on]) => {
+            if (on && uid !== me) otherUidSet.add(uid);
+          });
+        });
 
-            // 1️⃣ Add me first (if I’m in this group)
-            if (memberUids[me]) {
-              const meSnap = await getDoc(doc(db, 'users', me));
-              if (meSnap.exists()) {
-                const { displayName, color } = meSnap.data();
-                members.push({
-                  id: me,
-                  name: displayName || 'You',
-                  color: memberColors[me] || color || '#3B82F6',
-                  joinedAt: memberJoinDates[me]?.toMillis ? memberJoinDates[me].toMillis() : undefined
-                });
-              }
-            }
+        const otherUids = Array.from(otherUidSet);
+        const otherSnaps = await Promise.all(
+          otherUids.map(uid => getDoc(doc(db, 'users', uid)))
+        );
 
-            // 2️⃣ Gather everyone else and sort by join date
-            const others: { id: string; name: string; color: string; joinedAt?: number }[] = [];
-            for (const uid of Object.keys(memberUids)) {
-              if (uid === me || !memberUids[uid]) continue;
-              const memberSnap = await getDoc(doc(db, 'users', uid));
-              if (memberSnap.exists()) {
-                const { displayName, color } = memberSnap.data();
-                const joinDate = memberJoinDates[uid];
-                others.push({
-                  id: uid,
-                  name: displayName || 'User',
-                  color: memberColors[uid] || color || '#3B82F6',
-                  joinedAt: joinDate?.toMillis ? joinDate.toMillis() : undefined
-                });
-              }
-            }
+        const userInfoByUid = new Map<string, { displayName?: string; color?: string }>();
+        // Reuse the userDoc we already fetched above for self.
+        userInfoByUid.set(me, { displayName: userData.displayName, color: userData.color });
+        otherSnaps.forEach(snap => {
+          if (snap.exists()) {
+            const d = snap.data();
+            userInfoByUid.set(snap.id, { displayName: d.displayName, color: d.color });
+          }
+        });
 
-            others.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
-            members.push(...others);
+        const groupsData: GroupData[] = validGroupSnaps.map(snap => {
+          const groupData = snap.data();
+          const memberUids: Record<string, boolean> = groupData.memberUids || {};
+          const memberColors: Record<string, string> = groupData.memberColors || {};
+          const memberJoinDates: Record<string, any> = groupData.memberJoinDates || {};
 
-            groupsData.push({
-              id: groupDocSnap.id,
-              name: groupData.name,
-              members
+          const members: { id: string; name: string; color: string; joinedAt?: number }[] = [];
+
+          // 1️⃣ Me first
+          const myInfo = userInfoByUid.get(me);
+          if (myInfo) {
+            members.push({
+              id: me,
+              name: myInfo.displayName || 'You',
+              color: memberColors[me] || myInfo.color || '#3B82F6',
+              joinedAt: memberJoinDates[me]?.toMillis ? memberJoinDates[me].toMillis() : undefined
             });
           }
-        }
+
+          // 2️⃣ Everyone else, sorted by join date
+          const others: { id: string; name: string; color: string; joinedAt?: number }[] = [];
+          for (const uid of Object.keys(memberUids)) {
+            if (uid === me || !memberUids[uid]) continue;
+            const info = userInfoByUid.get(uid);
+            if (!info) continue;
+            const joinDate = memberJoinDates[uid];
+            others.push({
+              id: uid,
+              name: info.displayName || 'User',
+              color: memberColors[uid] || info.color || '#3B82F6',
+              joinedAt: joinDate?.toMillis ? joinDate.toMillis() : undefined
+            });
+          }
+          others.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+          members.push(...others);
+
+          return {
+            id: snap.id,
+            name: groupData.name,
+            members
+          };
+        });
         
         if (userData.pinnedGroup) {
           groupsData.sort((a, b) => (a.id === userData.pinnedGroup ? -1 : b.id === userData.pinnedGroup ? 1 : 0));
@@ -180,20 +217,40 @@ export default function DashboardPage() {
 
         setGroups(groupsData);
 
-        // Auto-select pinned group if available, otherwise first group
-        if (groupsData.length > 0) {
-          const initial = groupsData.find(g => g.id === userData.pinnedGroup) || groupsData[0];
-          setSelectedGroup(initial);
-        }
+        // Preserve the user's current selection if it still exists in the
+        // fresh data (they may already be viewing it via the cache path),
+        // otherwise fall back to pinned-or-first.
+        setSelectedGroup(prev => {
+          if (prev) {
+            const match = groupsData.find(g => g.id === prev.id);
+            if (match) return match;
+          }
+          return (
+            groupsData.find(g => g.id === userData.pinnedGroup) ??
+            groupsData[0] ??
+            null
+          );
+        });
       } catch (error) {
         console.error("Error fetching groups:", error);
       }
-      
+
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [router]);
+
+  // Keep the localStorage cache in sync with current state so the next
+  // dashboard mount can paint from cache instantly.
+  useEffect(() => {
+    if (!user || loading || needsProfileSetup) return;
+    writeDashboardCache(user.uid, {
+      groups,
+      pinnedGroupId,
+      selectedGroupId: selectedGroup?.id ?? null,
+    });
+  }, [user, loading, needsProfileSetup, groups, pinnedGroupId, selectedGroup]);
 
     // Create a new group
     const handleCreateGroup = async () => {

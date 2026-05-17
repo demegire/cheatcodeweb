@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { collection, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { sendUserNotification } from '../../lib/notifications';
 import { Comment, Task } from '../../types';
@@ -10,6 +10,7 @@ import { ChevronLeftIcon, ChevronRightIcon, PaperAirplaneIcon } from '@heroicons
 interface CommentSectionProps {
   groupId: string;
   currentWeekId: string;
+  comments: Comment[];
   selectedTask: Task | null;
   onSelectTask: (task: Task | null) => void;
   highlightedTaskId: string | null;
@@ -19,9 +20,10 @@ interface CommentSectionProps {
   members: { id: string; name: string; color: string }[]; // Add this
 }
 
-export default function CommentSection({ 
-  groupId, 
+export default function CommentSection({
+  groupId,
   currentWeekId,
+  comments,
   selectedTask,
   onSelectTask,
   highlightedTaskId,
@@ -31,7 +33,6 @@ export default function CommentSection({
   members
 }: CommentSectionProps) {
   const { user } = useAuth();
-  const [comments, setComments] = useState<Comment[]>([]);
   const [commentTasks, setCommentTasks] = useState<Record<string, Task>>({});
   const [newComment, setNewComment] = useState('');
   const [mentionQuery, setMentionQuery] = useState('');
@@ -111,40 +112,6 @@ export default function CommentSection({
   };
 
   
-  // Fetch comments for the current group and week
-  useEffect(() => {
-    if (!groupId || !currentWeekId) return;
-
-    const commentsRef = collection(db, 'groups', groupId, 'comments');
-    const q = query(
-      commentsRef,
-      where('weekId', '==', currentWeekId),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const commentsList: Comment[] = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        commentsList.push({
-          id: doc.id,
-          text: data.text,
-          userId: data.userId,
-          userName: data.userName,
-          userColor: data.userColor,
-          taskId: data.taskId,
-          mentions: data.mentions || [],
-          createdAt: data.createdAt.toDate(),
-          weekId: data.weekId
-        });
-      });
-      
-      setComments(commentsList);
-    });
-
-    return () => unsubscribe();
-  }, [groupId, currentWeekId]);
-
   // Fetch tasks referenced by comments
   useEffect(() => {
     let isCancelled = false;

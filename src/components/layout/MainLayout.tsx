@@ -5,13 +5,14 @@ import { GoPin } from "react-icons/go";
 import { Task, Comment } from '../../types';
 import CommentSection from '../comments/CommentSection';
 import TaskTracker from '../../components/tracker/TaskTracker';
-import StatsView from '../stats/StatsView';
+import StatsView from '../stats/StatsView.lazy';
 import PlusModal from '../modals/PlusModal';
 import TutorialModal from '../modals/TutorialModal';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { requestNotificationPermission } from '../../lib/notifications';
 import { useAuth } from '../../lib/hooks/useAuth';
+import { clearDashboardCache } from '../../lib/dashboardCache';
 import Image from 'next/image'
 
 type TaskTrackerComponentProps = React.ComponentProps<typeof TaskTracker>;
@@ -86,7 +87,8 @@ export default function MainLayout({
     const commentsRef = collection(db, 'groups', groupId, 'comments');
     const q = query(
       commentsRef,
-      where('weekId', '==', currentWeekId)
+      where('weekId', '==', currentWeekId),
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -100,11 +102,12 @@ export default function MainLayout({
           userName: data.userName,
           userColor: data.userColor,
           taskId: data.taskId,
+          mentions: data.mentions || [],
           createdAt: data.createdAt.toDate(),
           weekId: data.weekId
         });
       });
-      
+
       setComments(commentsList);
     });
 
@@ -112,6 +115,7 @@ export default function MainLayout({
   }, [groupId, currentWeekId]);
 
   const handleLogout = () => {
+    if (user) clearDashboardCache(user.uid);
     auth.signOut();
   };
 
@@ -301,9 +305,10 @@ export default function MainLayout({
         ${rightSidebarCollapsed ? 'w-0' : 'w-full lg:w-64 shadow-lg z-50'}`}
       >
         {groupId && currentWeekId ? (
-          <CommentSection 
+          <CommentSection
             groupId={groupId}
             currentWeekId={currentWeekId}
+            comments={comments}
             selectedTask={selectedTask}
             onSelectTask={onSelectTask}
             highlightedTaskId={highlightedTaskId}
