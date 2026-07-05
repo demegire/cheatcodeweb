@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { Task, Comment } from '../../types';
+import { Task, Comment, TaskStatus } from '../../types';
 import TaskCell from './TaskCell';
 import WeeklyNavigation from './WeeklyNavigation';
 import TopBar from '../layout/TopBar';
@@ -55,6 +55,10 @@ type TaskType = 'local' | 'global';
 // Add this helper function at the top level
 const isCurrentWeek = (weekId: string) => {
   return weekId === getCurrentISOWeek();
+};
+
+const countsTowardScore = (task: Task) => {
+  return task.status !== 'suggested' && task.status !== 'info' && task.status !== 'goal';
 };
 
 export default function TaskTracker({
@@ -248,7 +252,7 @@ export default function TaskTracker({
         const scoreData: Record<string, number> = {};
         members.forEach(member => {
           const memberTasks = merged[member.id] || [];
-          const totalCount = memberTasks.filter(t => t.status !== 'suggested' && t.status !== 'info').length;
+          const totalCount = memberTasks.filter(countsTowardScore).length;
           if (totalCount > 0) {
             const completedCount = memberTasks.filter(t => t.status === 'completed').length;
             scoreData[member.id] = (completedCount / totalCount) * 100;
@@ -315,7 +319,7 @@ export default function TaskTracker({
           const scoreData: Record<string, number> = {};
           members.forEach(m => {
             const memberTasks = updated[m.id] || [];
-            const totalCount = memberTasks.filter(t => t.status !== 'suggested' && t.status !== 'info').length;
+            const totalCount = memberTasks.filter(countsTowardScore).length;
             if (totalCount > 0) {
               const completedCount = memberTasks.filter(t => t.status === 'completed').length;
               scoreData[m.id] = (completedCount / totalCount) * 100;
@@ -427,8 +431,8 @@ export default function TaskTracker({
 
       if (!task) return;
 
-      // Determine next status (cycle through: not-done -> completed -> postponed -> info ->not-done)
-      let nextStatus: 'not-done' | 'completed' | 'postponed' | 'info';
+      // Determine next status (cycle through: not-done -> completed -> postponed -> info -> goal -> not-done)
+      let nextStatus: Exclude<TaskStatus, 'suggested'>;
       switch (task.status) {
         case 'not-done':
           nextStatus = 'completed';
@@ -440,6 +444,9 @@ export default function TaskTracker({
           nextStatus = 'info';
           break;
         case 'info':
+          nextStatus = 'goal';
+          break;
+        case 'goal':
           nextStatus = 'not-done';
           break;
         default:

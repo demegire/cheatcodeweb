@@ -212,7 +212,8 @@ export default function StatsView({
         if (weekTasks.length > 0) {
           const suggestedTasks = weekTasks.filter(t => t.status === 'suggested');
           const infoTasks = weekTasks.filter(t => t.status === 'info');
-          const totalTasks = weekTasks.length - suggestedTasks.length - infoTasks.length;
+          const goalTasks = weekTasks.filter(t => t.status === 'goal');
+          const totalTasks = weekTasks.length - suggestedTasks.length - infoTasks.length - goalTasks.length;
           if (totalTasks > 0) {
             const completedCount = weekTasks.filter(t => t.status === 'completed').length;
             const completionRate = (completedCount / totalTasks) * 100;

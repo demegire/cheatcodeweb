@@ -1,7 +1,9 @@
+export type TaskStatus = 'not-done' | 'completed' | 'postponed' | 'suggested' | 'info' | 'goal';
+
 export interface Task {
   id: string;
   text: string;
-  status: 'not-done' | 'completed' | 'postponed' | 'suggested' | 'info';
+  status: TaskStatus;
   day: number; // 0-6 for Monday-Sunday
   createdBy: string; // ID of the user who owns the task
   createdAt: Date;

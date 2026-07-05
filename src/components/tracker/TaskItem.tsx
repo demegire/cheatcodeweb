@@ -4,6 +4,14 @@ import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon, XMarkIcon, CheckIcon } 
 import { linkifyText } from '../../lib/linkify';
 import { FaInfo } from "react-icons/fa6";
 
+const GoalIcon = () => (
+  <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
+    <circle cx="10" cy="10" r="8" fill="#ffffff" stroke="#111827" strokeWidth="1.75" />
+    <circle cx="10" cy="10" r="4.75" fill="#111827" />
+    <circle cx="10" cy="10" r="2" fill="#ffffff" />
+  </svg>
+);
+
 interface TaskItemProps {
   task: Task;
   onUpdateStatus: () => void;
@@ -55,6 +63,7 @@ export default function TaskItem({
       case 'postponed': return <ArrowRightIcon className="size-3 stroke-3" />;
       case 'suggested': return '?';
       case 'info': return <FaInfo />;
+      case 'goal': return <GoalIcon />;
       default: return <XMarkIcon className="size-3 stroke-3" />;
     }
   };
@@ -65,6 +74,7 @@ export default function TaskItem({
       case 'postponed': return `${isCurrentUser ? "bg-yellow-400 hover:bg-yellow-500" : "bg-yellow-300"}`;
       case 'not-done': return `${isCurrentUser ? "bg-red-400 hover:bg-red-500" : "bg-red-300"}`;
       case 'info': return `${isCurrentUser ? "bg-gray-400 hover:bg-gray-500" : "bg-gray-300"}`;
+      case 'goal': return `${isCurrentUser ? "bg-white hover:bg-gray-100" : "bg-white"} border border-black`;
     }
   };
 
@@ -74,6 +84,7 @@ export default function TaskItem({
       case 'postponed': return 'Postponed';
       case 'suggested': return `Suggested by ${members.find(m => m.id === task.suggestedBy)?.name}`;
       case 'info': return 'Info';
+      case 'goal': return 'Goal';
       default: return 'Not done';
     }
   };
