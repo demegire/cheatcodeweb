@@ -55,6 +55,7 @@ export default function TickCrossBackground() {
         <button
           key={idx}
           onClick={() => toggle(idx)}
+          aria-label={isTick ? 'Toggle task to not done' : 'Toggle task to done'}
           className="flex items-center justify-center"
         >
           <span className="w-8 h-8 rounded-full gray-50 flex items-center justify-center">
