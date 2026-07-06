@@ -1,8 +1,9 @@
 import TickCrossBackground from '../../components/auth/TickCrossBackground';
+import TinCredit from '../../components/layout/TinCredit';
 
 export default function TermsOfService() {
   return (
-    <div className="relative flex items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50 overflow-hidden">
       <TickCrossBackground />
       <div className="relative z-10 w-full max-w-3xl bg-white p-8 rounded-lg shadow-md overflow-y-auto max-h-screen">
         <h1 className="text-2xl font-bold mb-6 text-black">Terms and Conditions</h1>
@@ -34,6 +35,9 @@ export default function TermsOfService() {
           <p>If you have questions about these Terms, contact us at ege@cheat-code.cc.</p>
         </div>
       </div>
+      <footer className="relative z-10 mt-6 text-center">
+        <TinCredit />
+      </footer>
     </div>
   );
 }

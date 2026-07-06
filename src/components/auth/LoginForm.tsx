@@ -6,6 +6,7 @@ import TickCrossBackground from './TickCrossBackground';
 import TaskDemoBox from './TaskDemoBox';
 import AnnouncementsBox from './AnnouncementsBox';
 import ContactBox from './ContactBox';
+import TinCredit from '../layout/TinCredit';
 
 export default function LoginForm() {
   const { signInWithGoogle } = useAuth();
@@ -56,6 +57,9 @@ export default function LoginForm() {
           <ContactBox />
         </div>
       </div>
+      <footer className="relative z-10 mt-6 text-center">
+        <TinCredit />
+      </footer>
     </div>
   );
 }
