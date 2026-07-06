@@ -46,7 +46,7 @@ export default function CommentSection({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const escapeHTML = (s: string) =>
-    s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+    s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
   const getMentionHTML = useCallback((text: string) => {
     const safe = escapeHTML(text);
