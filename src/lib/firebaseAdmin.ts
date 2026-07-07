@@ -1,6 +1,8 @@
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getStorage } from 'firebase-admin/storage';
 
 const app =
   getApps().length > 0
@@ -11,7 +13,10 @@ const app =
           privateKey: process.env.NEXT_PRIVATE_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
           clientEmail: process.env.NEXT_PRIVATE_FIREBASE_CLIENT_EMAIL
         }),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
 
+export const adminAuth = getAuth(app);
 export const adminDb = getFirestore(app);
 export const adminMessaging = getMessaging(app);
+export const adminStorage = getStorage(app);

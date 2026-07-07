@@ -4,10 +4,18 @@ declare module 'firebase-admin/app' {
   export const getApps: any;
 }
 
+declare module 'firebase-admin/auth' {
+  export const getAuth: any;
+}
+
 declare module 'firebase-admin/firestore' {
   export const getFirestore: any;
 }
 
 declare module 'firebase-admin/messaging' {
   export const getMessaging: any;
+}
+
+declare module 'firebase-admin/storage' {
+  export const getStorage: any;
 }

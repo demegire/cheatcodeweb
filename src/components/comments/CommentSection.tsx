@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { collection, addDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
-import { db, storage } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { sendUserNotification } from '../../lib/notifications';
 import { Comment, CommentAttachment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -325,22 +324,45 @@ export default function CommentSection({
   const uploadCommentPhotos = async (): Promise<CommentAttachment[]> => {
     return Promise.all(
       selectedPhotos.map(async (photo, index) => {
-        const safeName = photo.file.name.replace(/[^a-z0-9._-]/gi, '-');
-        const path = `groups/${groupId}/comments/${currentWeekId}/${user!.uid}/${Date.now()}-${index}-${safeName}`;
-        const photoRef = storageRef(storage, path);
+        const token = await user!.getIdToken();
+        const formData = new FormData();
+        formData.append('groupId', groupId);
+        formData.append('weekId', currentWeekId);
+        formData.append('file', photo.file);
 
-        await uploadBytes(photoRef, photo.file, {
-          contentType: photo.file.type,
+        const response = await fetch('/api/comment-photos', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         });
 
-        return {
-          type: 'image',
-          url: await getDownloadURL(photoRef),
-          storagePath: path,
-          fileName: photo.file.name,
-        };
+        if (!response.ok) {
+          throw new Error(`Could not upload photo ${index + 1}`);
+        }
+
+        return await response.json() as CommentAttachment;
       })
     );
+  };
+
+  const deleteCommentPhoto = async (storagePath: string) => {
+    if (!user || !groupId) return;
+
+    const token = await user.getIdToken();
+    const response = await fetch('/api/comment-photos', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ groupId, storagePath }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Could not delete comment photo');
+    }
   };
 
   // Add a new comment
@@ -425,7 +447,7 @@ export default function CommentSection({
     } catch (error) {
       if (uploadedAttachments.length > 0) {
         await Promise.allSettled(
-          uploadedAttachments.map((attachment) => deleteObject(storageRef(storage, attachment.storagePath)))
+          uploadedAttachments.map((attachment) => deleteCommentPhoto(attachment.storagePath))
         );
       }
       console.error('Error adding comment:', error);
@@ -440,7 +462,7 @@ export default function CommentSection({
       const comment = comments.find((item) => item.id === commentId);
       if (comment?.attachments?.length) {
         await Promise.allSettled(
-          comment.attachments.map((attachment) => deleteObject(storageRef(storage, attachment.storagePath)))
+          comment.attachments.map((attachment) => deleteCommentPhoto(attachment.storagePath))
         );
       }
       await deleteDoc(doc(db, 'groups', groupId, 'comments', commentId));
