@@ -1,11 +1,21 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { collection, addDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
 import { sendUserNotification } from '../../lib/notifications';
-import { Comment, Task } from '../../types';
+import { Comment, CommentAttachment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
 import CommentItem from './CommentItem';
-import { ChevronLeftIcon, ChevronRightIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PaperAirplaneIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
+const MAX_PHOTOS_PER_COMMENT = 4;
+const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
+
+interface DraftPhoto {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface CommentSectionProps {
   groupId: string;
@@ -39,8 +49,13 @@ export default function CommentSection({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionCursor, setMentionCursor] = useState(0);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<DraftPhoto[]>([]);
+  const [photoError, setPhotoError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const selectedPhotosRef = useRef<DraftPhoto[]>([]);
 
   // Add a ref to the main container to handle keyboard events
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,6 +66,16 @@ export default function CommentSection({
   const getMentionHTML = useCallback((text: string) => {
     const safe = escapeHTML(text);
     return safe.replace(/(@[\w]+)/g, `<span class="text-blue-600 font-medium">$1</span>`);
+  }, []);
+
+  useEffect(() => {
+    selectedPhotosRef.current = selectedPhotos;
+  }, [selectedPhotos]);
+
+  useEffect(() => {
+    return () => {
+      selectedPhotosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    };
   }, []);
 
   const getCaretPosition = (element: HTMLElement) => {
@@ -233,29 +258,121 @@ export default function CommentSection({
     ? comments.filter(comment => comment.taskId === selectedTask.id)
     : comments;
 
+  const clearSelectedPhotos = () => {
+    selectedPhotosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    selectedPhotosRef.current = [];
+    setSelectedPhotos([]);
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
+    }
+  };
+
+  const removeSelectedPhoto = (photoId: string) => {
+    setSelectedPhotos((photos) => {
+      const photoToRemove = photos.find((photo) => photo.id === photoId);
+      if (photoToRemove) {
+        URL.revokeObjectURL(photoToRemove.previewUrl);
+      }
+      return photos.filter((photo) => photo.id !== photoId);
+    });
+  };
+
+  const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const remainingSlots = MAX_PHOTOS_PER_COMMENT - selectedPhotos.length;
+    if (remainingSlots <= 0) {
+      setPhotoError(`Attach up to ${MAX_PHOTOS_PER_COMMENT} photos per comment.`);
+      event.target.value = '';
+      return;
+    }
+
+    const acceptedPhotos: DraftPhoto[] = [];
+    let rejected = false;
+
+    files.slice(0, remainingSlots).forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        rejected = true;
+        return;
+      }
+      if (file.size > MAX_PHOTO_SIZE_BYTES) {
+        rejected = true;
+        return;
+      }
+
+      const photoId =
+        typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      acceptedPhotos.push({
+        id: `${file.name}-${file.lastModified}-${photoId}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+      });
+    });
+
+    setSelectedPhotos((photos) => [...photos, ...acceptedPhotos]);
+    setPhotoError(
+      rejected || files.length > remainingSlots
+        ? `Some photos were skipped. Use image files under 8 MB, up to ${MAX_PHOTOS_PER_COMMENT} per comment.`
+        : ''
+    );
+    event.target.value = '';
+  };
+
+  const uploadCommentPhotos = async (): Promise<CommentAttachment[]> => {
+    return Promise.all(
+      selectedPhotos.map(async (photo, index) => {
+        const safeName = photo.file.name.replace(/[^a-z0-9._-]/gi, '-');
+        const path = `groups/${groupId}/comments/${currentWeekId}/${user!.uid}/${Date.now()}-${index}-${safeName}`;
+        const photoRef = storageRef(storage, path);
+
+        await uploadBytes(photoRef, photo.file, {
+          contentType: photo.file.type,
+        });
+
+        return {
+          type: 'image',
+          url: await getDownloadURL(photoRef),
+          storagePath: path,
+          fileName: photo.file.name,
+        };
+      })
+    );
+  };
+
   // Add a new comment
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user || !groupId) return;
+    if ((!newComment.trim() && selectedPhotos.length === 0) || !user || !groupId || isSubmitting) return;
 
+    setIsSubmitting(true);
+    setPhotoError('');
+    let uploadedAttachments: CommentAttachment[] = [];
     try {
       const currentMember = members.find(member => member.id === user.uid);
       const userData = {
         userName: currentMember?.name || 'Anonymous',
         userColor: currentMember?.color || '#3B82F6'
       };
+      const commentText = newComment.trim();
+      uploadedAttachments = await uploadCommentPhotos();
+      const notificationBody = commentText || (uploadedAttachments.length === 1 ? 'Shared a photo' : `Shared ${uploadedAttachments.length} photos`);
 
       // Parse mentions based on @name pattern
-      const mentionNames = Array.from(newComment.matchAll(/@([\w]+)/g)).map(m => m[1].toLowerCase());
+      const mentionNames = Array.from(commentText.matchAll(/@([\w]+)/g)).map(m => m[1].toLowerCase());
       const mentionIds = mentionNames
         .map(name => members.find(mem => mem.name.toLowerCase() === name)?.id)
         .filter((id): id is string => !!id);
 
       const commentRef = await addDoc(collection(db, 'groups', groupId, 'comments'), {
-        text: newComment.trim(),
+        text: commentText,
         userId: user.uid,
         userName: userData.userName,
         userColor: userData.userColor,
         taskId: selectedTask?.id || null,
+        attachments: uploadedAttachments,
         mentions: mentionIds,
         createdAt: new Date(),
         weekId: currentWeekId
@@ -277,7 +394,7 @@ export default function CommentSection({
             }),
             sendUserNotification(uid, {
               title: `${userData.userName} mentioned you`,
-              body: newComment.trim(),
+              body: notificationBody,
             })
           );
         }
@@ -296,7 +413,7 @@ export default function CommentSection({
           }),
           sendUserNotification(selectedTask.createdBy, {
             title: `${userData.userName} commented on your task`,
-            body: newComment.trim(),
+            body: notificationBody,
           })
         );
       }
@@ -304,13 +421,28 @@ export default function CommentSection({
       await Promise.all(notifications);
 
       setNewComment('');
+      clearSelectedPhotos();
     } catch (error) {
+      if (uploadedAttachments.length > 0) {
+        await Promise.allSettled(
+          uploadedAttachments.map((attachment) => deleteObject(storageRef(storage, attachment.storagePath)))
+        );
+      }
       console.error('Error adding comment:', error);
+      setPhotoError('Could not post that comment. Try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
     try {
+      const comment = comments.find((item) => item.id === commentId);
+      if (comment?.attachments?.length) {
+        await Promise.allSettled(
+          comment.attachments.map((attachment) => deleteObject(storageRef(storage, attachment.storagePath)))
+        );
+      }
       await deleteDoc(doc(db, 'groups', groupId, 'comments', commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -459,15 +591,62 @@ export default function CommentSection({
           </div>
 
             <div className="bg-gray-50 p-2 flex justify-end">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handlePhotoSelect}
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={isSubmitting || selectedPhotos.length >= MAX_PHOTOS_PER_COMMENT}
+                className="mr-auto px-2 py-1 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+                title="Attach photos"
+                aria-label="Attach photos"
+              >
+                <PhotoIcon className="h-5 w-5" />
+              </button>
               <button
                 onClick={handleAddComment}
-                disabled={!newComment.trim()}
+                disabled={(!newComment.trim() && selectedPhotos.length === 0) || isSubmitting}
                 className="px-2 py-1 bg-theme text-white rounded hover:bg-theme-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+                title={isSubmitting ? 'Posting comment' : 'Post comment'}
+                aria-label={isSubmitting ? 'Posting comment' : 'Post comment'}
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
             </div>
           </div>
+          {selectedPhotos.length > 0 && (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {selectedPhotos.map((photo) => (
+                <div key={photo.id} className="relative overflow-hidden rounded border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.previewUrl}
+                    alt={photo.file.name}
+                    className="h-24 w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSelectedPhoto(photo.id)}
+                    disabled={isSubmitting}
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/75 disabled:opacity-50"
+                    title="Remove photo"
+                    aria-label="Remove photo"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {photoError && (
+            <p className="mt-2 text-xs text-red-600">{photoError}</p>
+          )}
         </div>
       )}
       

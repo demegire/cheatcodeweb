@@ -76,9 +76,33 @@ export default function CommentItem({ comment, onHover, onLeave, isHighlighted, 
           <div className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</div>
         </div>
       </div>
-      <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-        {linkifyText(comment.text)}
-      </div>
+      {comment.text && (
+        <div className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+          {linkifyText(comment.text)}
+        </div>
+      )}
+      {comment.attachments && comment.attachments.length > 0 && (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {comment.attachments.map((attachment) => (
+            <a
+              key={attachment.storagePath}
+              href={attachment.url}
+              target="_blank"
+              rel="noreferrer"
+              className="block overflow-hidden rounded border border-gray-200 bg-gray-50"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={attachment.url}
+                alt={attachment.fileName || 'Comment photo'}
+                className="h-28 w-full object-cover"
+                loading="lazy"
+              />
+            </a>
+          ))}
+        </div>
+      )}
       {task && taskOwner && (
         <div className="mt-2 flex items-center">
           <div

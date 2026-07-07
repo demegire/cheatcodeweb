@@ -102,6 +102,15 @@ export default function MainLayout({
           userName: data.userName,
           userColor: data.userColor,
           taskId: data.taskId,
+          attachments: Array.isArray(data.attachments)
+            ? data.attachments.filter((attachment) =>
+                attachment &&
+                attachment.type === 'image' &&
+                typeof attachment.url === 'string' &&
+                typeof attachment.storagePath === 'string' &&
+                typeof attachment.fileName === 'string'
+              )
+            : [],
           mentions: data.mentions || [],
           createdAt: data.createdAt.toDate(),
           weekId: data.weekId

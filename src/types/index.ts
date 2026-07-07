@@ -54,8 +54,16 @@ export interface Comment {
   userName: string;
   userColor: string;
   taskId: string | null;
+  attachments?: CommentAttachment[];
   /** Array of user ids mentioned in this comment */
   mentions?: string[];
   createdAt: Date;
   weekId: string;
+}
+
+export interface CommentAttachment {
+  type: 'image';
+  url: string;
+  storagePath: string;
+  fileName: string;
 }
