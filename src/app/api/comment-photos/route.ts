@@ -5,6 +5,8 @@ import { adminAuth, adminDb, adminStorage } from '../../../lib/firebaseAdmin';
 export const runtime = 'nodejs';
 
 const MAX_PHOTO_SIZE_BYTES = 8 * 1024 * 1024;
+const CHUNK_SIZE_BYTES = 512 * 1024;
+const PHOTO_STORAGE_PREFIX = 'commentPhotos';
 
 const getBearerToken = (req: NextRequest) => {
   const header = req.headers.get('authorization') || '';
@@ -12,16 +14,41 @@ const getBearerToken = (req: NextRequest) => {
   return scheme === 'Bearer' ? token : '';
 };
 
-const sanitizeFileName = (fileName: string) =>
-  fileName.replace(/[^a-z0-9._-]/gi, '-').replace(/-+/g, '-').slice(0, 120) || 'photo';
-
 const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
+
+const getPhotoUrl = (req: NextRequest, groupId: string, photoId: string, token: string) => {
+  const params = new URLSearchParams({ groupId, photoId, token });
+  return `${req.nextUrl.origin}/api/comment-photos?${params.toString()}`;
+};
+
+const getPhotoRef = (groupId: string, photoId: string) =>
+  adminDb.collection('groups').doc(groupId).collection('commentPhotos').doc(photoId);
 
 const verifyGroupMember = async (groupId: string, uid: string) => {
   const groupSnap = await adminDb.collection('groups').doc(groupId).get();
   const group = groupSnap.data();
   return !!group?.memberUids?.[uid];
+};
+
+const deleteStoredPhoto = async (groupId: string, photoId: string) => {
+  const photoRef = getPhotoRef(groupId, photoId);
+  const photoSnap = await photoRef.get();
+  const photo = photoSnap.data();
+  const chunkCount = typeof photo?.chunkCount === 'number' ? photo.chunkCount : 0;
+
+  await Promise.all(
+    Array.from({ length: chunkCount }, (_, index) =>
+      photoRef.collection('chunks').doc(String(index).padStart(4, '0')).delete()
+    )
+  );
+  await photoRef.delete();
+};
+
+const parseFirestoreStoragePath = (storagePath: string) => {
+  const [prefix, groupId, photoId] = storagePath.split('/');
+  if (prefix !== PHOTO_STORAGE_PREFIX || !groupId || !photoId) return null;
+  return { groupId, photoId };
 };
 
 export async function POST(req: NextRequest) {
@@ -46,30 +73,83 @@ export async function POST(req: NextRequest) {
     const isMember = await verifyGroupMember(groupId, decodedToken.uid);
     if (!isMember) return jsonError('You do not have access to this group', 403);
 
-    const bucket = adminStorage.bucket();
-    const safeName = sanitizeFileName(file.name);
     const token = randomUUID();
-    const storagePath = `groups/${groupId}/comments/${weekId}/${decodedToken.uid}/${Date.now()}-${token}-${safeName}`;
+    const photoId = randomUUID();
+    const storagePath = `${PHOTO_STORAGE_PREFIX}/${groupId}/${photoId}`;
     const bytes = Buffer.from(await file.arrayBuffer());
+    const photoRef = getPhotoRef(groupId, photoId);
+    const chunkCount = Math.ceil(bytes.length / CHUNK_SIZE_BYTES);
 
-    await bucket.file(storagePath).save(bytes, {
+    await photoRef.set({
       contentType: file.type,
-      metadata: {
-        metadata: {
-          firebaseStorageDownloadTokens: token,
-        },
-      },
+      createdAt: new Date(),
+      fileName: file.name,
+      ownerId: decodedToken.uid,
+      size: bytes.length,
+      token,
+      weekId,
+      chunkCount,
     });
+
+    await Promise.all(
+      Array.from({ length: chunkCount }, async (_, index) => {
+        const start = index * CHUNK_SIZE_BYTES;
+        const end = Math.min(start + CHUNK_SIZE_BYTES, bytes.length);
+        await photoRef.collection('chunks').doc(String(index).padStart(4, '0')).set({
+          data: bytes.subarray(start, end).toString('base64'),
+        });
+      })
+    );
 
     return NextResponse.json({
       type: 'image',
-      url: `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media&token=${token}`,
+      url: getPhotoUrl(req, groupId, photoId, token),
       storagePath,
       fileName: file.name,
     });
   } catch (error) {
     console.error('Error uploading comment photo:', error);
     return jsonError('Could not upload that photo', 500);
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const groupId = req.nextUrl.searchParams.get('groupId');
+    const photoId = req.nextUrl.searchParams.get('photoId');
+    const token = req.nextUrl.searchParams.get('token');
+
+    if (!groupId || !photoId || !token) {
+      return jsonError('Missing photo fields', 400);
+    }
+
+    const photoRef = getPhotoRef(groupId, photoId);
+    const photoSnap = await photoRef.get();
+    const photo = photoSnap.data();
+
+    if (!photoSnap.exists || photo?.token !== token) {
+      return jsonError('Photo not found', 404);
+    }
+
+    const chunkCount = typeof photo.chunkCount === 'number' ? photo.chunkCount : 0;
+    const chunkSnaps = await Promise.all(
+      Array.from({ length: chunkCount }, (_, index) =>
+        photoRef.collection('chunks').doc(String(index).padStart(4, '0')).get()
+      )
+    );
+    const data = Buffer.concat(
+      chunkSnaps.map((chunkSnap) => Buffer.from(String(chunkSnap.data()?.data || ''), 'base64'))
+    );
+
+    return new NextResponse(new Uint8Array(data), {
+      headers: {
+        'Cache-Control': 'private, max-age=31536000, immutable',
+        'Content-Type': typeof photo.contentType === 'string' ? photo.contentType : 'image/jpeg',
+      },
+    });
+  } catch (error) {
+    console.error('Error reading comment photo:', error);
+    return jsonError('Could not load that photo', 500);
   }
 }
 
@@ -85,10 +165,26 @@ export async function DELETE(req: NextRequest) {
       return jsonError('Missing delete fields', 400);
     }
 
-    if (
-      !storagePath.startsWith(`groups/${groupId}/comments/`) ||
-      !storagePath.includes(`/${decodedToken.uid}/`)
-    ) {
+    const storedPhoto = parseFirestoreStoragePath(storagePath);
+    if (storedPhoto) {
+      if (storedPhoto.groupId !== groupId) {
+        return jsonError('You cannot delete this photo', 403);
+      }
+
+      const photoSnap = await getPhotoRef(groupId, storedPhoto.photoId).get();
+      const photo = photoSnap.data();
+      if (photo?.ownerId !== decodedToken.uid) {
+        return jsonError('You cannot delete this photo', 403);
+      }
+
+      const isMember = await verifyGroupMember(groupId, decodedToken.uid);
+      if (!isMember) return jsonError('You do not have access to this group', 403);
+
+      await deleteStoredPhoto(groupId, storedPhoto.photoId);
+      return NextResponse.json({ success: true });
+    }
+
+    if (!storagePath.startsWith(`groups/${groupId}/comments/`) || !storagePath.includes(`/${decodedToken.uid}/`)) {
       return jsonError('You cannot delete this photo', 403);
     }
 
