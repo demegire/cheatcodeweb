@@ -17,14 +17,15 @@ export const getISOWeek = (date: Date): string => {
   
   export const getDateFromISOWeek = (isoWeek: string): Date => {
     const [year, week] = isoWeek.split('-W').map(Number);
-    
-    // Get first day of the year
-    const firstDayOfYear = new Date(year, 0, 1);
-    
-    // Add weeks and adjust to Monday
-    const result = new Date(firstDayOfYear);
-    result.setDate(firstDayOfYear.getDate() + (week - 1) * 7 - (firstDayOfYear.getDay() || 7) + 1);
-    
+
+    // Jan 4th always falls in ISO week 1, regardless of what day the year starts on
+    const jan4 = new Date(year, 0, 4);
+    const jan4Day = jan4.getDay() || 7;
+
+    // Find the Monday of week 1, then add the remaining weeks
+    const result = new Date(jan4);
+    result.setDate(jan4.getDate() - jan4Day + 1 + (week - 1) * 7);
+
     return result;
   };
   
