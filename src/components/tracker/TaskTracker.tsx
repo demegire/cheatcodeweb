@@ -11,6 +11,7 @@ import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirs
 import ThisWeekButton from './ThisWeekButton';
 import dynamic from 'next/dynamic';
 import { sendUserNotification } from '../../lib/notifications';
+import { computeScores } from '../../lib/scores';
 
 // Only needed once someone opens their color picker.
 const HexColorPicker = dynamic(() => import('react-colorful').then(m => m.HexColorPicker), { ssr: false });
@@ -58,10 +59,6 @@ type TaskType = 'local' | 'global';
 // Add this helper function at the top level
 const isCurrentWeek = (weekId: string) => {
   return weekId === getCurrentISOWeek();
-};
-
-const countsTowardScore = (task: Task) => {
-  return task.status !== 'suggested' && task.status !== 'info' && task.status !== 'goal';
 };
 
 export default function TaskTracker({
@@ -252,17 +249,7 @@ export default function TaskTracker({
           merged[member.id] = [...localData[member.id], ...globals];
         });
 
-        const scoreData: Record<string, number> = {};
-        members.forEach(member => {
-          const memberTasks = merged[member.id] || [];
-          const totalCount = memberTasks.filter(countsTowardScore).length;
-          if (totalCount > 0) {
-            const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-            scoreData[member.id] = (completedCount / totalCount) * 100;
-          }
-        });
-
-        setScores(scoreData);
+        setScores(computeScores(members.map(m => m.id), merged));
         return merged;
       });
     });
@@ -319,16 +306,7 @@ export default function TaskTracker({
           const localOnly = (updated[member.id] || []).filter(t => !t.isGlobal);
           updated[member.id] = [...localOnly, ...globalTasks];
 
-          const scoreData: Record<string, number> = {};
-          members.forEach(m => {
-            const memberTasks = updated[m.id] || [];
-            const totalCount = memberTasks.filter(countsTowardScore).length;
-            if (totalCount > 0) {
-              const completedCount = memberTasks.filter(t => t.status === 'completed').length;
-              scoreData[m.id] = (completedCount / totalCount) * 100;
-            }
-          });
-          setScores(scoreData);
+          setScores(computeScores(members.map(m => m.id), updated));
           return updated;
         });
       });
