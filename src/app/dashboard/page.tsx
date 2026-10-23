@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, deleteField, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
-import ProfileSetup from '../../components/auth/ProfileSetup';
+import dynamic from 'next/dynamic';
 import MainLayout from '../../components/layout/MainLayout';
 import TaskTracker from '../../components/tracker/TaskTracker';
 import { Task } from '../../types';
@@ -26,6 +26,10 @@ interface GroupData {
     joinedAt?: number;
   }[];
 }
+
+// Only brand-new users see this, so keep it (and react-colorful) out of the
+// dashboard bundle.
+const ProfileSetup = dynamic(() => import('../../components/auth/ProfileSetup'), { ssr: false });
 
 export default function DashboardPage() {
   const router = useRouter();
