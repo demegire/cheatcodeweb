@@ -227,6 +227,10 @@ export default function DashboardPage() {
         setSelectedGroup(prev => {
           if (prev) {
             const match = groupsData.find(g => g.id === prev.id);
+            // Keep the old object when nothing changed so TaskTracker and
+            // StatsView, which subscribe on `members`, don't tear down and
+            // re-open every Firestore listener after revalidation.
+            if (match && JSON.stringify(match) === JSON.stringify(prev)) return prev;
             if (match) return match;
           }
           return (
