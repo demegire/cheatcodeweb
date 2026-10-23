@@ -59,6 +59,19 @@ export function writeDashboardCache(
   }
 }
 
+// True if any account on this browser has a fresh cache entry, i.e. a
+// returning user who can go straight to /dashboard without waiting on auth.
+export function hasDashboardCache(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return Object.keys(localStorage)
+      .filter(k => k.startsWith(PREFIX))
+      .some(k => readDashboardCache(k.slice(PREFIX.length)) !== null);
+  } catch {
+    return false;
+  }
+}
+
 export function clearDashboardCache(uid?: string) {
   if (typeof window === 'undefined') return;
   try {

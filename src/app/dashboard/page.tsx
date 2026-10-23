@@ -14,7 +14,7 @@ import StatsView from '../../components/stats/StatsView.lazy';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import TutorialModal from '../../components/modals/TutorialModal';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { readDashboardCache, writeDashboardCache } from '../../lib/dashboardCache';
+import { readDashboardCache, writeDashboardCache, clearDashboardCache } from '../../lib/dashboardCache';
 
 interface GroupData {
   id: string;
@@ -87,7 +87,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
       if (!authUser) {
-        // No user, redirect to login
+        // No user, redirect to login. Drop any cached dashboard so the login
+        // page doesn't bounce us straight back here.
+        clearDashboardCache();
         router.push('/');
         return;
       }
