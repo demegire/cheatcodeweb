@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/hooks/useAuth';
 import LoginForm from '../components/auth/LoginForm';
-import ProfileSetup from '../components/auth/ProfileSetup';
+import dynamic from 'next/dynamic';
+
+// Only brand-new users see this, so keep it (and react-colorful) out of the
+// login page bundle.
+const ProfileSetup = dynamic(() => import('../components/auth/ProfileSetup'), { ssr: false });
 
 export default function Home() {
   const router = useRouter();

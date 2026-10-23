@@ -9,8 +9,11 @@ import { collection, addDoc, updateDoc, doc, query, where, onSnapshot, deleteDoc
 import { db } from '../../lib/firebase';
 import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirstWeek, getISOWeek } from '../../lib/dateUtils';
 import ThisWeekButton from './ThisWeekButton';
-import { HexColorPicker } from 'react-colorful';
+import dynamic from 'next/dynamic';
 import { sendUserNotification } from '../../lib/notifications';
+
+// Only needed once someone opens their color picker.
+const HexColorPicker = dynamic(() => import('react-colorful').then(m => m.HexColorPicker), { ssr: false });
 
 // Helper function to get list of dates for a specific ISO week
 const getDates = (isoWeek: string) => {
