@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { hasDashboardCache } from '../lib/dashboardCache';
 import { useAuth } from '../lib/hooks/useAuth';
 import LoginForm from '../components/auth/LoginForm';
 import ProfileSetup from '../components/auth/ProfileSetup';
@@ -10,6 +11,15 @@ export default function Home() {
   const router = useRouter();
   const { user, loading, needsProfileSetup } = useAuth();
   const [destination, setDestination] = useState<string | null>(null);
+
+  // Returning users: skip waiting on auth + the user doc fetch and go straight
+  // to the dashboard, which paints from cache and bounces back here if the
+  // session turns out to be gone.
+  useEffect(() => {
+    if (!localStorage.getItem('pendingInvite') && hasDashboardCache()) {
+      router.replace('/dashboard');
+    }
+  }, [router]);
 
   useEffect(() => {
     // Check for pending invite
