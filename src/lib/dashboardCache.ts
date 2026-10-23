@@ -24,7 +24,9 @@ export interface CachedDashboard {
 }
 
 const PREFIX = 'cc-dash-v1:';
-const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+// Always revalidated in the background, so this only bounds how stale the
+// first paint can be for someone returning after a while.
+const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function readDashboardCache(uid: string): CachedDashboard | null {
   if (typeof window === 'undefined') return null;
