@@ -5,6 +5,7 @@ import { sendUserNotification } from '../../lib/notifications';
 import { Comment, CommentAttachment, Task } from '../../types';
 import { useAuth } from '../../lib/hooks/useAuth';
 import CommentItem from './CommentItem';
+import { buildTaskPath } from '../../lib/taskLinks';
 import { ChevronLeftIcon, ChevronRightIcon, PaperAirplaneIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const MAX_PHOTOS_PER_COMMENT = 4;
@@ -51,6 +52,7 @@ export default function CommentSection({
   const [selectedPhotos, setSelectedPhotos] = useState<DraftPhoto[]>([]);
   const [photoError, setPhotoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -401,6 +403,11 @@ export default function CommentSection({
       });
 
       const notifications: Promise<any>[] = [];
+      const notificationUrl = buildTaskPath(
+        selectedTask
+          ? { groupId, weekId: selectedTask.weekId, taskId: selectedTask.id }
+          : { groupId, weekId: currentWeekId }
+      );
 
       // Notify mentioned users
       mentionIds.forEach(uid => {
@@ -417,6 +424,7 @@ export default function CommentSection({
             sendUserNotification(uid, {
               title: `${userData.userName} mentioned you`,
               body: notificationBody,
+              url: notificationUrl,
             })
           );
         }
@@ -436,6 +444,7 @@ export default function CommentSection({
           sendUserNotification(selectedTask.createdBy, {
             title: `${userData.userName} commented on your task`,
             body: notificationBody,
+            url: notificationUrl,
           })
         );
       }
@@ -482,6 +491,23 @@ export default function CommentSection({
   // Clear task selection button
   const handleClearTaskSelection = () => {
     onSelectTask(null);
+  };
+
+  // Mostly for the installed app, where there's no address bar to copy from.
+  const handleCopyTaskLink = async () => {
+    if (!selectedTask) return;
+    const url = window.location.origin + buildTaskPath({
+      groupId,
+      weekId: selectedTask.weekId,
+      taskId: selectedTask.id,
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy task link', err);
+    }
   };
   return (
     <div className="h-full flex flex-col" ref={containerRef}>
@@ -553,12 +579,20 @@ export default function CommentSection({
               <span className="text-sm text-blue-700">
                 Commenting on: <span className="font-medium">{selectedTask.text}</span>
               </span>
-              <button 
-                onClick={handleClearTaskSelection}
-                className="text-xs text-blue-500 hover:text-blue-700"
-              >
-                Clear
-              </button>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <button
+                  onClick={handleCopyTaskLink}
+                  className="text-xs text-blue-500 hover:text-blue-700 cursor-pointer"
+                >
+                  {linkCopied ? 'Copied!' : 'Copy link'}
+                </button>
+                <button 
+                  onClick={handleClearTaskSelection}
+                  className="text-xs text-blue-500 hover:text-blue-700"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           )}
           

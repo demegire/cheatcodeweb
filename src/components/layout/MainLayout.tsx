@@ -42,6 +42,8 @@ interface MainLayoutProps {
   currentWeekId?: string;
   selectedTask?: Task | null;
   onSelectTask?: (task: Task | null) => void;
+  /** Start with the comments panel open (page was opened from a task link). */
+  initialCommentsOpen?: boolean;
 }
 
 export default function MainLayout({
@@ -57,9 +59,10 @@ export default function MainLayout({
   currentWeekId = '',
   selectedTask = null,
   onSelectTask = () => {},
+  initialCommentsOpen = false,
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(!initialCommentsOpen);
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
