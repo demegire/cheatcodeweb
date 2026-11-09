@@ -7,6 +7,12 @@ export interface Task {
   day: number; // 0-6 for Monday-Sunday
   createdBy: string; // ID of the user who owns the task
   createdAt: Date;
+  /**
+   * When the task entered its current section of the day (info / goal / task).
+   * Set when a status change moves it between sections, so it lands at the
+   * bottom of the new section. Falls back to createdAt when absent.
+   */
+  orderedAt?: Date | null;
   weekId: string; // ISO week format like "2023-W42"
   suggestedBy?: string; // ID of the user who suggested this task (optional)
   /** Timestamp when the timer was started. Null when timer is stopped */
