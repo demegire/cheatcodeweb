@@ -165,6 +165,7 @@ export default function TaskItem({
       onClick={handleClick}
       onDoubleClick={onDoubleClick}
       data-task-item="true"
+      data-task-id={task.id}
     >
       {/* Comment icon - shows in top right corner when task has comments */}
       {hasComments && !isEditing && (
