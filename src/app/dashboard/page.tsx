@@ -550,6 +550,7 @@ function Dashboard() {
         selectedTask={selectedTask}
         onSelectTask={handleSelectTask}
         initialCommentsOpen={openedFromLink}
+        onLogoClick={() => setStatView(false)}
         >
         {selectedGroup && !isStatView && (
           <TaskTracker
