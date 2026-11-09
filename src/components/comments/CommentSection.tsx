@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { collection, addDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { sendUserNotification } from '../../lib/notifications';
 import { Comment, CommentAttachment, Task } from '../../types';
@@ -50,7 +50,7 @@ export default function CommentSection({
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<DraftPhoto[]>([]);
   const [photoError, setPhotoError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -257,15 +257,6 @@ export default function CommentSection({
     ? comments.filter(comment => comment.taskId === selectedTask.id)
     : comments;
 
-  const clearSelectedPhotos = () => {
-    selectedPhotosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
-    selectedPhotosRef.current = [];
-    setSelectedPhotos([]);
-    if (photoInputRef.current) {
-      photoInputRef.current.value = '';
-    }
-  };
-
   const removeSelectedPhoto = (photoId: string) => {
     setSelectedPhotos((photos) => {
       const photoToRemove = photos.find((photo) => photo.id === photoId);
@@ -321,13 +312,13 @@ export default function CommentSection({
     event.target.value = '';
   };
 
-  const uploadCommentPhotos = async (): Promise<CommentAttachment[]> => {
+  const uploadCommentPhotos = async (photos: DraftPhoto[], targetGroupId: string, weekId: string): Promise<CommentAttachment[]> => {
     return Promise.all(
-      selectedPhotos.map(async (photo, index) => {
+      photos.map(async (photo, index) => {
         const token = await user!.getIdToken();
         const formData = new FormData();
-        formData.append('groupId', groupId);
-        formData.append('weekId', currentWeekId);
+        formData.append('groupId', targetGroupId);
+        formData.append('weekId', weekId);
         formData.append('file', photo.file);
 
         const response = await fetch('/api/comment-photos', {
@@ -365,57 +356,82 @@ export default function CommentSection({
     }
   };
 
-  // Add a new comment
+  // Add a new comment.
+  // The draft is snapshotted and the input cleared immediately, so the user never
+  // sees a stale draft while the post is in flight, and anything typed meanwhile
+  // is a new draft that the in-flight post won't wipe.
   const handleAddComment = async () => {
-    if ((!newComment.trim() && selectedPhotos.length === 0) || !user || !groupId || isSubmitting) return;
+    const commentText = newComment.trim();
+    const photos = selectedPhotos;
+    if ((!commentText && photos.length === 0) || !user || !groupId) return;
+    // Photo uploads are slow; don't let a double-press post the same photos twice.
+    if (photos.length > 0 && isUploadingPhotos) return;
 
-    setIsSubmitting(true);
+    const targetGroupId = groupId;
+    const weekId = currentWeekId;
+    const task = selectedTask;
+
+    // Clear the draft right away.
+    setNewComment('');
+    if (inputRef.current) inputRef.current.innerHTML = '';
+    setShowMentions(false);
+    selectedPhotosRef.current = [];
+    setSelectedPhotos([]);
+    if (photoInputRef.current) photoInputRef.current.value = '';
     setPhotoError('');
+    if (photos.length > 0) setIsUploadingPhotos(true);
+
     let uploadedAttachments: CommentAttachment[] = [];
     try {
       const currentMember = members.find(member => member.id === user.uid);
-      const userData = {
-        userName: currentMember?.name || 'Anonymous',
-        userColor: currentMember?.color || '#3B82F6'
-      };
-      const commentText = newComment.trim();
-      uploadedAttachments = await uploadCommentPhotos();
+      const userName = currentMember?.name || 'Anonymous';
+      const userColor = currentMember?.color || '#3B82F6';
+
+      if (photos.length > 0) {
+        uploadedAttachments = await uploadCommentPhotos(photos, targetGroupId, weekId);
+      }
       const notificationBody = commentText || (uploadedAttachments.length === 1 ? 'Shared a photo' : `Shared ${uploadedAttachments.length} photos`);
 
       // Parse mentions based on @name pattern
       const mentionNames = Array.from(commentText.matchAll(/@([\w]+)/g)).map(m => m[1].toLowerCase());
-      const mentionIds = mentionNames
-        .map(name => members.find(mem => mem.name.toLowerCase() === name)?.id)
-        .filter((id): id is string => !!id);
+      const mentionIds = Array.from(new Set(
+        mentionNames
+          .map(name => members.find(mem => mem.name.toLowerCase() === name)?.id)
+          .filter((id): id is string => !!id)
+      ));
 
-      const commentRef = await addDoc(collection(db, 'groups', groupId, 'comments'), {
+      // Generate the id locally so the comment shows up via the snapshot listener
+      // immediately (latency compensation) and we can reference it in notifications.
+      const commentRef = doc(collection(db, 'groups', targetGroupId, 'comments'));
+      await setDoc(commentRef, {
         text: commentText,
         userId: user.uid,
-        userName: userData.userName,
-        userColor: userData.userColor,
-        taskId: selectedTask?.id || null,
+        userName,
+        userColor,
+        taskId: task?.id || null,
         attachments: uploadedAttachments,
         mentions: mentionIds,
         createdAt: new Date(),
-        weekId: currentWeekId
+        weekId,
       });
 
-      const notifications: Promise<any>[] = [];
+      photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
 
-      // Notify mentioned users
+      // Notifications are best-effort and must not block or fail the post.
+      const notifications: Promise<unknown>[] = [];
       mentionIds.forEach(uid => {
         if (uid !== user.uid) {
           notifications.push(
             addDoc(collection(db, 'users', uid, 'notifications'), {
               type: 'mention',
               commentId: commentRef.id,
-              groupId,
-              taskId: selectedTask?.id || null,
+              groupId: targetGroupId,
+              taskId: task?.id || null,
               createdAt: new Date(),
               read: false,
             }),
             sendUserNotification(uid, {
-              title: `${userData.userName} mentioned you`,
+              title: `${userName} mentioned you`,
               body: notificationBody,
             })
           );
@@ -423,27 +439,28 @@ export default function CommentSection({
       });
 
       // Notify owner of the task when someone comments on their task
-      if (selectedTask && selectedTask.createdBy !== user.uid) {
+      if (task && task.createdBy !== user.uid && !mentionIds.includes(task.createdBy)) {
         notifications.push(
-          addDoc(collection(db, 'users', selectedTask.createdBy, 'notifications'), {
+          addDoc(collection(db, 'users', task.createdBy, 'notifications'), {
             type: 'comment',
             commentId: commentRef.id,
-            taskId: selectedTask.id,
-            groupId,
+            taskId: task.id,
+            groupId: targetGroupId,
             createdAt: new Date(),
             read: false,
           }),
-          sendUserNotification(selectedTask.createdBy, {
-            title: `${userData.userName} commented on your task`,
+          sendUserNotification(task.createdBy, {
+            title: `${userName} commented on your task`,
             body: notificationBody,
           })
         );
       }
 
-      await Promise.all(notifications);
-
-      setNewComment('');
-      clearSelectedPhotos();
+      Promise.allSettled(notifications).then((results) => {
+        results.forEach((r) => {
+          if (r.status === 'rejected') console.error('Error sending comment notification:', r.reason);
+        });
+      });
     } catch (error) {
       if (uploadedAttachments.length > 0) {
         await Promise.allSettled(
@@ -452,8 +469,20 @@ export default function CommentSection({
       }
       console.error('Error adding comment:', error);
       setPhotoError('Could not post that comment. Try again.');
+
+      // Restore the failed draft, unless the user has already started a new one.
+      if (inputRef.current && !inputRef.current.innerText.trim()) {
+        setNewComment(commentText);
+        inputRef.current.innerHTML = getMentionHTML(commentText);
+      }
+      if (selectedPhotosRef.current.length === 0) {
+        selectedPhotosRef.current = photos;
+        setSelectedPhotos(photos);
+      } else {
+        photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+      }
     } finally {
-      setIsSubmitting(false);
+      if (photos.length > 0) setIsUploadingPhotos(false);
     }
   };
 
@@ -473,7 +502,7 @@ export default function CommentSection({
 
   // Handle key press in the input field
   const handleKeyPress = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleAddComment();
     }
@@ -624,7 +653,7 @@ export default function CommentSection({
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                disabled={isSubmitting || selectedPhotos.length >= MAX_PHOTOS_PER_COMMENT}
+                disabled={selectedPhotos.length >= MAX_PHOTOS_PER_COMMENT}
                 className="mr-auto px-2 py-1 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
                 title="Attach photos"
                 aria-label="Attach photos"
@@ -633,10 +662,10 @@ export default function CommentSection({
               </button>
               <button
                 onClick={handleAddComment}
-                disabled={(!newComment.trim() && selectedPhotos.length === 0) || isSubmitting}
+                disabled={(!newComment.trim() && selectedPhotos.length === 0) || (selectedPhotos.length > 0 && isUploadingPhotos)}
                 className="px-2 py-1 bg-theme text-white rounded hover:bg-theme-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
-                title={isSubmitting ? 'Posting comment' : 'Post comment'}
-                aria-label={isSubmitting ? 'Posting comment' : 'Post comment'}
+                title={isUploadingPhotos ? 'Uploading photos' : 'Post comment'}
+                aria-label={isUploadingPhotos ? 'Uploading photos' : 'Post comment'}
               >
                 <PaperAirplaneIcon className="h-5 w-5" />
               </button>
@@ -655,7 +684,6 @@ export default function CommentSection({
                   <button
                     type="button"
                     onClick={() => removeSelectedPhoto(photo.id)}
-                    disabled={isSubmitting}
                     className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/75 disabled:opacity-50"
                     title="Remove photo"
                     aria-label="Remove photo"
@@ -665,6 +693,9 @@ export default function CommentSection({
                 </div>
               ))}
             </div>
+          )}
+          {isUploadingPhotos && (
+            <p className="mt-2 text-xs text-gray-500">Uploading photos…</p>
           )}
           {photoError && (
             <p className="mt-2 text-xs text-red-600">{photoError}</p>
