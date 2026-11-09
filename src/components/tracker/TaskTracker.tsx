@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { useToday } from '../../lib/hooks/useToday';
 import { Task, Comment, TaskStatus } from '../../types';
-import TaskCell from './TaskCell';
+import TaskCell, { NewTaskStatus } from './TaskCell';
 import WeeklyNavigation from './WeeklyNavigation';
 import TopBar from '../layout/TopBar';
 import BottomBar from '../layout/BottomBar';
@@ -453,14 +453,14 @@ export default function TaskTracker({
     onWeekChange?.(newWeek); // Notify parent
   };
 
-  const handleAddTask = async (memberId: string, day: number, text: string) => {
+  const handleAddTask = async (memberId: string, day: number, text: string, status: NewTaskStatus = 'not-done') => {
     if (!user || !groupId) return;
 
     try {
       // Add task to Firestore with ISO week ID
       await addDoc(collection(db, 'groups', groupId, 'tasks'), {
         text,
-        status: 'not-done',
+        status,
         day,
         createdBy: memberId,
         createdAt: new Date(),
@@ -475,13 +475,13 @@ export default function TaskTracker({
     }
   };
 
-  const handleAddGlobalTask = async (memberId: string, day: number, text: string) => {
+  const handleAddGlobalTask = async (memberId: string, day: number, text: string, status: NewTaskStatus = 'not-done') => {
      if (!user) return;
      try {
         // Add task to Firestore with ISO week ID
         await addDoc(collection(db, 'users', memberId, 'tasks'), {
           text,
-          status: 'not-done',
+          status,
           day,
           createdBy: memberId,
           createdAt: new Date(),
@@ -870,10 +870,10 @@ export default function TaskTracker({
                         memberId={member.id}
                         day={index}
                         tasks={sortForDay(tasks[member.id]?.filter(t => t.day === index) || [])}
-                        onAddTask={(text) => {
+                        onAddTask={(text, status) => {
                           // If adding task for current user, use handleAddTask (local)
                           if (member.id === user?.uid) {
-                            handleAddTask(member.id, index, text);
+                            handleAddTask(member.id, index, text, status);
                           }
                           // If adding task for another user, use handleSuggestTask (local suggestion)
                           else {
@@ -882,7 +882,7 @@ export default function TaskTracker({
                         }}
                         // Pass the global task handler
                         onAddGlobalTask={
-                          member.id === user?.uid ? (text) => handleAddGlobalTask(member.id, index, text) : undefined
+                          member.id === user?.uid ? (text, status) => handleAddGlobalTask(member.id, index, text, status) : undefined
                         }
                         onUpdateTaskStatus={(taskId) => handleUpdateTaskStatus(member.id, taskId)}
                         onDeleteTask={(taskId) => handleDeleteTask(member.id, taskId)}

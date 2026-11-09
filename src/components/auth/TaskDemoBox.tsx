@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
-import TaskCell from '../tracker/TaskCell';
+import TaskCell, { NewTaskStatus } from '../tracker/TaskCell';
 import { Task } from '../../types';
 
 export default function TaskDemoBox() {
@@ -50,14 +50,14 @@ export default function TaskDemoBox() {
     ],
   });
 
-  const handleAddTask = (memberId: string, text: string) => {
+  const handleAddTask = (memberId: string, text: string, status: NewTaskStatus = 'not-done') => {
     setTasks(prev => {
       const memberTasks = prev[memberId] || [];
       if (memberTasks.length >= 2) return prev;
       const newTask: Task = {
         id: nanoid(),
         text,
-        status: 'not-done',
+        status,
         day: 0,
         createdBy: memberId,
         createdAt: new Date(),
@@ -161,7 +161,7 @@ export default function TaskDemoBox() {
                 memberId={member.id}
                 day={0}
                 tasks={tasks[member.id] || []}
-                onAddTask={text => handleAddTask(member.id, text)}
+                onAddTask={(text, status) => handleAddTask(member.id, text, status)}
                 onUpdateTaskStatus={taskId => handleUpdateStatus(member.id, taskId)}
                 onDeleteTask={taskId => handleDeleteTask(member.id, taskId)}
                 onEditTask={(taskId, newText) => handleEditTask(member.id, taskId, newText)}
