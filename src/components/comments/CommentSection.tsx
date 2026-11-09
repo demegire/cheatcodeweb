@@ -372,6 +372,9 @@ export default function CommentSection({
     const targetGroupId = groupId;
     const weekId = currentWeekId;
     const task = selectedTask;
+    // Taken now, not after the photo upload, so a comment sent during an
+    // upload can't end up listed before this one.
+    const createdAt = new Date();
 
     // Clear the draft right away.
     setNewComment('');
@@ -413,7 +416,7 @@ export default function CommentSection({
         taskId: task?.id || null,
         attachments: uploadedAttachments,
         mentions: mentionIds,
-        createdAt: new Date(),
+        createdAt,
         weekId,
       });
 
