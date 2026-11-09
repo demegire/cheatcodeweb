@@ -5,11 +5,15 @@ export const getISOWeek = (date: Date): string => {
     // Set to nearest Thursday (to get correct year for week number)
     d.setDate(d.getDate() + 4 - (d.getDay() || 7));
     
-    // Get first day of year
-    const yearStart = new Date(d.getFullYear(), 0, 1);
-    
+    // Days since Jan 1, counted on calendar dates in UTC so a daylight-saving
+    // change between Jan 1 and d can't shift the result by an hour (which
+    // pushed weeks forward in places where Jan 1 is in DST, e.g. Australia)
+    const dayOfYear = Math.round(
+      (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000
+    );
+
     // Calculate week number
-    const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    const weekNum = Math.floor(dayOfYear / 7) + 1;
     
     // Return ISO week string
     return `${d.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
