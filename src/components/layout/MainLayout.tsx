@@ -44,6 +44,8 @@ interface MainLayoutProps {
   onSelectTask?: (task: Task | null) => void;
   /** Start with the comments panel open (page was opened from a task link). */
   initialCommentsOpen?: boolean;
+  /** Clicking the cheat-code.cc logo in the sidebar: go back to the calendar. */
+  onLogoClick?: () => void;
 }
 
 export default function MainLayout({
@@ -60,6 +62,7 @@ export default function MainLayout({
   selectedTask = null,
   onSelectTask = () => {},
   initialCommentsOpen = false,
+  onLogoClick = () => {},
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(!initialCommentsOpen);
@@ -126,6 +129,11 @@ export default function MainLayout({
     return () => unsubscribe();
   }, [groupId, currentWeekId]);
 
+  const handleLogoClick = () => {
+    setSidebarCollapsed(true);
+    onLogoClick();
+  };
+
   const handleLogout = () => {
     if (user) clearDashboardCache(user.uid);
     auth.signOut();
@@ -173,8 +181,12 @@ export default function MainLayout({
               <button onClick={toggleSidebar} className="text-gray-600 hover:text-gray-900 cursor-pointer">
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
-              <div className="text-black font-bold">cheat-code.cc</div>
-              <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
+              <button onClick={handleLogoClick} className="text-black font-bold cursor-pointer">
+                cheat-code.cc
+              </button>
+              <button onClick={handleLogoClick} className="cursor-pointer" aria-label="Go to calendar">
+                <Image src="/android-chrome-192x192.png" alt="cheat-code.cc" width={32} height={32} className="h-8 w-8" />
+              </button>
             </div>
           )}
           
