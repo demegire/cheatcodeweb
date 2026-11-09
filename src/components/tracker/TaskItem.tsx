@@ -4,7 +4,7 @@ import { ArrowRightIcon, TrashIcon, PlayIcon, PauseIcon, XMarkIcon, CheckIcon } 
 import { linkifyText } from '../../lib/linkify';
 import { FaInfo } from "react-icons/fa6";
 
-const GoalIcon = () => (
+export const GoalIcon = () => (
   <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
     <circle cx="10" cy="10" r="8" fill="#ffffff" stroke="#111827" strokeWidth="1.75" />
     <circle cx="10" cy="10" r="4.75" fill="#111827" />

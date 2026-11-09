@@ -1,18 +1,22 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'; // Import useCallback
 import { createPortal } from 'react-dom'; // Import createPortal
-import { Task } from '../../types';
-import TaskItem from './TaskItem';
+import { Task, TaskStatus } from '../../types';
+import TaskItem, { GoalIcon } from './TaskItem';
+import { FaInfo } from 'react-icons/fa6';
 import { ChevronRightIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 // Task types enum for better type safety
 type TaskType = 'local' | 'global';
 
+// What a new item starts as: a normal task, or straight away a goal or info.
+export type NewTaskStatus = Extract<TaskStatus, 'not-done' | 'goal' | 'info'>;
+
 interface TaskCellProps {
   memberId: string;
   day: number;
   tasks: Task[];
-  onAddTask: (text: string) => void; // This will now always be the local task handler from TaskTracker
-  onAddGlobalTask?: (text: string) => void; // This will be the global task handler from TaskTracker (only passed for current user's row)
+  onAddTask: (text: string, status?: NewTaskStatus) => void; // This will now always be the local task handler from TaskTracker
+  onAddGlobalTask?: (text: string, status?: NewTaskStatus) => void; // This will be the global task handler from TaskTracker (only passed for current user's row)
   onUpdateTaskStatus: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   onEditTask?: (taskId: string, newText: string) => void;
@@ -87,15 +91,15 @@ export default function TaskCell({
     }, [isExpanded]); // Re-measure only when expanded state changes
 
 
-    const handleAddTask = () => {
+    const handleAddTask = (status: NewTaskStatus = 'not-done') => {
       if (newTaskText.trim() && newTaskText.length <= 64) {
         // Use the currentTaskType from props
         if (currentTaskType === 'global' && onAddGlobalTask) {
           // Call the global handler if type is global and handler is provided
-          onAddGlobalTask(newTaskText.trim());
+          onAddGlobalTask(newTaskText.trim(), status);
         } else {
           // Otherwise, call the local handler
-          onAddTask(newTaskText.trim());
+          onAddTask(newTaskText.trim(), status);
         }
         setNewTaskText('');
         // Optionally collapse options after adding task
@@ -296,7 +300,7 @@ export default function TaskCell({
                 placeholder={`Add ${currentTaskType} task...`} // Placeholder uses currentTaskType from props
               />
               <button
-                onClick={handleAddTask}
+                onClick={() => handleAddTask()}
                 disabled={!newTaskText.trim()}
                 className="bg-theme hover:bg-theme-hover text-white w-[27px] flex-shrink-0 flex items-center justify-center h-full cursor-pointer disabled:cursor-not-allowed"
               >
@@ -337,7 +341,7 @@ export default function TaskCell({
                         placeholder={"Suggest task..."}
                      />
                       <button
-                        onClick={handleAddTask} // This will call the local handleAddTask (which calls handleSuggestTask)
+                        onClick={() => handleAddTask()} // This will call the local handleAddTask (which calls handleSuggestTask)
                         disabled={!newTaskText.trim()}
                         className={`bg-theme hover:bg-theme-hover text-white px-2 py-1 w-[27px] flex-shrink-0 flex items-center justify-center h-full rounded-r cursor-pointer disabled:cursor-not-allowed`} // Apply rounded-r here for non-current user
                       >
@@ -385,7 +389,25 @@ export default function TaskCell({
               </button>
             )}
 
-            {/* Room for future task types */}
+            {/* Add the typed text straight away as a goal or info instead of a task */}
+            <button
+              onClick={() => handleAddTask('goal')}
+              disabled={!newTaskText.trim()}
+              title={newTaskText.trim() ? 'Add as goal' : 'Type something first'}
+              className="bg-theme text-white px-2 py-1 flex items-center justify-center gap-1 hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer border-l border-white disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <GoalIcon />
+              <span>Goal</span>
+            </button>
+            <button
+              onClick={() => handleAddTask('info')}
+              disabled={!newTaskText.trim()}
+              title={newTaskText.trim() ? 'Add as info' : 'Type something first'}
+              className="bg-theme text-white px-2 py-1 flex items-center justify-center gap-1 hover:bg-theme-hover whitespace-nowrap text-sm h-8 cursor-pointer border-l border-white disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <FaInfo className="h-3 w-3" />
+              <span>Info</span>
+            </button>
           </div>,
           document.body // Append to the document body
         )}
