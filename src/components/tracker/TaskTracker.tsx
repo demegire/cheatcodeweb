@@ -12,6 +12,7 @@ import { getCurrentISOWeek, getRelativeISOWeek, getDateFromISOWeek, getMonthFirs
 import ThisWeekButton from './ThisWeekButton';
 import dynamic from 'next/dynamic';
 import { sendUserNotification } from '../../lib/notifications';
+import { buildTaskPath } from '../../lib/taskLinks';
 
 // Only needed once someone opens their color picker.
 const HexColorPicker = dynamic(() => import('react-colorful').then(m => m.HexColorPicker), { ssr: false });
@@ -42,6 +43,10 @@ interface TaskTrackerProps {
   onSelectTask?: (task: Task | null) => void;
   selectedTask?: Task | null;
   highlightedTaskId?: string | null;
+  /** Week to show on mount (e.g. from a task link). Defaults to this week. */
+  initialWeekId?: string;
+  /** Task from an incoming link: opened (comments + scroll) once it loads. */
+  deepLinkTaskId?: string | null;
   onWeekChange?: (weekId: string) => void;
   comments?: Comment[];
   isStatView: boolean;
@@ -97,6 +102,8 @@ export default function TaskTracker({
   onSelectTask,
   selectedTask,
   highlightedTaskId,
+  initialWeekId,
+  deepLinkTaskId,
   onWeekChange,
   comments = [],
   isStatView,
@@ -108,7 +115,7 @@ export default function TaskTracker({
   onMemberColorChange
 }: TaskTrackerProps) {
   const { user } = useAuth();
-  const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
+  const [currentISOWeek, setCurrentISOWeek] = useState(() => initialWeekId ?? getCurrentISOWeek());
   const [tasks, setTasks] = useState<Record<string, Task[]>>({});
   const [scores, setScores] = useState<Record<string, number>>({});
   const [currentGroupName, setCurrentGroupName] = useState(groupName);
@@ -204,6 +211,36 @@ export default function TaskTracker({
       onToggleRightSidebar();
     }
   };
+
+  // Open the linked task once its week's tasks have arrived: select it (which
+  // opens its comments), bring its day column into view on narrow screens
+  // where the grid scrolls sideways, and scroll it into view vertically.
+  const openedDeepLinkRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!deepLinkTaskId || openedDeepLinkRef.current === deepLinkTaskId) return;
+    let task: Task | undefined;
+    for (const memberTasks of Object.values(tasks)) {
+      task = memberTasks.find(t => t.id === deepLinkTaskId && t.weekId === currentISOWeek);
+      if (task) break;
+    }
+    if (!task) return;
+    openedDeepLinkRef.current = deepLinkTaskId;
+    handleTaskDoubleClick(task);
+
+    const taskId = task.id;
+    const day = task.day;
+    requestAnimationFrame(() => {
+      const container = tableContainerRef.current;
+      if (!container) return;
+      const headerCell = container.querySelector(`[data-day-index="${day}"]`) as HTMLElement | null;
+      if (headerCell && container.scrollWidth > container.clientWidth) {
+        container.scrollLeft = headerCell.offsetLeft - 62; // Name cell width
+      }
+      const taskEl = container.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`);
+      taskEl?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkTaskId, tasks, currentISOWeek]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -671,6 +708,7 @@ export default function TaskTracker({
       await sendUserNotification(forMemberId, {
         title: `Suggestion by ${fromName}`,
         body: `${text}`,
+        url: buildTaskPath({ groupId, weekId: currentISOWeek, taskId: taskRef.id }),
       });
 
       // No need to update local state as the onSnapshot will handle that

@@ -1,7 +1,7 @@
 'use client';
 import { User } from 'firebase/auth';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, deleteField, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import dynamic from 'next/dynamic';
@@ -15,6 +15,7 @@ import ConfirmModal from '../../components/modals/ConfirmModal';
 import TutorialModal from '../../components/modals/TutorialModal';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { readDashboardCache, writeDashboardCache, clearDashboardCache } from '../../lib/dashboardCache';
+import { buildTaskPath, clearPendingTaskLink, parseTaskLink, readTaskLinkFromLocation, stashPendingTaskLink, TaskLink } from '../../lib/taskLinks';
 
 interface GroupData {
   id: string;
@@ -31,15 +32,42 @@ interface GroupData {
 // dashboard bundle.
 const ProfileSetup = dynamic(() => import('../../components/auth/ProfileSetup'), { ssr: false });
 
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-400 animate-spin">
+        <XMarkIcon className="w-8 h-8 text-white" />
+      </div>
+    </div>
+  );
+}
+
+// useSearchParams needs a Suspense boundary on a statically rendered page.
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Dashboard />
+    </Suspense>
+  );
+}
+
+function Dashboard() {
   const router = useRouter();
+  // Unlike window.location, this is already up to date on the first render
+  // after a client-side navigation (e.g. the redirect after login).
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [currentISOWeek, setCurrentISOWeek] = useState(getCurrentISOWeek());
+  // A task link this page was opened with (/dashboard?group&week[&task]).
+  // Stays set until the task is opened or the user navigates somewhere else.
+  // Read once at mount so MainLayout can start with the comments panel open.
+  const [openedFromLink] = useState(() => parseTaskLink(searchParams.toString()) !== null);
+  const [deepLink, setDeepLink] = useState<TaskLink | null>(() => parseTaskLink(searchParams.toString()));
+  const [currentISOWeek, setCurrentISOWeek] = useState(() => deepLink?.weekId ?? getCurrentISOWeek());
   const [isStatView, setStatView] = useState(false);
   const [groupToLeave, setGroupToLeave] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -90,11 +118,15 @@ export default function DashboardPage() {
         // No user, redirect to login. Drop any cached dashboard so the login
         // page doesn't bounce us straight back here.
         clearDashboardCache();
+        const link = readTaskLinkFromLocation();
+        if (link) stashPendingTaskLink(link);
         router.push('/');
         return;
       }
 
       setUser(authUser);
+      // Signed in and here: any link saved on the way through login is used up.
+      clearPendingTaskLink();
 
       // Cache-first paint: if we have a recent snapshot of this user's
       // group graph, render it immediately while we revalidate below.
@@ -103,7 +135,9 @@ export default function DashboardPage() {
         setNeedsProfileSetup(false);
         setPinnedGroupId(cached.pinnedGroupId);
         setGroups(cached.groups);
+        const linked = readTaskLinkFromLocation();
         const initial =
+          cached.groups.find(g => g.id === linked?.groupId) ??
           cached.groups.find(g => g.id === cached.selectedGroupId) ??
           cached.groups.find(g => g.id === cached.pinnedGroupId) ??
           cached.groups[0];
@@ -226,7 +260,14 @@ export default function DashboardPage() {
         // Preserve the user's current selection if it still exists in the
         // fresh data (they may already be viewing it via the cache path),
         // otherwise fall back to pinned-or-first.
+        const linked = readTaskLinkFromLocation();
+        const linkedGroup = linked ? groupsData.find(g => g.id === linked.groupId) : undefined;
+        // Not (or no longer) a member of the linked group: drop the link. A
+        // link without a task is done once its group and week are showing.
+        if (linked && (!linkedGroup || !linked.taskId)) setDeepLink(null);
+
         setSelectedGroup(prev => {
+          if (linkedGroup && prev?.id !== linkedGroup.id) return linkedGroup;
           if (prev) {
             const match = groupsData.find(g => g.id === prev.id);
             // Keep the old object when nothing changed so TaskTracker and
@@ -261,6 +302,28 @@ export default function DashboardPage() {
       selectedGroupId: selectedGroup?.id ?? null,
     });
   }, [user, loading, needsProfileSetup, groups, pinnedGroupId, selectedGroup]);
+
+  // Mirror the open task in the URL so it can be copied/shared, and clear it
+  // when the task is closed. Left alone while an incoming link is resolving.
+  useEffect(() => {
+    if (deepLink || !selectedGroup) return;
+    const path = selectedTask
+      ? buildTaskPath({ groupId: selectedGroup.id, weekId: selectedTask.weekId, taskId: selectedTask.id })
+      : '/dashboard';
+    if (window.location.pathname + window.location.search !== path) {
+      window.history.replaceState(window.history.state, '', path);
+    }
+  }, [deepLink, selectedTask, selectedGroup]);
+
+  const handleSelectTask = (task: Task | null) => {
+    setDeepLink(null);
+    setSelectedTask(task);
+  };
+
+  const handleWeekChange = (weekId: string) => {
+    if (deepLink && deepLink.weekId !== weekId) setDeepLink(null);
+    setCurrentISOWeek(weekId);
+  };
 
     // Create a new group
     const handleCreateGroup = async () => {
@@ -405,17 +468,16 @@ export default function DashboardPage() {
 
   // Handle group selection
   const handleGroupSelect = (group: GroupData) => {
+    if (group.id !== selectedGroup?.id) {
+      setDeepLink(null);
+      // A task (and its comment thread) belongs to the group it was opened in.
+      setSelectedTask(null);
+    }
     setSelectedGroup(group);
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-400 animate-spin">
-          <XMarkIcon className="w-8 h-8 text-white" />
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!user) {
@@ -486,7 +548,8 @@ export default function DashboardPage() {
         groupId={selectedGroup?.id}
         currentWeekId={currentISOWeek}
         selectedTask={selectedTask}
-        onSelectTask={setSelectedTask}
+        onSelectTask={handleSelectTask}
+        initialCommentsOpen={openedFromLink}
         >
         {selectedGroup && !isStatView && (
           <TaskTracker
@@ -494,9 +557,11 @@ export default function DashboardPage() {
           groupName={selectedGroup?.name || ''}
           members={selectedGroup?.members || []}
           onGroupNameUpdate={handleGroupNameUpdate}
-          onSelectTask={setSelectedTask}
+          onSelectTask={handleSelectTask}
           selectedTask={selectedTask}
-          onWeekChange={setCurrentISOWeek}
+          initialWeekId={currentISOWeek}
+          deepLinkTaskId={deepLink?.taskId && deepLink.groupId === selectedGroup.id ? deepLink.taskId : null}
+          onWeekChange={handleWeekChange}
           isStatView={isStatView}
           onStatView={handleStatButtonPress}
           onMemberColorChange={handleMemberColorChange}

@@ -42,7 +42,9 @@ export async function requestNotificationPermission(userId: string) {
  */
 export async function sendUserNotification(
   userId: string,
-  notification: { title: string; body: string; data?: Record<string, string> }
+  // Sent as FCM `data`, so every value must be a string. `url` is a
+  // same-origin path the service worker opens when the notification is tapped.
+  notification: { title: string; body: string; url?: string }
 ) {
   try {
     await fetch('/api/notify', {

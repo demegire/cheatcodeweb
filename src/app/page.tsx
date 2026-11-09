@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { hasDashboardCache } from '../lib/dashboardCache';
 import { useAuth } from '../lib/hooks/useAuth';
+import { peekPendingTaskPath } from '../lib/taskLinks';
 import LoginForm from '../components/auth/LoginForm';
 import dynamic from 'next/dynamic';
 
 // Only brand-new users see this, so keep it (and react-colorful) out of the
 // login page bundle.
 const ProfileSetup = dynamic(() => import('../components/auth/ProfileSetup'), { ssr: false });
+
+// A task link opened while signed out goes back to that task after login.
+const dashboardPath = () => peekPendingTaskPath() ?? '/dashboard';
 
 export default function Home() {
   const router = useRouter();
@@ -21,7 +25,7 @@ export default function Home() {
   // session turns out to be gone.
   useEffect(() => {
     if (!localStorage.getItem('pendingInvite') && hasDashboardCache()) {
-      router.replace('/dashboard');
+      router.replace(dashboardPath());
     }
   }, [router]);
 
@@ -31,7 +35,7 @@ export default function Home() {
     if (pendingInvite) {
       setDestination(`/invite/${pendingInvite}`);
     } else {
-      setDestination('/dashboard');
+      setDestination(dashboardPath());
     }
 
     // If user is logged in and profile is completed, redirect to destination
