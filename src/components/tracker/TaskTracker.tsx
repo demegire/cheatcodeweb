@@ -61,6 +61,30 @@ const isCurrentWeek = (weekId: string) => {
   return weekId === getCurrentISOWeek();
 };
 
+// Order within a day: infos on top, then goals, then tasks (not-done,
+// completed, postponed, suggested). Inside a section, items are in the order
+// they entered it: creation time, or orderedAt if a status change moved the
+// item into that section later. Switching between not-done/completed/postponed
+// stays in the same section, so the task doesn't move.
+const statusRank = (status: TaskStatus) => {
+  if (status === 'info') return 0;
+  if (status === 'goal') return 1;
+  return 2;
+};
+
+const sectionTime = (task: Task) => (task.orderedAt ?? task.createdAt).getTime();
+
+const sortForDay = (dayTasks: Task[]) =>
+  dayTasks.sort((a, b) =>
+    statusRank(a.status) - statusRank(b.status) || sectionTime(a) - sectionTime(b)
+  );
+
+const toDateOrNull = (value: any): Date | null => {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate();
+  return new Date(value);
+};
+
 const countsTowardScore = (task: Task) => {
   return task.status !== 'suggested' && task.status !== 'info' && task.status !== 'goal';
 };
@@ -239,6 +263,7 @@ export default function TaskTracker({
           id: docSnap.id,
           ...data,
           createdAt,
+          orderedAt: toDateOrNull(data.orderedAt),
           timerStartedAt,
           elapsedSeconds: data.elapsedSeconds || 0,
           isGlobal: false,
@@ -315,6 +340,7 @@ export default function TaskTracker({
             id: docSnap.id,
             ...data,
             createdAt,
+            orderedAt: toDateOrNull(data.orderedAt),
             timerStartedAt,
             elapsedSeconds: data.elapsedSeconds || 0,
             isGlobal: true,
@@ -471,8 +497,12 @@ export default function TaskTracker({
         : doc(db, 'groups', groupId!, 'tasks', taskId);
 
       // Update task status in Firestore
+      // Moving into a different section (task / info / goal) puts the item at
+      // the bottom of that section, as if it had just been added there.
+      const changesSection = statusRank(task.status) !== statusRank(nextStatus);
       await updateDoc(taskRef, {
         status: nextStatus,
+        ...(changesSection ? { orderedAt: new Date() } : {}),
       });
 
       // No need to update local state as the onSnapshot will handle that
@@ -801,7 +831,7 @@ export default function TaskTracker({
                         key={index}
                         memberId={member.id}
                         day={index}
-                        tasks={tasks[member.id]?.filter(t => t.day === index) || []}
+                        tasks={sortForDay(tasks[member.id]?.filter(t => t.day === index) || [])}
                         onAddTask={(text) => {
                           // If adding task for current user, use handleAddTask (local)
                           if (member.id === user?.uid) {
