@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../lib/hooks/useAuth';
+import { useToday } from '../../lib/hooks/useToday';
 import { Task, Comment, TaskStatus } from '../../types';
 import TaskCell from './TaskCell';
 import WeeklyNavigation from './WeeklyNavigation';
@@ -157,7 +158,16 @@ export default function TaskTracker({
 
 
   const days = getDates(currentISOWeek);
-  const currentDay = useMemo(() => new Date(), []);
+  // Stays correct when the page is left open past midnight. If a new week
+  // starts while someone is looking at the current week, move them along.
+  const currentDay = useToday((previous, next) => {
+    const previousWeek = getISOWeek(previous);
+    const nextWeek = getISOWeek(next);
+    if (nextWeek !== previousWeek && currentISOWeek === previousWeek) {
+      setCurrentISOWeek(nextWeek);
+      onWeekChange?.(nextWeek);
+    }
+  });
 
   // Extract task IDs from comments
   const tasksWithComments = comments
